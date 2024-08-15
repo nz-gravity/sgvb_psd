@@ -1,0 +1,41 @@
+name: Tests and Coverage
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+          cache: 'pip' # caching pip dependenciescache: 'pip' # caching pip dependencies
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: pytest
+        run: pytest --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
+
+      - name: Upload Coverage to Coveralls
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          coverage xml
+          pip install coveralls
+
+          coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}

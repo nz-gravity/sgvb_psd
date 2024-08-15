@@ -1,0 +1,84 @@
+[train_models-system]
+requires = [
+    "setuptools>=64",
+    "setuptools-scm>=8.0",
+    "wheel"
+]
+train_models-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]  # list of folders that contain the packages (["."] by default)
+include = ["sgvb_psd*"]  # package names should match these glob patterns (["*"] by default)
+exclude = ["sgvb_psd.tests*"]  # exclude packages matching these glob patterns (empty by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
+
+
+[project]
+name = "sgvb_psd"
+version = "0.0.1"
+requires-python = ">=3.8"
+description = "FILL ME" # TODO
+readme = "README.md"
+authors = [
+    {name = "Jianan Liu", email = "jliu812@aucklanduni.ac.nz" },
+    {name = "Avi Vajpeyi", email = "avi.vajpeyi@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+]
+dependencies = [
+    "tensorflow",
+    "pandas",
+    "numpy",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=4.1.0",
+    "pre-commit",
+    "flake8>=5.0.4",
+    "black>=22.12.0",
+    "jupyter-book",
+]
+
+[tool.setuptools_scm]
+version_file = "src/sbvb_psd/_version.py"
+
+
+[project.urls]  # Optional
+"Homepage" = "https://github.com/nz-gravity/sgvb_psd"
+"Bug Reports" = "https://github.com/nz-gravity/sgvb_psd"
+"Source" = "https://github.com/nz-gravity/sgvb_psd"
+
+
+
+[tool.black]
+line-length = 79
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | train_models
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
