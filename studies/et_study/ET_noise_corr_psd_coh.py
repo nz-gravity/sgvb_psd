@@ -6,6 +6,11 @@ start_time = time.time()
 from sgvb_psd import SpecVI
 import tensorflow as tf
 import tensorflow_probability as tfp
+from sgvb_psd.lr_tuner import lr_tuner
+
+
+
+
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
