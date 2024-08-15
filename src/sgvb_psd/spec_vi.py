@@ -142,7 +142,7 @@ class SpecVI:
         print('VI Time: ', stop - start)
         stop_total = timeit.default_timer()
         self.kld = losses
-        plt.plot(losses)
+        #plt.plot(losses)
 
         print('Total Inference Training Time: ', stop_total - start_total)
 
