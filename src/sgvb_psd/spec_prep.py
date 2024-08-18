@@ -1,6 +1,5 @@
 import timeit
 import numpy as np
-from scipy.sparse import coo_matrix
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
@@ -138,39 +137,4 @@ class SpecPrep:  # Parent used to create SpecModel object
         self.Zar_im = np.imag(Z_)
         return self.Zar_re, self.Zar_im
 
-    # Sparse matrix form of Zmtrix()
-    def SparseZmtrix(self):  # sparse Z matrix
-        y_work = self.y_work()
-        n, p = y_work.shape
-
-        if p == 1:
-            raise Exception('To use sparse representation, dimension of time series should be at least 2')
-            return
-
-        y_ls = np.split(y_work, n)
-
-        coomat_re_ls = []
-        coomat_im_ls = []
-        for i in range(n):
-            Zar = self.dmtrix_k(y_ls[i])
-            Zar_re = np.real(Zar)
-            Zar_im = np.imag(Zar)
-            coomat_re_ls.append(coo_matrix(Zar_re))
-            coomat_im_ls.append(coo_matrix(Zar_im))
-
-        Zar_re_indices = []
-        Zar_im_indices = []
-        Zar_re_values = []
-        Zar_im_values = []
-        for i in range(len(coomat_re_ls)):
-            Zar_re_indices.append(np.stack([coomat_re_ls[i].row, coomat_re_ls[i].col], -1))
-            Zar_im_indices.append(np.stack([coomat_im_ls[i].row, coomat_im_ls[i].col], -1))
-            Zar_re_values.append(coomat_re_ls[i].data)
-            Zar_im_values.append(coomat_im_ls[i].data)
-
-        self.Zar_re_indices = Zar_re_indices
-        self.Zar_im_indices = Zar_im_indices
-        self.Zar_re_values = Zar_re_values
-        self.Zar_im_values = Zar_im_values
-        self.Zar_size = Zar.shape
-        return [self.Zar_re_indices, self.Zar_re_values], [self.Zar_im_indices, self.Zar_im_values]
+    

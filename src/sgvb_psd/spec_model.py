@@ -1,6 +1,5 @@
 import timeit
 import numpy as np
-from scipy.sparse import coo_matrix
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
@@ -12,7 +11,7 @@ tfb = tfp.bijectors
 
 
 class SpecModel(SpecPrep):
-    def __init__(self, x, hyper, sparse_op=False, nchunks=128, time_interval=2048, required_part=128):
+    def __init__(self, x, hyper, nchunks=128, time_interval=2048, required_part=128):
         super().__init__(x)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior
@@ -23,7 +22,6 @@ class SpecModel(SpecPrep):
         # Xmat:   basis matrix
         # Zar:    arry of design matrix Z_k for every freq k
         self.hyper = hyper
-        self.sparse_op = sparse_op
         self.trainable_vars = []  # all trainable variables
         self.nchunks = nchunks
         self.time_interval = time_interval
@@ -43,23 +41,10 @@ class SpecModel(SpecPrep):
         self.Xmat_delta = tf.convert_to_tensor(self.Xmat_delta, dtype=tf.float32)
         self.Xmat_theta = tf.convert_to_tensor(self.Xmat_theta, dtype=tf.float32)
 
-        if self.sparse_op == False:
-            self.Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)  # complex array
-            self.Z_re = tf.convert_to_tensor(self.Zar_re, dtype=tf.float32)
-            self.Z_im = tf.convert_to_tensor(self.Zar_im, dtype=tf.float32)
-        else:  # sparse_op == True
-            self.Zar_re_indices = [tf.convert_to_tensor(x, tf.int64) for x in
-                                   self.Zar_re_indices]  # int64 required by tf.sparse.SparseTensor
-            self.Zar_im_indices = [tf.convert_to_tensor(x, tf.int64) for x in self.Zar_im_indices]
-            self.Zar_re_values = [tf.convert_to_tensor(x, tf.float32) for x in self.Zar_re_values]
-            self.Zar_im_values = [tf.convert_to_tensor(x, tf.float32) for x in self.Zar_im_values]
-
-            self.Zar_size = tf.convert_to_tensor(self.Zar_size, tf.int64)
-
-            self.Z_re = [tf.sparse.SparseTensor(x, y, self.Zar_size) for x, y in
-                         zip(self.Zar_re_indices, self.Zar_re_values)]
-            self.Z_im = [tf.sparse.SparseTensor(x, y, self.Zar_size) for x, y in
-                         zip(self.Zar_im_indices, self.Zar_im_values)]
+        self.Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)  # complex array
+        self.Z_re = tf.convert_to_tensor(self.Zar_re, dtype=tf.float32)
+        self.Z_im = tf.convert_to_tensor(self.Zar_im, dtype=tf.float32)
+    
 
         self.hyper = [tf.convert_to_tensor(self.hyper[i], dtype=tf.float32) for i in range(len(self.hyper))]
         if self.p_dim > 1:
@@ -160,39 +145,6 @@ class SpecModel(SpecPrep):
         log_lik = tf.reduce_sum(sum_xγ + tmp2_)  # sum over all LnL
         return log_lik
 
-        # Sparse form of loglik()
-
-    def loglik_sparse(self, params):
-        # y_re:            self.y_re
-        # y_im:            self.y_im
-        # Z_:              self.Zar
-        # X_:              self.Xmat
-        # params:          self.trainable_vars (ga_delta, xxx,
-        #                                       ga_theta_re, xxx,
-        #                                       ga_theta_im, xxx, ...)
-        # each of params is a 3-d tensor with sample_size as the fist dim.
-        # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
-
-        ldelta_ = tf.matmul(self.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
-        tmp1_ = - tf.reduce_sum(ldelta_, [1, 2])
-        # delta_ = tf.exp(ldelta_)
-        delta_inv = tf.exp(- ldelta_)
-        theta_re = tf.matmul(self.Xmat_theta, tf.transpose(params[2], [0, 2, 1]))  # no need \ here
-        theta_im = tf.matmul(self.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
-
-        Z_theta_re_ls = [
-            tf.sparse.sparse_dense_matmul(self.Z_re[i], tf.transpose(theta_re[:, i])) - tf.sparse.sparse_dense_matmul(
-                self.Z_im[i], tf.transpose(theta_im[:, i])) for i in range(self.num_obs)]
-        Z_theta_im_ls = [
-            tf.sparse.sparse_dense_matmul(self.Z_re[i], tf.transpose(theta_im[:, i])) + tf.sparse.sparse_dense_matmul(
-                self.Z_im[i], tf.transpose(theta_re[:, i])) for i in range(self.num_obs)]
-
-        u_re = self.y_re - tf.transpose(tf.stack(Z_theta_re_ls), [2, 0, 1])
-        u_im = self.y_im - tf.transpose(tf.stack(Z_theta_im_ls), [2, 0, 1])
-
-        tmp2_ = - tf.reduce_sum(tf.multiply(tf.square(u_re) + tf.square(u_im), delta_inv), [1, 2])
-        log_lik = tmp1_ + tmp2_
-        return log_lik
 
     #
     # Model training one step
