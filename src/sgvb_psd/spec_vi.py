@@ -1,6 +1,5 @@
 import timeit
 import numpy as np
-from scipy.sparse import coo_matrix
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
@@ -17,10 +16,8 @@ class SpecVI:
         self.data = x
 
     def runModel(self, N_delta=30, N_theta=30, lr_map=5e-4, ntrain_map=5e3, inference_size=500,
-                 nchunks=400, variation_factor=0, sparse_op=False, time_interval=2048, required_part=128,
-                degree_fluctuate=None
-                 ):
-        self.sparse_op = sparse_op
+                 nchunks=400, variation_factor=0, time_interval=2048, required_part=128,
+                degree_fluctuate=None):
 
         x = self.data
         print('data shape: ' + str(x.shape))
@@ -38,16 +35,15 @@ class SpecVI:
 
         ## Define Model
         ##
-        Spec_hs = SpecModel(x, hyper_hs, sparse_op=self.sparse_op,
-                            nchunks=nchunks, time_interval=time_interval, required_part=required_part)
+        Spec_hs = SpecModel(x, hyper_hs, nchunks=nchunks, 
+                            time_interval=time_interval, required_part=required_part)
         self.model = Spec_hs  # save model object
         # comput fft
         Spec_hs.sc_fft()
         # compute array of design matrix Z, 3d
-        if self.sparse_op == False:
-            Spec_hs.Zmtrix()
-        else:
-            Spec_hs.SparseZmtrix()
+        
+        Spec_hs.Zmtrix()
+        
         # compute X matrix related to basis function on ffreq
         Spec_hs.Xmtrix(N_delta, N_theta)
         # convert all above to tensorflow object
@@ -78,10 +74,8 @@ class SpecVI:
             lp = tf.TensorArray(tf.float32, size=0, dynamic_size=True)
 
             for i in tf.range(n_train):
-                if self.sparse_op == False:
-                    lpost = model.train_one_step(optimizer, model.loglik, model.logprior_hs)
-                else:
-                    lpost = model.train_one_step(optimizer, model.loglik_sparse, model.logprior_hs)
+                lpost = model.train_one_step(optimizer, model.loglik, model.logprior_hs)
+                
                 if optimizer.iterations % 5000 == 0:
                     tf.print('Step', optimizer.iterations, ': log posterior', lpost)
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
@@ -125,12 +119,8 @@ class SpecVI:
                     reinterpreted_batch_ndims=1)
                 for i in tf.range(len(opt_vars_hs))])
 
-        if self.sparse_op == False:
-            def conditioned_log_prob(*z):
-                return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
-        else:
-            def conditioned_log_prob(*z):
-                return Spec_hs.loglik_sparse(z) + Spec_hs.logprior_hs(z)
+        def conditioned_log_prob(*z):
+            return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
 
         print('Start UQ training: ')
         start = timeit.default_timer()

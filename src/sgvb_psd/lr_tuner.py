@@ -24,9 +24,8 @@ class OptimalSpectralDensityEstimator:
         lr_map = params['lr_map']
         Spec = SpecVI(self.x)
         result_list = Spec.runModel(N_delta=self.N_delta, N_theta=self.N_theta, lr_map=lr_map,
-                                    ntrain_map=self.ntrain_map, sparse_op=False,
-                                    nchunks=self.nchunks, time_interval=self.time_interval,
-                                    required_part=self.required_part)
+                                    ntrain_map=self.ntrain_map, nchunks=self.nchunks, 
+                                    time_interval=self.time_interval, required_part=self.required_part)
         
         losses = result_list[0]
         samp = result_list[2]
