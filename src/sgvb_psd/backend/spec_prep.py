@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+
+
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
@@ -36,7 +38,7 @@ class SpecPrep:  # Parent used to create SpecModel object
         x = self.ts
         total_len = x.shape[0]
         num_segments = self.nchunks
-        time_interval = self.time_interval
+        duration = self.duration
         fmax_for_analysis = self.fmax_for_analysis
         len_chunk = x.shape[0] // num_segments
         x = np.array(
@@ -66,7 +68,7 @@ class SpecPrep:  # Parent used to create SpecModel object
             y = y[:, 0 : int((n - 1) / 2), :]
             fq_y = fq_y[0 : int((n - 1) / 2)]
 
-        freq_range = total_len / time_interval / 2
+        freq_range = total_len / duration / 2
         y = y[:, 0 : int(fmax_for_analysis / freq_range * y.shape[1]), :]
         fq_y = fq_y[0 : int(fmax_for_analysis / freq_range * fq_y.shape[0])]
 

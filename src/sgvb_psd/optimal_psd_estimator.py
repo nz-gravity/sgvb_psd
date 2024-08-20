@@ -1,0 +1,248 @@
+import time
+from typing import Tuple
+
+import numpy as np
+import tensorflow as tf
+from hyperopt import hp, tpe, fmin
+
+from .backend import SpecVI
+from .postproc import plot_psdq, plot_peridogram
+
+
+class OptimalPSDEstimator:
+    """
+    This class is used to run SGVB and estimate the posterior PSD
+
+    This works in a few steps
+    1. Optimize the learning rate for determining maximised posterior+ELBO (ie surrogate posterior == unnormlised posterior)
+    2. Use optimized learning rate to estimate the posterior PSD
+
+    The main interface is run() which returns the posterior PSD and the quantiles of the PSD.
+    """
+
+    def __init__(
+            self,
+            x: np.ndarray,
+            N_theta: int = 30,
+            nchunks: int = 1,
+            duration: float = 1.0,
+            ntrain_map=10000,
+            N_samples: int = 500,
+            max_hyperparm_eval: int = 100,
+            psd_scaling: float = 1.0,
+    ):
+        """
+        :param x:
+        :param N_theta: the number of basis functions for the theta component
+        :param nchunks:
+        :param duration:
+        :param ntrain_map:
+        :param N_samples:
+        :param max_hyperparm_eval:
+        :param psd_scaling:
+
+
+        """
+
+        self.N_theta = N_theta
+        self.N_samples = N_samples
+        self.nchunks = nchunks
+        self.duration = duration
+        self.ntrain_map = ntrain_map
+        self.fmax_for_analysis = x.shape[0] / 2
+        self.x = x
+        self.max_hyperparm_eval = max_hyperparm_eval
+        self.psd_scaling = psd_scaling
+
+        # Internal variables
+        self.lr_map_values = []
+        self.loss_values = []
+        self.all_samp = []
+        self.model_info = {}
+        self.psd_quantiles = None
+        self.psd_all = None
+
+    def __learning_rate_optimisation_objective(self, lr):
+        """Objective function for the hyperopt optimisation of the learning rate for the MAP
+
+        :param lr: learning rate to be optimised
+        :return: ELBO loss
+        """
+        lr_map = lr["lr_map"]
+        Spec = SpecVI(self.x)
+        result_list = Spec.runModel(
+            N_delta=self.N_theta,  # N_delta is set to N_theta -- they must be the same
+            N_theta=self.N_theta,
+            lr_map=lr_map,
+            ntrain_map=self.ntrain_map,
+            nchunks=self.nchunks,
+            duration=self.duration,
+            fmax_for_analysis=self.fmax_for_analysis,
+            inference_size=self.N_samples,
+        )
+
+        losses = result_list[0]
+        samp = result_list[2]
+
+        if self.model_info == {}:
+            (
+                self.model_info["Xmat_delta"],
+                self.model_info["Xmat_theta"],
+            ) = result_list[1].Xmtrix(
+                N_delta=self.N_theta, N_theta=self.N_theta
+            )
+            self.model_info["p_dim"] = result_list[1].p_dim
+
+        self.lr_map_values.append(lr_map)
+        self.loss_values.append(losses[-1].numpy())
+        self.all_samp.append(samp)
+
+        return losses[-1].numpy()
+
+    def find_optimal_surrogate_params(self):
+        """
+        This function is used to find the optimal learning rate
+        :return: Best learning rate
+        """
+        space = {"lr_map": hp.uniform("lr_map", 0.002, 0.02)}
+        algo = tpe.suggest
+
+        hyperopt_start_time = time.time()
+        fmin(
+            self.__learning_rate_optimisation_objective,
+            space,
+            algo=algo,
+            max_evals=self.max_hyperparm_eval,
+        )
+        hyperopt_end_time = time.time()
+        self.hyperopt_time = hyperopt_end_time - hyperopt_start_time
+
+        min_loss_index = self.loss_values.index(min(self.loss_values))
+        self.optimal_lr = self.lr_map_values[min_loss_index]
+        best_samp = self.all_samp[min_loss_index]
+
+        return best_samp
+
+    def _compute_spectral_density(self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]) -> Tuple[
+        np.ndarray, np.ndarray]:
+        """
+        This function is used to compute the spectral density given surrogate posterior parameters
+        :param post_sample: the surrogate posterior parameters
+
+        Computes:
+            1. self.psd_q: the quantiles of the spectral density [n-quantiles, n-freq, dim, dim]
+            2. self.psd_all: Nsamp instances of the spectral density [Nsamp, n-freq, dim, dim]
+
+        """
+        Xmat_delta = self.model_info["Xmat_delta"]
+        Xmat_theta = self.model_info["Xmat_theta"]
+        p_dim = self.model_info["p_dim"]
+
+        delta2_all_s = tf.exp(
+            tf.matmul(Xmat_delta, tf.transpose(post_sample[0], [0, 2, 1]))
+        )  # (500, #freq, p)
+
+        theta_re_s = tf.matmul(
+            Xmat_theta, tf.transpose(post_sample[2], [0, 2, 1])
+        )  # (500, #freq, p(p-1)/2)
+        theta_im_s = tf.matmul(
+            Xmat_theta, tf.transpose(post_sample[4], [0, 2, 1])
+        )
+
+        theta_all_s = -(
+            tf.complex(theta_re_s, theta_im_s)
+        )  # (500, #freq, p(p-1)/2)
+        theta_all_np = theta_all_s.numpy()
+
+        D_all = tf.map_fn(
+            lambda x: tf.linalg.diag(x), delta2_all_s
+        ).numpy()  # (500, #freq, p, p)
+
+        num_slices, num_freq, num_elements = theta_all_np.shape
+        row_indices, col_indices = np.tril_indices(p_dim, k=-1)
+        diag_matrix = np.eye(p_dim, dtype=np.complex64)
+        T_all = np.tile(diag_matrix, (num_slices, num_freq, 1, 1))
+        T_all[:, :, row_indices, col_indices] = theta_all_np.reshape(
+            num_slices, num_freq, -1
+        )
+
+        T_all_conj_trans = np.conj(np.transpose(T_all, axes=(0, 1, 3, 2)))
+        D_all_inv = np.linalg.inv(D_all)
+
+        spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
+        self.psd_all = np.linalg.inv(spectral_density_inverse_all)
+
+        self.psd_q = np.zeros(
+            (3, num_freq, p_dim, p_dim), dtype=complex
+        )
+
+        diag_indices = np.diag_indices(p_dim)
+        self.psd_q[
+        :, :, diag_indices[0], diag_indices[1]
+        ] = np.quantile(
+            np.real(
+                self.psd_all[:, :, diag_indices[0], diag_indices[1]]
+            ),
+            quantiles,
+            axis=0,
+        )
+
+        triu_indices = np.triu_indices(p_dim, k=1)
+        real_part = np.real(
+            self.psd_all[:, :, triu_indices[1], triu_indices[0]]
+        )
+        imag_part = np.imag(
+            self.psd_all[:, :, triu_indices[1], triu_indices[0]]
+        )
+
+        for i, q in enumerate(quantiles):
+            self.psd_q[i, :, triu_indices[1], triu_indices[0]] = (
+                    np.quantile(real_part, q, axis=0)
+                    + 1j * np.quantile(imag_part, q, axis=0)
+            ).T
+
+        self.psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
+            self.psd_q[:, :, triu_indices[1], triu_indices[0]]
+        )
+
+        self.psd_quantiles = self.psd_q
+        self.psd_all = self.psd_all
+
+        # changing freq from [0, 1/2] to [0, 1/samp_freq] (and applying scaling)
+        true_fmax = self.sampling_freq / 2
+        scaling = self.psd_scaling ** 2 / (true_fmax / 0.5)
+        self.psd_quantiles = self.psd_quantiles / scaling
+        self.psd_all = self.psd_all / scaling
+
+    def run(self) -> Tuple[np.ndarray, np.ndarray]:
+        best_samp = self.find_optimal_surrogate_params()
+        self._compute_spectral_density(best_samp)
+        return self.psd_all, self.psd_quantiles
+
+    @property
+    def freq(self):
+        """Return the freq per chunk of the PSD estimate"""
+        if hasattr(self, "_freq"):
+            return self._freq
+        fmax_true = self.sampling_freq / 2
+        self._freq = np.fft.fftfreq(self.n_per_chunk, d=1 / self.sampling_freq)
+        fmax_idx = int(self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2)
+        return self._freq[0:fmax_idx]
+
+    @property
+    def n_per_chunk(self):
+        """Return the number of points per chunk"""
+        return self.x.shape[0] // self.nchunks
+
+    @property
+    def sampling_freq(self):
+        """Return the sampling frequency of the PSD estimate"""
+        return self.n_per_chunk / self.duration
+
+    def plot(self) -> "matplotlib.pyplot.figure":
+        axes = plot_psdq(
+            self.psd_quantiles,
+            freqs=self.freq,
+        )
+        axes = plot_peridogram(self.x, axs=axes, fs=2*np.pi)
+        return axes

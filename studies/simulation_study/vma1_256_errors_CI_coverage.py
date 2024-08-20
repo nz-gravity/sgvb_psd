@@ -1,7 +1,7 @@
 import os
 
 task_id = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
-print(f"Current task ID: {task_id}")
+logger.info(f"Current task ID: {task_id}")
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -9,8 +9,8 @@ import tensorflow_probability as tfp
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
-from sgvb_psd import SpecVI
-from sgvb_psd import lr_tuner
+from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
+
 from hyperopt import hp, tpe, fmin
 import true_vma
 import time
@@ -37,15 +37,15 @@ x = data_whole[task_id * n : ((task_id + 1) * n), :]
 N_delta = 30
 N_theta = 30
 nchunks = 1
-time_interval = 1
+duration = 1
 ntrain_map = 10000
 fmax_for_analysis = x.shape[0] / 2
 
-psd_estimator = lr_tuner.OptimalSpectralDensityEstimator(
+psd_estimator = OptimalPSDEstimator(
     N_delta=N_delta,
     N_theta=N_theta,
     nchunks=nchunks,
-    time_interval=time_interval,
+    duration=duration,
     ntrain_map=ntrain_map,
     x=x,
 )
@@ -58,9 +58,9 @@ spec_true, spectral_density_all, spectral_density_q = [
 ]
 n_freq = spectral_density_q.shape[1]
 
-from sgvb_psd import psd_analyzer
+from sgvb_psd.postproc import PSDAnalyzer
 
-PSD_analyzer = psd_analyzer.psdanalyzer(
+PSD_analyzer = PSDAnalyzer(
     spec_true, spectral_density_q, n_freq, task_id, psd_estimator
 )
 PSD_analyzer.run_analysis(iteration_start_time)

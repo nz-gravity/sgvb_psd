@@ -3,10 +3,21 @@ import pandas as pd
 import time
 
 
-class psdanalyzer:
+class PSDAnalyzer:
+    """
+    This is a utility class to analyze the estimated PSDs, given the true PSDs.
+    """
     def __init__(
         self, spec_true, spectral_density_q, n_freq, task_id, psd_estimator
     ):
+        """
+
+        :param spec_true:
+        :param spectral_density_q:
+        :param n_freq:
+        :param task_id:
+        :param psd_estimator:
+        """
         self.spec_true = spec_true
         self.spectral_density_q = spectral_density_q
         self.n_freq = n_freq
