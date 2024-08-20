@@ -4,10 +4,10 @@ from scipy.stats import median_abs_deviation
 import time
 
 start_time = time.time()
-from sgvb_psd import SpecVI
+
 import tensorflow as tf
 import tensorflow_probability as tfp
-from sgvb_psd.lr_tuner import lr_tuner
+from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
 
 
 tfd = tfp.distributions
@@ -29,7 +29,7 @@ channels = np.column_stack((X_ETnoise_GP, Y_ETnoise_GP, Z_ETnoise_GP))
 # channels_short = channels
 q = 10**22 / 1.0
 
-time_interval = 2000
+duration = 2000
 nchunks = 125
 fmax_for_analysis = 128
 
@@ -55,7 +55,7 @@ def objective(params):
         ntrain_map=ntrain_map,
         sparse_op=False,
         nchunks=nchunks,
-        time_interval=time_interval,
+        duration=duration,
         fmax_for_analysis=fmax_for_analysis,
         degree_fluctuate=N_delta,
     )
@@ -84,7 +84,9 @@ min_loss_index = loss_values.index(min(loss_values))
 optimal_lr = lr_map_values[min_loss_index]
 best_samp = all_samp[min_loss_index]
 
-print("The optimised lr is", optimal_lr)
+from sgvb_psd.logging import logger
+
+logger.info(f"The optimised lr is {optimal_lr}")
 
 # find estimated psd given the max elbo-----------------------------------------------------------------
 Xmat_delta = model_info["Xmat_delta"]

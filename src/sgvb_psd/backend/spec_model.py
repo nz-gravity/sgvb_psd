@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 from .spec_prep import SpecPrep
+from ..logging import logger
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -12,7 +13,7 @@ tfb = tfp.bijectors
 
 class SpecModel(SpecPrep):
     def __init__(
-        self, x, hyper, nchunks=128, time_interval=2048, fmax_for_analysis=128
+        self, x, hyper, nchunks=128, duration=2048, fmax_for_analysis=128
     ):
         super().__init__(x)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
@@ -26,7 +27,7 @@ class SpecModel(SpecPrep):
         self.hyper = hyper
         self.trainable_vars = []  # all trainable variables
         self.nchunks = nchunks
-        self.time_interval = time_interval
+        self.duration = duration
         self.fmax_for_analysis = fmax_for_analysis
 
     def toTensor(self):

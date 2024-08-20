@@ -4,6 +4,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 from .spec_model import SpecModel
+from ..logging import logger
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -22,13 +23,13 @@ class SpecVI:
         inference_size=500,
         nchunks=400,
         variation_factor=0,
-        time_interval=2048,
+        duration=2048,
         fmax_for_analysis=128,
         degree_fluctuate=None,
     ):
 
         x = self.data
-        print("data shape: " + str(x.shape))
+        logger.debug(f"Inputted data shape: {x.shape}")
 
         ## Hyperparameter
         ##
@@ -46,7 +47,7 @@ class SpecVI:
             x,
             hyper_hs,
             nchunks=nchunks,
-            time_interval=time_interval,
+            duration=duration,
             fmax_for_analysis=fmax_for_analysis,
         )
         self.model = Spec_hs  # save model object
@@ -63,7 +64,7 @@ class SpecVI:
         # create tranable variables
         Spec_hs.createModelVariables_hs()
 
-        print("Start Model Inference Training: ")
+        logger.info("Start Model Inference Training: ")
 
         """
         # Phase1 obtain MAP
@@ -97,7 +98,7 @@ class SpecVI:
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
             return model.trainable_vars, lp.stack()
 
-        print("Start Point Estimating: ")
+        logger.info("Start Point Estimating: ")
         opt_vars_hs, lp_hs = train_hs(Spec_hs, optimizer_hs, n_train)
         # opt_vars_hs:         self.trainable_vars(ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
@@ -105,7 +106,7 @@ class SpecVI:
         #                                       ltau)
         # Variational inference for regression parameters
         end_map = timeit.default_timer()
-        print("MAP Training Time: ", end_map - start_map)
+        logger.info(f"MAP Training Time: {end_map-start_map:.2f}s")
         self.lp = lp_hs
 
         """
@@ -159,8 +160,10 @@ class SpecVI:
         def conditioned_log_prob(*z):
             return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
 
-        print("Start UQ training: ")
+        logger.info("Start UQ training: ")
         start = timeit.default_timer()
+        # For more on TF's fit_surrogate_posterior, see
+        # https://www.tensorflow.org/probability/api_docs/python/tfp/vi/fit_surrogate_posterior
         losses = tf.function(
             lambda l: tfp.vi.fit_surrogate_posterior(
                 target_log_prob_fn=l,
@@ -172,12 +175,12 @@ class SpecVI:
             conditioned_log_prob
         )  #
         stop = timeit.default_timer()
-        print("VI Time: ", stop - start)
+        logger.info(f"VI Time: {stop-start:.2f}s")
         stop_total = timeit.default_timer()
         self.kld = losses
         # plt.plot(losses)
 
-        print("Total Inference Training Time: ", stop_total - start_total)
+        logger.info(f"Total Inference Training Time: {stop_total-start_total:.2f}s")
 
         self.posteriorPointEst = trainable_Mvnormal.mean()
         self.posteriorPointEstStd = trainable_Mvnormal.stddev()

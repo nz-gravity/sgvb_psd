@@ -32,12 +32,13 @@ classifiers = [
 ]
 dependencies = [
     "tensorflow",
-    "tensorflow_probability>=0.24.0",
-    "tf_keras",
+    "tensorflow-probability>=0.24.0",
+    "tf-keras",
     "pandas",
     "numpy",
     "matplotlib",
     "hyperopt",
+    "colorama"
 ]
 
 [project.optional-dependencies]
