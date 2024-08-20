@@ -13,7 +13,7 @@ out_test
 *.so
 *.png
 *txt
-
+*.hdf5
 # Distribution / packaging
 .Python
 build/
