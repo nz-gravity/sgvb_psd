@@ -11,7 +11,9 @@ tfb = tfp.bijectors
 
 
 class SpecModel(SpecPrep):
-    def __init__(self, x, hyper, nchunks=128, time_interval=2048, required_part=128):
+    def __init__(
+        self, x, hyper, nchunks=128, time_interval=2048, fmax_for_analysis=128
+    ):
         super().__init__(x)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior
@@ -25,7 +27,7 @@ class SpecModel(SpecPrep):
         self.trainable_vars = []  # all trainable variables
         self.nchunks = nchunks
         self.time_interval = time_interval
-        self.required_part = required_part
+        self.fmax_for_analysis = fmax_for_analysis
 
     def toTensor(self):
         # convert to tensorflow object
@@ -38,17 +40,27 @@ class SpecModel(SpecPrep):
         self.p_dim = tf.convert_to_tensor(self.p_dim, dtype=tf.int32)
         self.N_delta = tf.convert_to_tensor(self.N_delta, dtype=tf.int32)
         self.N_theta = tf.convert_to_tensor(self.N_theta, dtype=tf.int32)
-        self.Xmat_delta = tf.convert_to_tensor(self.Xmat_delta, dtype=tf.float32)
-        self.Xmat_theta = tf.convert_to_tensor(self.Xmat_theta, dtype=tf.float32)
+        self.Xmat_delta = tf.convert_to_tensor(
+            self.Xmat_delta, dtype=tf.float32
+        )
+        self.Xmat_theta = tf.convert_to_tensor(
+            self.Xmat_theta, dtype=tf.float32
+        )
 
-        self.Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)  # complex array
+        self.Zar = tf.convert_to_tensor(
+            self.Zar, dtype=tf.complex64
+        )  # complex array
         self.Z_re = tf.convert_to_tensor(self.Zar_re, dtype=tf.float32)
         self.Z_im = tf.convert_to_tensor(self.Zar_im, dtype=tf.float32)
-    
 
-        self.hyper = [tf.convert_to_tensor(self.hyper[i], dtype=tf.float32) for i in range(len(self.hyper))]
+        self.hyper = [
+            tf.convert_to_tensor(self.hyper[i], dtype=tf.float32)
+            for i in range(len(self.hyper))
+        ]
         if self.p_dim > 1:
-            self.n_theta = tf.cast(self.p_dim * (self.p_dim - 1) / 2, tf.int32)  # number of theta in the model
+            self.n_theta = tf.cast(
+                self.p_dim * (self.p_dim - 1) / 2, tf.int32
+            )  # number of theta in the model
 
     def createModelVariables_hs(self, batch_size=1):
         #
@@ -70,34 +82,71 @@ class SpecModel(SpecPrep):
         ga_initializer_para = tf.initializers.constant(value=0.0)
         ga_initializer_para2 = tf.initializers.constant(value=0.0)
         if size_delta <= 10:
-            cvec_d = 0.
+            cvec_d = 0.0
         else:
-            cvec_d = tf.concat([tf.zeros(10 - 2) + 0., tf.zeros(size_delta - 10) + 1.], 0)
+            cvec_d = tf.concat(
+                [tf.zeros(10 - 2) + 0.0, tf.zeros(size_delta - 10) + 1.0], 0
+            )
         if size_theta <= 10:
             cvec_o = 0.5
         else:
-            cvec_o = tf.concat([tf.zeros(10) + 0.5, tf.zeros(size_theta - 10) + 1.5], 0)
+            cvec_o = tf.concat(
+                [tf.zeros(10) + 0.5, tf.zeros(size_theta - 10) + 1.5], 0
+            )
 
-        ga_delta = tf.Variable(ga_initializer_para(shape=(batch_size, p, size_delta), dtype=tf.float32),
-                               name='ga_delta')
-        lla_delta = tf.Variable(ga_initializer(shape=(batch_size, p, size_theta - 2), dtype=tf.float32) - cvec_d,
-                                name='lla_delta')
-        ltau = tf.Variable(ga_initializer(shape=(batch_size, p, 1), dtype=tf.float32) - 1, name='ltau')
+        ga_delta = tf.Variable(
+            ga_initializer_para(
+                shape=(batch_size, p, size_delta), dtype=tf.float32
+            ),
+            name="ga_delta",
+        )
+        lla_delta = tf.Variable(
+            ga_initializer(
+                shape=(batch_size, p, size_theta - 2), dtype=tf.float32
+            )
+            - cvec_d,
+            name="lla_delta",
+        )
+        ltau = tf.Variable(
+            ga_initializer(shape=(batch_size, p, 1), dtype=tf.float32) - 1,
+            name="ltau",
+        )
         self.trainable_vars.append(ga_delta)
         self.trainable_vars.append(lla_delta)
 
         nn = int(self.n_theta)  # number of thetas in the model
-        ga_theta_re = tf.Variable(ga_initializer_para2(shape=(batch_size, nn, size_theta), dtype=tf.float32),
-                                  name='ga_theta_re')
-        ga_theta_im = tf.Variable(ga_initializer_para2(shape=(batch_size, nn, size_theta), dtype=tf.float32),
-                                  name='ga_theta_im')
+        ga_theta_re = tf.Variable(
+            ga_initializer_para2(
+                shape=(batch_size, nn, size_theta), dtype=tf.float32
+            ),
+            name="ga_theta_re",
+        )
+        ga_theta_im = tf.Variable(
+            ga_initializer_para2(
+                shape=(batch_size, nn, size_theta), dtype=tf.float32
+            ),
+            name="ga_theta_im",
+        )
 
-        lla_theta_re = tf.Variable(ga_initializer(shape=(batch_size, nn, size_theta), dtype=tf.float32) - cvec_o,
-                                   name='lla_theta_re')
-        lla_theta_im = tf.Variable(ga_initializer(shape=(batch_size, nn, size_theta), dtype=tf.float32) - cvec_o,
-                                   name='lla_theta_im')
+        lla_theta_re = tf.Variable(
+            ga_initializer(
+                shape=(batch_size, nn, size_theta), dtype=tf.float32
+            )
+            - cvec_o,
+            name="lla_theta_re",
+        )
+        lla_theta_im = tf.Variable(
+            ga_initializer(
+                shape=(batch_size, nn, size_theta), dtype=tf.float32
+            )
+            - cvec_o,
+            name="lla_theta_im",
+        )
 
-        ltau_theta = tf.Variable(ga_initializer(shape=(batch_size, nn, 1), dtype=tf.float32) - 1.5, name='ltau_theta')
+        ltau_theta = tf.Variable(
+            ga_initializer(shape=(batch_size, nn, 1), dtype=tf.float32) - 1.5,
+            name="ltau_theta",
+        )
 
         self.trainable_vars.append(ga_theta_re)
         self.trainable_vars.append(lla_theta_re)
@@ -124,37 +173,42 @@ class SpecModel(SpecPrep):
         # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
 
         xγ = tf.matmul(self.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
-        sum_xγ = - tf.reduce_sum(xγ, [1, 2])
-        exp_xγ_inv = tf.exp(- xγ)
+        sum_xγ = -tf.reduce_sum(xγ, [1, 2])
+        exp_xγ_inv = tf.exp(-xγ)
 
-        xα = tf.matmul(self.Xmat_theta, tf.transpose(params[2], [0, 2, 1]))  # no need \ here
+        xα = tf.matmul(
+            self.Xmat_theta, tf.transpose(params[2], [0, 2, 1])
+        )  # no need \ here
         xβ = tf.matmul(self.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
 
         # Z = Sum [(xα + i xβ) * y]
-        Z_theta_re = tf.linalg.matvec(tf.expand_dims(self.Z_re, 0), xα) - tf.linalg.matvec(
-            tf.expand_dims(self.Z_im, 0), xβ)
-        Z_theta_im = tf.linalg.matvec(tf.expand_dims(self.Z_re, 0), xβ) + tf.linalg.matvec(
-            tf.expand_dims(self.Z_im, 0), xα)
+        Z_theta_re = tf.linalg.matvec(
+            tf.expand_dims(self.Z_re, 0), xα
+        ) - tf.linalg.matvec(tf.expand_dims(self.Z_im, 0), xβ)
+        Z_theta_im = tf.linalg.matvec(
+            tf.expand_dims(self.Z_re, 0), xβ
+        ) + tf.linalg.matvec(tf.expand_dims(self.Z_im, 0), xα)
 
         u_re = self.y_re - Z_theta_re
         u_im = self.y_im - Z_theta_im
 
         numerator = tf.square(u_re) + tf.square(u_im)
         internal = tf.multiply(numerator, exp_xγ_inv)
-        tmp2_ = - tf.reduce_sum(internal, [-2, -1])  # sum over p_dim and freq
+        tmp2_ = -tf.reduce_sum(internal, [-2, -1])  # sum over p_dim and freq
         log_lik = tf.reduce_sum(sum_xγ + tmp2_)  # sum over all LnL
         return log_lik
-
 
     #
     # Model training one step
     #
     def train_one_step(self, optimizer, loglik, prior):  # one step training
         with tf.GradientTape() as tape:
-            loss = - loglik(self.trainable_vars) - prior(self.trainable_vars)  # negative log posterior
+            loss = -loglik(self.trainable_vars) - prior(
+                self.trainable_vars
+            )  # negative log posterior
         grads = tape.gradient(loss, self.trainable_vars)
         optimizer.apply_gradients(zip(grads, self.trainable_vars))
-        return - loss  # return log posterior
+        return -loss  # return log posterior
 
     # For new prior strategy, need new createModelVariables() and logprior()
 
@@ -166,54 +220,93 @@ class SpecModel(SpecPrep):
         #                                       ltau, ltau_theta)
         # each of params is a 3-d tensor with sample_size as the fist dim.
         # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
-        Sigma1 = tf.multiply(tf.eye(tf.constant(2), dtype=tf.float32), self.hyper[2])
+        Sigma1 = tf.multiply(
+            tf.eye(tf.constant(2), dtype=tf.float32), self.hyper[2]
+        )
         priorDist1 = tfd.MultivariateNormalTriL(
-            scale_tril=tf.linalg.cholesky(Sigma1))  # can also use tfd.MultivariateNormalDiag
+            scale_tril=tf.linalg.cholesky(Sigma1)
+        )  # can also use tfd.MultivariateNormalDiag
 
         Sigm = tfb.Sigmoid()
-        s_la_alp = Sigm(- tf.range(1, params[1].shape[-1] + 1., dtype=tf.float32) + self.hyper[3])
+        s_la_alp = Sigm(
+            -tf.range(1, params[1].shape[-1] + 1.0, dtype=tf.float32)
+            + self.hyper[3]
+        )
         priorDist_la_alp = tfd.HalfCauchy(tf.constant(0, tf.float32), s_la_alp)
 
-        s_la_theta = Sigm(- tf.range(1, params[3].shape[-1] + 1., dtype=tf.float32) + self.hyper[3])
-        priorDist_la_theta = tfd.HalfCauchy(tf.constant(0, tf.float32), s_la_theta)
+        s_la_theta = Sigm(
+            -tf.range(1, params[3].shape[-1] + 1.0, dtype=tf.float32)
+            + self.hyper[3]
+        )
+        priorDist_la_theta = tfd.HalfCauchy(
+            tf.constant(0, tf.float32), s_la_theta
+        )
 
         a2 = tf.square(tf.exp(params[1]))
-        Sigma2i_diag = tf.divide(tf.multiply(tf.multiply(a2, tf.square(tf.exp(params[6]))), self.hyper[1]),
-                                 tf.multiply(a2, tf.square(tf.exp(params[6]))) + self.hyper[1])
+        Sigma2i_diag = tf.divide(
+            tf.multiply(
+                tf.multiply(a2, tf.square(tf.exp(params[6]))), self.hyper[1]
+            ),
+            tf.multiply(a2, tf.square(tf.exp(params[6]))) + self.hyper[1],
+        )
 
         priorDist2 = tfd.MultivariateNormalDiag(scale_diag=Sigma2i_diag)
 
-        lpriorAlp_delt = tf.reduce_sum(priorDist1.log_prob(params[0][:, :, 0:2]), [1])  #
-        lprior_delt = tf.reduce_sum(priorDist2.log_prob(params[0][:, :, 2:]),
-                                    [1])  # only 2 dim due to log_prob rm the event_shape dim
-        lpriorla_delt = tf.reduce_sum(priorDist_la_alp.log_prob(tf.exp(params[1])), [1, 2]) + tf.reduce_sum(params[1],
-                                                                                                            [1, 2])
+        lpriorAlp_delt = tf.reduce_sum(
+            priorDist1.log_prob(params[0][:, :, 0:2]), [1]
+        )  #
+        lprior_delt = tf.reduce_sum(
+            priorDist2.log_prob(params[0][:, :, 2:]), [1]
+        )  # only 2 dim due to log_prob rm the event_shape dim
+        lpriorla_delt = tf.reduce_sum(
+            priorDist_la_alp.log_prob(tf.exp(params[1])), [1, 2]
+        ) + tf.reduce_sum(params[1], [1, 2])
         lpriorDel = lprior_delt + lpriorla_delt + lpriorAlp_delt
 
         a3 = tf.square(tf.exp(params[3]))
-        Sigma3i_diag = tf.divide(tf.multiply(tf.multiply(a3, tf.square(tf.exp(params[7]))), self.hyper[1]),
-                                 tf.multiply(a3, tf.square(tf.exp(params[7]))) + self.hyper[1])
+        Sigma3i_diag = tf.divide(
+            tf.multiply(
+                tf.multiply(a3, tf.square(tf.exp(params[7]))), self.hyper[1]
+            ),
+            tf.multiply(a3, tf.square(tf.exp(params[7]))) + self.hyper[1],
+        )
 
         priorDist3 = tfd.MultivariateNormalDiag(scale_diag=Sigma3i_diag)
 
         lprior_thet_re = tf.reduce_sum(priorDist3.log_prob(params[2]), [1])
-        lpriorla_thet_re = tf.reduce_sum(priorDist_la_theta.log_prob(tf.exp(params[3])), [1, 2]) + tf.reduce_sum(
-            params[3], [1, 2])
+        lpriorla_thet_re = tf.reduce_sum(
+            priorDist_la_theta.log_prob(tf.exp(params[3])), [1, 2]
+        ) + tf.reduce_sum(params[3], [1, 2])
         lpriorThe_re = lprior_thet_re + lpriorla_thet_re
 
         a4 = tf.square(tf.exp(params[5]))
-        Sigma4i_diag = tf.divide(tf.multiply(tf.multiply(a4, tf.square(tf.exp(params[7]))), self.hyper[1]),
-                                 tf.multiply(a4, tf.square(tf.exp(params[7]))) + self.hyper[1])
+        Sigma4i_diag = tf.divide(
+            tf.multiply(
+                tf.multiply(a4, tf.square(tf.exp(params[7]))), self.hyper[1]
+            ),
+            tf.multiply(a4, tf.square(tf.exp(params[7]))) + self.hyper[1],
+        )
 
         priorDist4 = tfd.MultivariateNormalDiag(scale_diag=Sigma4i_diag)
 
         lprior_thet_im = tf.reduce_sum(priorDist4.log_prob(params[4]), [1])
-        lpriorla_thet_im = tf.reduce_sum(priorDist_la_theta.log_prob(tf.exp(params[5])), [1, 2]) + tf.reduce_sum(
-            params[5], [1, 2])
+        lpriorla_thet_im = tf.reduce_sum(
+            priorDist_la_theta.log_prob(tf.exp(params[5])), [1, 2]
+        ) + tf.reduce_sum(params[5], [1, 2])
         lpriorThe_im = lprior_thet_im + lpriorla_thet_im
 
-        priorDist_tau = tfd.HalfCauchy(tf.constant(0, tf.float32), self.hyper[0])
-        logPrior = lpriorDel + lpriorThe_re + lpriorThe_im + tf.reduce_sum(
-            priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]) + tf.reduce_sum(
-            priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2])
+        priorDist_tau = tfd.HalfCauchy(
+            tf.constant(0, tf.float32), self.hyper[0]
+        )
+        logPrior = (
+            lpriorDel
+            + lpriorThe_re
+            + lpriorThe_im
+            + tf.reduce_sum(
+                priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
+            )
+            + tf.reduce_sum(
+                priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
+            )
+        )
         return logPrior

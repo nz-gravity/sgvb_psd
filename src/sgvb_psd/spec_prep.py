@@ -37,9 +37,11 @@ class SpecPrep:  # Parent used to create SpecModel object
         total_len = x.shape[0]
         num_segments = self.nchunks
         time_interval = self.time_interval
-        required_part = self.required_part
+        fmax_for_analysis = self.fmax_for_analysis
         len_chunk = x.shape[0] // num_segments
-        x = np.array(np.split(x[0:len_chunk * num_segments, :], num_segments))
+        x = np.array(
+            np.split(x[0 : len_chunk * num_segments, :], num_segments)
+        )
 
         y = []
         for i in range(num_segments):
@@ -57,16 +59,16 @@ class SpecPrep:  # Parent used to create SpecModel object
 
         if np.mod(n, 2) == 0:
             # n is even
-            y = y[:, 0:int(n / 2), :]
-            fq_y = fq_y[0:int(n / 2)]
+            y = y[:, 0 : int(n / 2), :]
+            fq_y = fq_y[0 : int(n / 2)]
         else:
             # n is odd
-            y = y[:, 0:int((n - 1) / 2), :]
-            fq_y = fq_y[0:int((n - 1) / 2)]
+            y = y[:, 0 : int((n - 1) / 2), :]
+            fq_y = fq_y[0 : int((n - 1) / 2)]
 
         freq_range = total_len / time_interval / 2
-        y = y[:, 0:int(required_part / freq_range * y.shape[1]), :]
-        fq_y = fq_y[0:int(required_part / freq_range * fq_y.shape[0])]
+        y = y[:, 0 : int(fmax_for_analysis / freq_range * y.shape[1]), :]
+        fq_y = fq_y[0 : int(fmax_for_analysis / freq_range * fq_y.shape[0])]
 
         p_dim = x.shape[2]
 
@@ -82,7 +84,12 @@ class SpecPrep:  # Parent used to create SpecModel object
         # N:  amount of basis used
         # return a len(nu)-by-N matrix
         nu = self.freq
-        basis = np.array([np.sqrt(2) * np.cos(x * np.pi * nu * 2) for x in np.arange(1, N + 1)]).T
+        basis = np.array(
+            [
+                np.sqrt(2) * np.cos(x * np.pi * nu * 2)
+                for x in np.arange(1, N + 1)
+            ]
+        ).T
         return basis
 
     #  DR_basis(y_ft$fq_y, N=10)
@@ -90,15 +97,29 @@ class SpecPrep:  # Parent used to create SpecModel object
     # cbinded X matrix
     def Xmtrix(self, N_delta=15, N_theta=15):
         nu = self.freq
-        X_delta = np.concatenate([np.column_stack([np.repeat(1, nu.shape[0]), nu]), self.DR_basis(N=N_delta)], axis=1)
-        X_theta = np.concatenate([np.column_stack([np.repeat(1, nu.shape[0]), nu]), self.DR_basis(N=N_theta)], axis=1)
+        X_delta = np.concatenate(
+            [
+                np.column_stack([np.repeat(1, nu.shape[0]), nu]),
+                self.DR_basis(N=N_delta),
+            ],
+            axis=1,
+        )
+        X_theta = np.concatenate(
+            [
+                np.column_stack([np.repeat(1, nu.shape[0]), nu]),
+                self.DR_basis(N=N_theta),
+            ],
+            axis=1,
+        )
         try:
             if self.Xmat_delta is not None:
                 Xmat_delta = tf.convert_to_tensor(X_delta, dtype=tf.float32)
                 Xmat_theta = tf.convert_to_tensor(X_theta, dtype=tf.float32)
                 return Xmat_delta, Xmat_theta
         except:  # NPE
-            self.Xmat_delta = tf.convert_to_tensor(X_delta, dtype=tf.float32)  # basis matrix
+            self.Xmat_delta = tf.convert_to_tensor(
+                X_delta, dtype=tf.float32
+            )  # basis matrix
             self.Xmat_theta = tf.convert_to_tensor(X_theta, dtype=tf.float32)
             self.N_delta = N_delta  # N
             self.N_theta = N_theta
@@ -112,12 +133,14 @@ class SpecPrep:  # Parent used to create SpecModel object
     def dmtrix_k(self, y_k):
 
         n, p_work = y_k.shape
-        Z_k = np.zeros([n, p_work, int(p_work * (p_work - 1) / 2)], dtype=complex)
+        Z_k = np.zeros(
+            [n, p_work, int(p_work * (p_work - 1) / 2)], dtype=complex
+        )
 
         for j in range(n):
             count = 0
             for i in np.arange(1, p_work):
-                Z_k[j, i, count:count + i] = y_k[j, :i]  # .flatten()
+                Z_k[j, i, count : count + i] = y_k[j, :i]  # .flatten()
                 count += i
         return Z_k
 
@@ -133,8 +156,8 @@ class SpecPrep:  # Parent used to create SpecModel object
                 Z_ = np.array([self.dmtrix_k(x) for x in y_ls])
         else:
             Z_ = 0
-        self.Zar_re = np.real(Z_)  # add new variables to self, if Zar not defined in init at the beginning
+        self.Zar_re = np.real(
+            Z_
+        )  # add new variables to self, if Zar not defined in init at the beginning
         self.Zar_im = np.imag(Z_)
         return self.Zar_re, self.Zar_im
-
-    
