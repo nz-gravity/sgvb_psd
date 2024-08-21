@@ -29,17 +29,17 @@ class OptimalPSDEstimator:
             ntrain_map=10000,
             N_samples: int = 500,
             max_hyperparm_eval: int = 100,
-            psd_scaling: float = 1.0,
+            psd_scaling: float = 1.0
     ):
         """
-        :param x:
+        :param x: the input multivariate time series
         :param N_theta: the number of basis functions for the theta component
-        :param nchunks:
-        :param duration:
-        :param ntrain_map:
-        :param N_samples:
-        :param max_hyperparm_eval:
-        :param psd_scaling:
+        :param nchunks: the number of blocks that multivariate time series is divided into
+        :param duration: the total observation time
+        :param ntrain_map: the number of iterations in gradient ascent for MAP
+        :param N_samples: the number of parameters sampled from the surrogate distribution
+        :param max_hyperparm_eval: the number of evaluations in 'Hyperopt'
+        :param psd_scaling: the scale size of the input data
 
 
         """
@@ -102,7 +102,7 @@ class OptimalPSDEstimator:
     def find_optimal_surrogate_params(self):
         """
         This function is used to find the optimal learning rate
-        :return: Best learning rate
+        :return: Best surrogate posterior parameters given the optimal learning rate
         """
         space = {"lr_map": hp.uniform("lr_map", 0.002, 0.02)}
         algo = tpe.suggest
@@ -126,7 +126,7 @@ class OptimalPSDEstimator:
     def _compute_spectral_density(self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]) -> Tuple[
         np.ndarray, np.ndarray]:
         """
-        This function is used to compute the spectral density given surrogate posterior parameters
+        This function is used to compute the spectral density given best surrogate posterior parameters
         :param post_sample: the surrogate posterior parameters
 
         Computes:
@@ -208,7 +208,8 @@ class OptimalPSDEstimator:
         self.psd_quantiles = self.psd_q
         self.psd_all = self.psd_all
 
-        # changing freq from [0, 1/2] to [0, 1/samp_freq] (and applying scaling)
+        # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
+        self.sampling_freq = 2 * np.pi if self.duration == 1 else self.x.shape[0] / self.duration
         true_fmax = self.sampling_freq / 2
         scaling = self.psd_scaling ** 2 / (true_fmax / 0.5)
         self.psd_quantiles = self.psd_quantiles / scaling
@@ -224,6 +225,7 @@ class OptimalPSDEstimator:
         """Return the freq per chunk of the PSD estimate"""
         if hasattr(self, "_freq"):
             return self._freq
+
         fmax_true = self.sampling_freq / 2
         self._freq = np.fft.fftfreq(self.n_per_chunk, d=1 / self.sampling_freq)
         fmax_idx = int(self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2)
