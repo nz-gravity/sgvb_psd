@@ -53,7 +53,7 @@ class OptimalPSDEstimator:
         self.x = x
         self.max_hyperparm_eval = max_hyperparm_eval
         self.psd_scaling = psd_scaling
-
+        self.sampling_freq = 2 * np.pi if duration == 1 else x.shape[0] / duration
         # Internal variables
         self.lr_map_values = []
         self.loss_values = []
@@ -209,7 +209,6 @@ class OptimalPSDEstimator:
         self.psd_all = self.psd_all
 
         # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
-        self.sampling_freq = 2 * np.pi if self.duration == 1 else self.x.shape[0] / self.duration
         true_fmax = self.sampling_freq / 2
         scaling = self.psd_scaling ** 2 / (true_fmax / 0.5)
         self.psd_quantiles = self.psd_quantiles / scaling
