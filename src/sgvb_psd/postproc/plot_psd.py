@@ -12,7 +12,8 @@ def plot_psdq(psd_q, freqs, axs=None, col="C0"):
     p = psd_q.shape[-1]
 
     if nfreqs != len(freqs):
-        raise ValueError("The number of frequencies does not match the number of PSDs")
+        raise ValueError(
+            f"The len of frequencies {len(freqs)} does not match the len of PSD {nfreqs}")
 
     if axs is None:
         # generate a square figure with pxp subplots
@@ -60,7 +61,7 @@ def plot_peridogram(x, col="lightgray", axs=None, fs=1.0):
                 psd = np.imag(psd)
 
             ax = axs[row_i, col_j]
-            ax.plot(f, psd[1], color=col)
+            ax.plot(f, psd, color=col)
 
     return axs
 

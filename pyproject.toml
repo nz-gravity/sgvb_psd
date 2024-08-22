@@ -32,7 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "tensorflow",
-    "tensorflow-probability>=0.24.0",
+    "tensorflow-probability",
     "tf-keras",
     "pandas",
     "numpy",

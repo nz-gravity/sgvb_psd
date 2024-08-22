@@ -53,7 +53,7 @@ class OptimalPSDEstimator:
         self.x = x
         self.max_hyperparm_eval = max_hyperparm_eval
         self.psd_scaling = psd_scaling
-        self.sampling_freq = 2 * np.pi if duration == 1 else x.shape[0] / duration
+
         # Internal variables
         self.lr_map_values = []
         self.loss_values = []
@@ -227,6 +227,9 @@ class OptimalPSDEstimator:
 
         fmax_true = self.sampling_freq / 2
         self._freq = np.fft.fftfreq(self.n_per_chunk, d=1 / self.sampling_freq)
+        # only keep the positive freq, ie the first half of _freq
+        self._freq = self._freq[0 : self.n_per_chunk // 2]
+        # use fftshift to get the freq in the correct order
         fmax_idx = int(self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2)
         return self._freq[0:fmax_idx]
 
@@ -235,10 +238,17 @@ class OptimalPSDEstimator:
         """Return the number of points per chunk"""
         return self.x.shape[0] // self.nchunks
 
+
     @property
     def sampling_freq(self):
-        """Return the sampling frequency of the PSD estimate"""
-        return self.n_per_chunk / self.duration
+        """Return the sampling frequency"""
+        if self.duration == 1:
+            self._sampling_freq = 2 * np.pi # angular frequency
+        else:
+            self._sampling_freq = self.x[0] / self.duration
+
+        return self._sampling_freq
+
 
     def plot(self) -> "matplotlib.pyplot.figure":
         axes = plot_psdq(
