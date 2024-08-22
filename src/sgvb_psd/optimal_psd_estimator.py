@@ -227,8 +227,15 @@ class OptimalPSDEstimator:
 
         fmax_true = self.sampling_freq / 2
         self._freq = np.fft.fftfreq(self.n_per_chunk, d=1 / self.sampling_freq)
-        # only keep the positive freq, ie the first half of _freq
-        self._freq = self._freq[0 : self.n_per_chunk // 2]
+        
+        n = self.n_per_chunk
+        if np.mod(n,2)== 0:
+            #the length per chunk is even
+            self._freq = self._freq[0:int(n/2)]
+        else:
+            #the length per chunk is odd
+            self._freq = self._freq[0:int((n-1)/2)]
+        
         # use fftshift to get the freq in the correct order
         fmax_idx = int(self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2)
         return self._freq[0:fmax_idx]
