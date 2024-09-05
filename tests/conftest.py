@@ -33,3 +33,9 @@ def var2_data():
         'Data',
         ['ar', 'sigma', 'n', 'd', 'x']
     )(ar, sigma, n, d, x)
+
+
+@pytest.fixture
+def et_data():
+    # download and cache the dataset (small) if it doesn't exist
+    pass
