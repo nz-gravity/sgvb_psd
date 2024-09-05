@@ -1,6 +1,6 @@
 format: jb-book
 root: index.md
 chapters:
-- file: training.ipynb
-- file: signal_generation.ipynb
-- file: paper_plots.ipynb
+- file: api
+- file: examples/simulation_example
+- file: examples/ET_example

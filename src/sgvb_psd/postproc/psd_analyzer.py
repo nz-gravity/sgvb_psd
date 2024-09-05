@@ -7,8 +7,15 @@ class PSDAnalyzer:
     """
     This is a utility class to analyze the estimated PSDs, given the true PSDs.
     """
+
     def __init__(
-        self, spec_true, spectral_density_q, n_freq, task_id, psd_estimator
+            self,
+            spec_true,
+            spectral_density_q,
+            n_freq,
+            psd_estimator,
+            task_id=None,
+
     ):
         """
 
@@ -102,6 +109,7 @@ class PSDAnalyzer:
         return coverage_point_CI
 
     def run_analysis(self, iteration_start_time):
+        """What does this do?"""
         L2_VI = self.calculate_L2_error()
         (
             len_point_CI_f11,

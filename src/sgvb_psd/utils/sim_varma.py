@@ -74,23 +74,3 @@ def sim_varma(model, coeffs, n, d, burnin=10000, **kwargs):
             X_sim[t, :] += ma[:, (j - 1) * d:j * d] @ epsilon_sim[t - j, :]
 
     return X_sim[burnin:]
-
-# Example usage
-if __name__ == "__main__":
-    # Define VAR(2) model parameters
-    ar = np.array([[0.5, 0, 0, 0], [0, -0.3, 0, -0.5]])
-    n = 256
-    d = 2
-
-    # Simulate the VAR(2) process
-    x = sim_varma(model='ar', coeffs=ar, n=n, d=d)
-
-    # Plot the time series
-    plt.figure(figsize=(10, 6))
-    plt.plot(x)
-    plt.title('Simulated VAR(2) Time Series')
-    plt.xlabel('Time')
-    plt.ylabel('Value')
-    plt.legend([f'Series {i+1}' for i in range(d)])
-    plt.grid(True)
-    plt.show()

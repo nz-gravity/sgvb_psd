@@ -2,56 +2,40 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
-from sgvb_psd.utils import sim_varma
 from sgvb_psd.utils.periodogram import get_periodogram
 from sgvb_psd.postproc.plot_psd import plot_peridogram
+from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 
-def test_sim_varma():
-    ar = np.array([
-        [[0.5, 0], [0, -0.3]],
-        [[0, 0], [0, -0.5]]
-    ])
-    Sigma = np.array([[1, 0.9], [0.9, 1]])
-
-    ar = np.array([[0.5, 0, 0, 0], [0, -0.3, 0, -0.5]])
-    n = 256
-    d = 2
-
-    # Simulate the VAR(2) process
-    x = sim_varma(model='ar', coeffs=ar, n=n, d=d, sigma=Sigma)
-
-    # Plot the time series
-    plt.figure(figsize=(10, 6))
-    plt.plot(x)
+def test_simulated_datasets(var2_data, plot_dir):
+    plt.figure(figsize=(3, 2.5))
+    plt.plot(var2_data.x)
     plt.title('Simulated VAR(2) Time Series')
     plt.xlabel('Time')
     plt.ylabel('Value')
-    plt.legend([f'Series {i + 1}' for i in range(d)])
+    plt.legend([f'Series {i + 1}' for i in range(var2_data.d)])
     plt.grid(True)
-    plt.show()
+    plt.savefig(f'{plot_dir}/var2_data.png')
 
+
+def test_var_psd_generation(var2_data, plot_dir):
+    #FIXME: although this runs, the PSD scales are off
     optim = OptimalPSDEstimator(
-        N_theta=30, nchunks=1, duration=1, ntrain_map=100, x=x, max_hyperparm_eval=1
-
+        N_theta=30, nchunks=1, duration=1,
+        ntrain_map=100, x=var2_data.x, max_hyperparm_eval=1
     )
     optim.run()
     optim.plot()
-    plt.show()
+    plt.savefig(f'{plot_dir}/var_psd.png')
+
+    ## TODO
+    # run_statistics = PSDAnalyzer(optim).
+    # assert run_statistics.coverage > 0.95
+    # assert run_statistics.l2_error < 0.3
 
 
 
-def test_pdgmr():
-    Sigma = np.array([[1, 0.9], [0.9, 1]])
-
-    ar = np.array([[0.5, 0, 0, 0], [0, -0.3, 0, -0.5]])
-    n = 256
-    d = 2
-
-    # Simulate the VAR(2) process
-    x = sim_varma(model='ar', coeffs=ar, n=n, d=d, sigma=Sigma)
-    f, pdgrm = get_periodogram(x, fs=2*np.pi)
+def test_pdgmr(var2_data, plot_dir):
+    f, pdgrm = get_periodogram(var2_data.x, fs=2 * np.pi)
     assert pdgrm.shape == (129, 2, 2)
-
-    axes = plot_peridogram(x, fs=2*np.pi)
-    plt.gcf()
-    plt.savefig('test.png')
+    plot_peridogram(var2_data.x, fs=2 * np.pi)
+    plt.savefig(f'{plot_dir}/pdgrm.png')
