@@ -38,12 +38,16 @@ def plot_psdq(psd_q, freqs, axs=None, col="C0"):
 
 
 
-def plot_peridogram(x, col="lightgray", axs=None, fs=1.0):
+def plot_peridogram(x, axs=None, fs=1.0, **kwargs):
     """
     This is a utility function to plot the periodogram of a time series.
     """
     n, p = x.shape
     f, pdgrm = get_periodogram(x, fs)
+
+    # setting some default values
+    kwargs['color'] = kwargs.pop("color", "lightgray")
+    kwargs['zorder'] = kwargs.pop("zorder", -10)
 
 
     if axs is None:
@@ -61,7 +65,7 @@ def plot_peridogram(x, col="lightgray", axs=None, fs=1.0):
                 psd = np.imag(psd)
 
             ax = axs[row_i, col_j]
-            ax.plot(f, psd, color=col)
+            ax.plot(f, psd, **kwargs)
 
     return axs
 

@@ -9,7 +9,6 @@ import tensorflow_probability as tfp
 # set random seed
 np.random.seed(0)
 tf.random.set_seed(0)
-tfp.random.set_seed(0)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
