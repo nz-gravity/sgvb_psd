@@ -35,6 +35,10 @@ def plot_psdq(psd_q, freqs, axs=None, col="C0"):
 
     return axs
 
+def plot_psd(psd, freqs, axs=None, col="C0"):
+    """Plot a single PSD (eg the True PSD, or a median PSD)"""
+    # TODO: implement this function
+    pass
 
 
 

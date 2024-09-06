@@ -24,10 +24,16 @@ def test_var_psd_generation(var2_data, plot_dir):
         ntrain_map=100, x=var2_data.x, max_hyperparm_eval=1
     )
     optim.run()
-    optim.plot()
+
+    # TODO: load the true PSD
+    true_psd = None
+    optim.plot(true_psd=true_psd)
     plt.savefig(f'{plot_dir}/var_psd.png')
 
-    ## TODO
+    ## TODO make siomethig like the following work
+    # we need to ensure that we are getting correct range of
+    # l2 error and coverage
+
     # run_statistics = PSDAnalyzer(optim).
     # assert run_statistics.coverage > 0.95
     # assert run_statistics.l2_error < 0.3
