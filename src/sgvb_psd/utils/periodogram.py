@@ -3,6 +3,8 @@ import numpy as np
 
 def get_periodogram(x, fs):
     """Given a multivariate time series, return the periodogram."""
+    # TODO: fix this -- the periodogram is not being calculated correctly
+    # read wtf csd does and how to use it
     n, p = x.shape
     periodogram = np.zeros((1+n//2, p, p))
     for row_i in range(p):

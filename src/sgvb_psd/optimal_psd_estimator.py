@@ -6,7 +6,7 @@ import tensorflow as tf
 from hyperopt import hp, tpe, fmin
 
 from .backend import SpecVI
-from .postproc import plot_psdq, plot_peridogram
+from .postproc import plot_psdq, plot_peridogram, plot_psd
 
 
 class OptimalPSDEstimator:
@@ -257,10 +257,19 @@ class OptimalPSDEstimator:
         return self._sampling_freq
 
 
-    def plot(self) -> "matplotlib.pyplot.figure":
+    def plot(self, true_psd=None) -> "matplotlib.pyplot.figure":
         axes = plot_psdq(
             self.psd_quantiles,
             freqs=self.freq,
         )
         axes = plot_peridogram(self.x, axs=axes, fs=2*np.pi)
+        if true_psd is not None:
+            true_psd = true_psd[0]
+            true_freq = true_psd[1]
+            plot_psd(
+                true_psd,
+                freqs=true_freq,
+                axs=axes,
+                color="C1",
+            )
         return axes
