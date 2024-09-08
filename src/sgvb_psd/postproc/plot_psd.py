@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from ..utils.periodogram import get_periodogram
+from sgvb_psd import true_var
 
 
 def plot_psdq(psd_q, freqs, axs=None, col="C0"):
@@ -23,7 +24,7 @@ def plot_psdq(psd_q, freqs, axs=None, col="C0"):
         for col_j in range(p):
             psd = psd_q[..., row_i, col_j]
             if row_i == col_j:
-                psd = np.real(psd)
+                psd = np.log(np.real(psd))
             elif row_i < col_j:  # upper triangular
                 psd = np.real(psd)
             else:  # lower triangular
@@ -35,10 +36,37 @@ def plot_psdq(psd_q, freqs, axs=None, col="C0"):
 
     return axs
 
-def plot_psd(psd, freqs, axs=None, col="C0"):
-    """Plot a single PSD (eg the True PSD, or a median PSD)"""
-    # TODO: implement this function
-    pass
+#n = var2_data().n
+#varCoef=var2_data().varCoef
+#vmaCoef=var2_data().vmaCoef
+#sigma=var2_data().sigma
+
+def plot_psd(fs = 1.0, axs=None, col="C3"):
+    """Plot a true PSD"""
+    Simulation = true_var.VarmaSim(n=n)
+    freq = (np.arange(0,np.floor_divide(n, 2), 1) / (n))
+    freq = freq* fs
+    spec_true = Simulation.calculateSpecMatrix(freq, varCoef, vmaCoef, sigma)
+    p = spec_true.shape[-1]
+
+    if axs is None:
+        fig, axs = plt.subplots(p, p, figsize=(p * 2.2, p * 2.2))
+
+    for row_i in range(p):
+        for col_j in range(p):
+            psd = spec_true[:, row_i, col_j]
+
+            if row_i == col_j:
+                psd = np.log(np.real(psd) / (2*np.pi))
+            elif row_i < col_j:
+                psd = np.real(psd) / fs
+            else:
+                psd = np.imag(psd) / fs
+
+            ax = axs[row_i, col_j]
+            ax.plot(freq, psd, color=col)
+
+    return axs
 
 
 
@@ -62,7 +90,7 @@ def plot_peridogram(x, axs=None, fs=1.0, **kwargs):
         for col_j in range(p):
             psd = pdgrm[..., row_i, col_j]
             if row_i == col_j:
-                psd = np.real(psd)
+                psd = np.log(np.real(psd)/2)
             elif row_i < col_j:  # upper triangular
                 psd = np.real(psd)
             else:  # lower triangular
