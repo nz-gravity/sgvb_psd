@@ -22,16 +22,17 @@ def plot_dir():
 
 @pytest.fixture
 def var2_data():
-    sigma = np.array([[1, 0.9], [0.9, 1]])
-    ar = np.array([[0.5, 0, 0, 0], [0, -0.3, 0, -0.5]])
+    sigma = np.array([[1., 0.9], [0.9, 1.]])  
+    varCoef = np.array([[[0.5, 0.], [0., -0.3]], [[0., 0.], [0., -0.5]]])
+    vmaCoef = np.array([[[1.,0.],[0.,1.]]])
     n = 256
     d = 2
-    x = sim_varma(model='ar', coeffs=ar, n=n, d=d, sigma=sigma)
+    x = sim_varma(n, varCoef, vmaCoef, sigma)
 
     return namedtuple(
         'Data',
-        ['ar', 'sigma', 'n', 'd', 'x']
-    )(ar, sigma, n, d, x)
+        ['varCoef', 'sigma', 'vmaCoef', 'n', 'd', 'x']
+    )(varCoef, sigma, vmaCoef, n, d, x)
 
 
 @pytest.fixture

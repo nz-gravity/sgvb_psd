@@ -9,6 +9,7 @@ from .backend import SpecVI
 from .postproc import plot_psdq, plot_peridogram, plot_psd
 
 
+
 class OptimalPSDEstimator:
     """
     This class is used to run SGVB and estimate the posterior PSD
@@ -61,6 +62,8 @@ class OptimalPSDEstimator:
         self.model_info = {}
         self.psd_quantiles = None
         self.psd_all = None
+        
+    
 
     def __learning_rate_optimisation_objective(self, lr):
         """Objective function for the hyperopt optimisation of the learning rate for the MAP
@@ -210,9 +213,8 @@ class OptimalPSDEstimator:
 
         # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
         true_fmax = self.sampling_freq / 2
-        scaling = self.psd_scaling ** 2 / (true_fmax / 0.5)
-        self.psd_quantiles = self.psd_quantiles / scaling
-        self.psd_all = self.psd_all / scaling
+        self.psd_quantiles = self.psd_quantiles / self.psd_scaling ** 2 / (true_fmax / 0.5)
+        self.psd_all = self.psd_all / self.psd_scaling ** 2 / (true_fmax / 0.5)
 
     def run(self) -> Tuple[np.ndarray, np.ndarray]:
         best_samp = self.find_optimal_surrogate_params()
@@ -257,19 +259,35 @@ class OptimalPSDEstimator:
         return self._sampling_freq
 
 
-    def plot(self, true_psd=None) -> "matplotlib.pyplot.figure":
+    def plot(self) -> "matplotlib.pyplot.figure":
         axes = plot_psdq(
             self.psd_quantiles,
             freqs=self.freq,
         )
-        axes = plot_peridogram(self.x, axs=axes, fs=2*np.pi)
-        if true_psd is not None:
-            true_psd = true_psd[0]
-            true_freq = true_psd[1]
-            plot_psd(
-                true_psd,
-                freqs=true_freq,
-                axs=axes,
-                color="C1",
-            )
+        axes = plot_peridogram(self.x, axs=axes, fs=self.sampling_freq)
+        
+#        if true_psd is not None:
+        axes = plot_psd(fs=self.sampling_freq)
+            
+            
+            #true_psd = true_psd[0]
+            #true_freq = true_psd[1]
+            #plot_psd(
+            #    true_psd,
+            #    freqs=true_freq,
+            #    axs=axes,
+            #    color="C1",
+            #)
+            
         return axes
+
+
+
+
+
+
+
+
+
+
+

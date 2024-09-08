@@ -6,6 +6,7 @@ from sgvb_psd.utils.periodogram import get_periodogram
 from sgvb_psd.postproc.plot_psd import plot_peridogram
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 
+
 def test_simulated_datasets(var2_data, plot_dir):
     plt.figure(figsize=(3, 2.5))
     plt.plot(var2_data.x)
@@ -18,16 +19,16 @@ def test_simulated_datasets(var2_data, plot_dir):
 
 
 def test_var_psd_generation(var2_data, plot_dir):
-    #FIXME: although this runs, the PSD scales are off
+    
     optim = OptimalPSDEstimator(
         N_theta=30, nchunks=1, duration=1,
-        ntrain_map=100, x=var2_data.x, max_hyperparm_eval=1
+        ntrain_map=10000, x=var2_data().x, max_hyperparm_eval=5
     )
     optim.run()
 
     # TODO: load the true PSD
     true_psd = None
-    optim.plot(true_psd=true_psd)
+    optim.plot()
     plt.savefig(f'{plot_dir}/var_psd.png')
 
     ## TODO make siomethig like the following work
