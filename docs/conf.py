@@ -14,6 +14,7 @@ extensions = [
     "sphinx_book_theme",
     "sphinx.ext.autodoc",
     "sphinx_jupyterbook_latex",
+'IPython.sphinxext.ipython_console_highlighting',
 ]
 external_toc_exclude_missing = False
 external_toc_path = "_toc.yml"
@@ -42,11 +43,6 @@ html_theme_options = {
             "type": "fontawesome",
         }
     ],
-    # "logo": {
-    #     "text": "Starccato",
-    #     "image_light": "_static/logo.png",
-    #     "image_dark": "_static/logo.png",
-    # },
     "show_prev_next": False,
     "footer_start": "copyright",
     "footer_end": "author",
