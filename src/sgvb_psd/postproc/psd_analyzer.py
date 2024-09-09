@@ -1,6 +1,7 @@
+import time
+
 import numpy as np
 import pandas as pd
-import time
 
 
 class PSDAnalyzer:
@@ -9,13 +10,12 @@ class PSDAnalyzer:
     """
 
     def __init__(
-            self,
-            spec_true,
-            spectral_density_q,
-            n_freq,
-            psd_estimator,
-            task_id=None,
-
+        self,
+        spec_true,
+        spectral_density_q,
+        n_freq,
+        psd_estimator,
+        task_id=None,
     ):
         """
 

@@ -3,8 +3,8 @@ import timeit
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from .spec_model import SpecModel
 from ..logging import logger
+from .spec_model import SpecModel
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -180,7 +180,9 @@ class SpecVI:
         self.kld = losses
         # plt.plot(losses)
 
-        logger.info(f"Total Inference Training Time: {stop_total-start_total:.2f}s")
+        logger.info(
+            f"Total Inference Training Time: {stop_total-start_total:.2f}s"
+        )
 
         self.posteriorPointEst = trainable_Mvnormal.mean()
         self.posteriorPointEstStd = trainable_Mvnormal.stddev()

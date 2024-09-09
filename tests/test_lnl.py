@@ -1,6 +1,5 @@
-
 def test_lnl(var2_data):
-    #TODO: implement this test
+    # TODO: implement this test
 
     # compute LNL (original, no blocks)
 

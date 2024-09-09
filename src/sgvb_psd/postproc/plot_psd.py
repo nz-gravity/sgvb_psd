@@ -18,7 +18,8 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
 
     if nfreqs != len(freqs):
         raise ValueError(
-            f"The len of frequencies {len(freqs)} does not match the len of PSD {nfreqs}")
+            f"The len of frequencies {len(freqs)} does not match the len of PSD {nfreqs}"
+        )
 
     if axs is None:
         # generate a square figure with pxp subplots
@@ -31,19 +32,20 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
 
             ax = axs[row_i, col_j]
             if nquantiles > 1:
-                ax.fill_between(freqs, psd_ij[0], psd_ij[2], alpha=0.3, lw=0, **plt_kwargs)
+                ax.fill_between(
+                    freqs, psd_ij[0], psd_ij[2], alpha=0.3, lw=0, **plt_kwargs
+                )
                 ax.plot(freqs, psd_ij[1], **plt_kwargs)
             else:
                 ax.plot(freqs.ravel(), psd_ij.ravel(), **plt_kwargs)
-
 
     return axs
 
 
 def plot_single_psd(psd, freqs, axs=None, **kwargs):
     psd = np.array([psd])
-    kwargs['color'] = kwargs.get("color", 'k')
-    kwargs['zorder'] = kwargs.get("zorder", -1)
+    kwargs["color"] = kwargs.get("color", "k")
+    kwargs["zorder"] = kwargs.get("zorder", -1)
     return plot_psdq(psd, freqs, axs, **kwargs)
 
 
@@ -86,7 +88,7 @@ def _generate_fig(p):
     """
     This is a utility function to generate a figure with pxp subplots.
     """
-    fig, axs = plt.subplots(p, p, figsize=(p * 2.2, p * 2.2),  sharex=True)
+    fig, axs = plt.subplots(p, p, figsize=(p * 2.2, p * 2.2), sharex=True)
     return fig, axs
 
 
@@ -99,45 +101,67 @@ def format_axes(axes, **kwargs):
 
 
 def _format_spines(
-        axes, tick_ln=5, diag_spline_thickness=2,
-        xlims=None,
-        diag_ylims=None, off_ylims=None,
-        diag_log=True, off_symlog=True,
-        sylmog_thresh=1e-3, **kwargs
+    axes,
+    tick_ln=5,
+    diag_spline_thickness=2,
+    xlims=None,
+    diag_ylims=None,
+    off_ylims=None,
+    diag_log=True,
+    off_symlog=True,
+    sylmog_thresh=1e-3,
+    **kwargs,
 ):
     p = axes.shape[0]
-    plt.subplots_adjust(hspace=0., wspace=0.)
-
+    plt.subplots_adjust(hspace=0.0, wspace=0.0)
 
     if diag_ylims is None:
         diag_ylims = (
             min([axes[i, i].get_ylim()[0] for i in range(p)]),
-            max([axes[i, i].get_ylim()[1] for i in range(p)])
+            max([axes[i, i].get_ylim()[1] for i in range(p)]),
         )
 
     if off_ylims is None:
         off_ylims = (
-            min([axes[i, j].get_ylim()[0] for i in range(p) for j in range(p) if i != j]),
-            max([axes[i, j].get_ylim()[1] for i in range(p) for j in range(p) if i != j])
+            min(
+                [
+                    axes[i, j].get_ylim()[0]
+                    for i in range(p)
+                    for j in range(p)
+                    if i != j
+                ]
+            ),
+            max(
+                [
+                    axes[i, j].get_ylim()[1]
+                    for i in range(p)
+                    for j in range(p)
+                    if i != j
+                ]
+            ),
         )
 
     if xlims is None:
         xlims = axes[0, 0].get_xlim()
-
 
     for i in range(p):
         for j in range(p):
             ax = axes[i, j]
             # turn off minor ticks
             ax.tick_params(
-                'both', length=0, width=0,
-                which='minor',
-                bottom=False, top=False, left=False, right=False
+                "both",
+                length=0,
+                width=0,
+                which="minor",
+                bottom=False,
+                top=False,
+                left=False,
+                right=False,
             )
-            ax.tick_params(axis='y', direction='in', pad=-10)
-            ax.yaxis.set_tick_params(which='both', labelleft=True, zorder=3)
+            ax.tick_params(axis="y", direction="in", pad=-10)
+            ax.yaxis.set_tick_params(which="both", labelleft=True, zorder=3)
             for label in ax.get_yticklabels():
-                label.set_horizontalalignment('left')
+                label.set_horizontalalignment("left")
             ax.set_xlim(xlims)
 
             if i == j:
@@ -145,24 +169,29 @@ def _format_spines(
                 for spine in ax.spines.values():
                     spine.set_linewidth(diag_spline_thickness)
                     spine.set_zorder(10)
-                ax.tick_params('both', length=tick_ln, width=diag_spline_thickness, which='major')
+                ax.tick_params(
+                    "both",
+                    length=tick_ln,
+                    width=diag_spline_thickness,
+                    which="major",
+                )
                 if diag_log:
-                    ax.set_yscale('log')
+                    ax.set_yscale("log")
                 ax.set_ylim(diag_ylims)
             else:
                 ax.set_ylim(off_ylims)
-                ax.patch.set_color('lightgray')  # or whatever color you like
-                ax.patch.set_alpha(.3)
-                ax.tick_params('both', length=tick_ln, width=1, which='major')
+                ax.patch.set_color("lightgray")  # or whatever color you like
+                ax.patch.set_alpha(0.3)
+                ax.tick_params("both", length=tick_ln, width=1, which="major")
 
                 if off_symlog:
-                    ax.set_yscale('symlog', linthresh=sylmog_thresh)
+                    ax.set_yscale("symlog", linthresh=sylmog_thresh)
 
 
 def _format_text(axes, channel_labels=None, **kwargs):
     p = axes.shape[0]
     if channel_labels is None:
-        channel_labels = ''.join([f'{i + 1}' for i in range(p)])
+        channel_labels = "".join([f"{i + 1}" for i in range(p)])
     assert len(channel_labels) == p
 
     # formatting text associated with the plot
@@ -170,26 +199,27 @@ def _format_text(axes, channel_labels=None, **kwargs):
         for j in range(p):
             ax = axes[i, j]
             lbl = f"{channel_labels[i]}{channel_labels[j]}"
-            lbl = '\mathbf{S}_{' + lbl + "}"
+            lbl = "\mathbf{S}_{" + lbl + "}"
 
             if i > j:  # upper triangular
-                lbl = '$\Re(' + lbl + ')$'
+                lbl = "$\Re(" + lbl + ")$"
             elif i < j:  # lower triangular
-                lbl = '$\Im(' + lbl + ')$'
+                lbl = "$\Im(" + lbl + ")$"
             else:
-                lbl = '$' + lbl + '$'
+                lbl = "$" + lbl + "$"
 
             ax.text(
-                0.95, 0.95, lbl,
+                0.95,
+                0.95,
+                lbl,
                 transform=ax.transAxes,
-                horizontalalignment='right', verticalalignment='top', fontsize='small'
+                horizontalalignment="right",
+                verticalalignment="top",
+                fontsize="small",
             )
 
     fig = axes[0, 0].get_figure()
     # yaxis label
-    fig.text(0.075, 0.5, 'PSD [1/Hz]', va='center', rotation='vertical')
+    fig.text(0.075, 0.5, "PSD [1/Hz]", va="center", rotation="vertical")
     # xaxis label
-    fig.text(0.5, 0.0325, 'Frequency [Hz]', ha='center')
-
-
-
+    fig.text(0.5, 0.0325, "Frequency [Hz]", ha="center")
