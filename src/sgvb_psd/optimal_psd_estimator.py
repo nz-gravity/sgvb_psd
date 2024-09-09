@@ -6,7 +6,8 @@ import tensorflow as tf
 from hyperopt import hp, tpe, fmin
 
 from .backend import SpecVI
-from .postproc import plot_psdq, plot_peridogram, plot_psd
+from .postproc import plot_psdq, plot_peridogram, plot_single_psd, format_axes
+from .utils.periodogram import get_periodogram
 
 
 
@@ -52,6 +53,7 @@ class OptimalPSDEstimator:
         self.ntrain_map = ntrain_map
         self.fmax_for_analysis = x.shape[0] / 2
         self.x = x
+        self.pdgrm = get_periodogram(x, fs=self.sampling_freq)
         self.max_hyperparm_eval = max_hyperparm_eval
         self.psd_scaling = psd_scaling
 
@@ -259,26 +261,16 @@ class OptimalPSDEstimator:
         return self._sampling_freq
 
 
-    def plot(self) -> "matplotlib.pyplot.figure":
-        axes = plot_psdq(
-            self.psd_quantiles,
-            freqs=self.freq,
-        )
-        axes = plot_peridogram(self.x, axs=axes, fs=self.sampling_freq)
+    def plot(self, true_psd=None, **kwargs) -> "matplotlib.pyplot.figure":
+        axes = plot_psdq(self.psd_quantiles,self.freq, **kwargs)
+        axes = plot_peridogram(*self.pdgrm, axs=axes, **kwargs)
         
-#        if true_psd is not None:
-        axes = plot_psd(fs=self.sampling_freq)
-            
-            
-            #true_psd = true_psd[0]
-            #true_freq = true_psd[1]
-            #plot_psd(
-            #    true_psd,
-            #    freqs=true_freq,
-            #    axs=axes,
-            #    color="C1",
-            #)
-            
+        if true_psd is not None:
+            plot_single_psd(*true_psd, axes, **kwargs)
+
+
+        format_axes(axes, **kwargs)
+
         return axes
 
 

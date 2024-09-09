@@ -22,13 +22,10 @@ def test_var_psd_generation(var2_data, plot_dir):
     
     optim = OptimalPSDEstimator(
         N_theta=30, nchunks=1, duration=1,
-        ntrain_map=10000, x=var2_data().x, max_hyperparm_eval=5
+        ntrain_map=100, x=var2_data.x, max_hyperparm_eval=1
     )
     optim.run()
-
-    # TODO: load the true PSD
-    true_psd = None
-    optim.plot()
+    optim.plot(true_psd=var2_data.true_psd, off_symlog=False)
     plt.savefig(f'{plot_dir}/var_psd.png')
 
     ## TODO make siomethig like the following work
@@ -42,7 +39,7 @@ def test_var_psd_generation(var2_data, plot_dir):
 
 
 def test_pdgmr(var2_data, plot_dir):
-    f, pdgrm = get_periodogram(var2_data.x, fs=2 * np.pi)
-    assert pdgrm.shape == (129, 2, 2)
-    plot_peridogram(var2_data.x, fs=2 * np.pi)
+    pdgrm, f = get_periodogram(var2_data.x, fs=2 * np.pi)
+    assert pdgrm.shape == (128, 2, 2)
+    plot_peridogram(pdgrm, f, off_symlog=False)
     plt.savefig(f'{plot_dir}/pdgrm.png')

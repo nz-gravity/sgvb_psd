@@ -27,4 +27,4 @@ def get_periodogram(x, fs):
                 cross_spectrum_fij = cross_spectrum_fij / fs
                 periodogram[..., row_i, col_j] = cross_spectrum_fij
                 
-    return f, periodogram
+    return periodogram, f
