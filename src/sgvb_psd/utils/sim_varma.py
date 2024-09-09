@@ -123,19 +123,20 @@ class SimVARMA:
         format_axes(axs, **kwargs)
         return axs
 
-    def __repr__(self):
+    def _repr_html_(self):
         """
-        Return a LaTeX representation of the VARMA process.
+        Return an HTML representation of the VARMA process for Jupyter notebook rendering.
         """
         p = self.var_coeffs.shape[0]  # VAR order
         q = self.vma_coeffs.shape[0]  # VMA order
 
-        latex_repr = r"$\mathbf{X}_t = "
+        html = "<h3>VARMA({}, {}) Process</h3>".format(p, q)
+        html += r"$$\mathbf{X}_t = "
 
         # VAR part
         if p > 0:
             for i in range(p):
-                latex_repr += (
+                html += (
                     r"\mathbf{\Phi}_{"
                     + str(i + 1)
                     + r"}\mathbf{X}_{t-"
@@ -144,10 +145,10 @@ class SimVARMA:
                 )
 
         # VMA part
-        latex_repr += r"\mathbf{\epsilon}_t + "
+        html += r"\mathbf{\epsilon}_t + "
         if q > 0:
             for i in range(q):
-                latex_repr += (
+                html += (
                     r"\mathbf{\Theta}_{"
                     + str(i + 1)
                     + r"}\mathbf{\epsilon}_{t-"
@@ -155,48 +156,52 @@ class SimVARMA:
                     + r"}"
                 )
                 if i < q - 1:
-                    latex_repr += " + "
+                    html += " + "
 
-        # Noise term
-        latex_repr += r"$"
-        latex_repr += "\n"
-        latex_repr += r"$\mathbf{\epsilon}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$"
+        html += r"$$"
+        html += r"$$\mathbf{\epsilon}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$$"
 
         # VAR coefficients
-        latex_repr += "\n\nVAR coefficients:\n"
+        html += "<h4>VAR coefficients:</h4>"
         for i in range(p):
-            latex_repr += (
-                r"$\mathbf{\Phi}_{"
+            html += (
+                r"$$\mathbf{\Phi}_{"
                 + str(i + 1)
                 + r"} = "
-                + np.array2string(
-                    self.var_coeffs[i], precision=2, separator=","
-                )
-                + "$\n"
+                + self._matrix_to_latex(self.var_coeffs[i])
+                + "$$"
             )
 
         # VMA coefficients
-        latex_repr += "\nVMA coefficients:\n"
+        html += "<h4>VMA coefficients:</h4>"
         for i in range(q):
-            latex_repr += (
-                r"$\mathbf{\Theta}_{"
+            html += (
+                r"$$\mathbf{\Theta}_{"
                 + str(i + 1)
                 + r"} = "
-                + np.array2string(
-                    self.vma_coeffs[i], precision=2, separator=","
-                )
-                + "$\n"
+                + self._matrix_to_latex(self.vma_coeffs[i])
+                + "$$"
             )
 
         # Sigma
-        latex_repr += "\nCovariance matrix:\n"
-        latex_repr += (
-            r"$\mathbf{\Sigma} = "
-            + np.array2string(self.sigma, precision=2, separator=",")
-            + "$"
+        html += "<h4>Covariance matrix:</h4>"
+        html += (
+            r"$$\mathbf{\Sigma} = " + self._matrix_to_latex(self.sigma) + "$$"
         )
 
-        return latex_repr
+        return html
+
+    def _matrix_to_latex(self, matrix):
+        """
+        Convert a numpy array to a LaTeX matrix representation.
+        """
+        latex = r"\begin{bmatrix} "
+        for i in range(matrix.shape[0]):
+            latex += " & ".join([f"{x:.2f}" for x in matrix[i]])
+            if i < matrix.shape[0] - 1:
+                latex += r"\\ "
+        latex += r" \end{bmatrix}"
+        return latex
 
 
 def _calculate_true_varma_psd(freq, dim, var_coeffs, vma_coeffs, sigma):
