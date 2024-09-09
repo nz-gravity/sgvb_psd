@@ -335,6 +335,67 @@ const thebe_selector_output = ".output, .cell_output"
   <section class="tex2jax_ignore mathjax_ignore" id="simulation-example">
 <h1>Simulation Example<a class="headerlink" href="#simulation-example" title="Permalink to this heading">#</a></h1>
 <p>Here we demonstrate how to use this package to estimate the multivariate PSD of VAR(2) and VMA(1) datasets</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">sgvb_psd.utils.sim_varma</span> <span class="kn">import</span> <span class="n">SimVARMA</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">var2</span> <span class="o">=</span> <span class="n">SimVARMA</span><span class="p">(</span>
+    <span class="n">n_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">var_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]]]),</span>
+    <span class="n">vma_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]]),</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]])</span>
+<span class="p">)</span>
+<span class="n">var2</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">var2</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_data.png&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p><img alt="VAR(2) Data" src="examples/var2_data.png" /></p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sgvb_psd.optimal_psd_estimator</span> <span class="kn">import</span> <span class="n">OptimalPSDEstimator</span>
+
+<span class="n">optim</span> <span class="o">=</span> <span class="n">OptimalPSDEstimator</span><span class="p">(</span>
+    <span class="n">N_theta</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">nchunks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">var2</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">max_hyperparm_eval</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+<span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span> <span class="n">off_symlog</span><span class="o">=</span><span class="kc">False</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_psd.png&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/1 [00:00&lt;?, ?trial/s, best loss=?]|17:41:55|SGVB-PSD|DEBUG| Inputted data shape: (1024, 2)
+|17:41:55|SGVB-PSD|INFO| Start Model Inference Training: 
+|17:41:55|SGVB-PSD|INFO| Start Point Estimating: 
+WARNING:tensorflow:6 out of the last 6 calls to &lt;function SpecVI.runModel.&lt;locals&gt;.train_hs at 0x7f6e7fa2c700&gt; triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+|17:41:57|SGVB-PSD|INFO| MAP Training Time: 1.33s
+|17:41:57|SGVB-PSD|INFO| Start UQ training: 
+WARNING:tensorflow:6 out of the last 6 calls to &lt;function SpecVI.runModel.&lt;locals&gt;.&lt;lambda&gt; at 0x7f6e7f1a0ee0&gt; triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+|17:42:02|SGVB-PSD|INFO| VI Time: 5.45s
+|17:42:02|SGVB-PSD|INFO| Total Inference Training Time: 6.81s
+100%|██████████| 1/1 [00:06&lt;00:00,  6.92s/trial, best loss: 892.1759033203125]
+</pre></div>
+</div>
+</div>
+</div>
+<p><img alt="VAR(2) PSD" src="examples/var2_psd.png" /></p>
 </section>
 
     <script type="text/x-thebe-config">
