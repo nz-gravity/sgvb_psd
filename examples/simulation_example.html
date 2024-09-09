@@ -334,7 +334,7 @@ const thebe_selector_output = ".output, .cell_output"
                   
   <section class="tex2jax_ignore mathjax_ignore" id="simulation-example">
 <h1>Simulation Example<a class="headerlink" href="#simulation-example" title="Permalink to this heading">#</a></h1>
-<p>Here we demonstrate how to use this package to estimate the multivariate PSD of VAR(2) and VMA(1) datasets</p>
+<p>Here we demonstrate how to use this package to estimate the multivariate PSD of VAR(2) simulated data.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -354,6 +354,8 @@ const thebe_selector_output = ".output, .cell_output"
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output text_html"><h3>VARMA(2, 1) Process</h3>$$\mathbf{X}_t = \mathbf{\Phi}_{1}\mathbf{X}_{t-1} + \mathbf{\Phi}_{2}\mathbf{X}_{t-2} + \mathbf{\epsilon}_t + \mathbf{\Theta}_{1}\mathbf{\epsilon}_{t-1}$$$$\mathbf{\epsilon}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$$<h4>VAR coefficients:</h4>$$\mathbf{\Phi}_{1} = \begin{bmatrix} 0.50 & 0.00\\ 0.00 & -0.30 \end{bmatrix}$$$$\mathbf{\Phi}_{2} = \begin{bmatrix} 0.00 & 0.00\\ 0.00 & -0.50 \end{bmatrix}$$<h4>VMA coefficients:</h4>$$\mathbf{\Theta}_{1} = \begin{bmatrix} 1.00 & 0.00\\ 0.00 & 1.00 \end{bmatrix}$$<h4>Covariance matrix:</h4>$$\mathbf{\Sigma} = \begin{bmatrix} 1.00 & 0.90\\ 0.90 & 1.00 \end{bmatrix}$$</div></div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
