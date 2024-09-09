@@ -125,83 +125,61 @@ class SimVARMA:
 
     def _repr_html_(self):
         """
-        Return an HTML representation of the VARMA process for Jupyter notebook rendering.
+        Return an HTML representation of the VARMA process for rendering in notebooks and Sphinx documentation.
         """
         p = self.var_coeffs.shape[0]  # VAR order
         q = self.vma_coeffs.shape[0]  # VMA order
 
-        html = "<h3>VARMA({}, {}) Process</h3>".format(p, q)
-        html += r"$$\mathbf{X}_t = "
+        html = f"""
+        <div style="font-family: Arial, sans-serif;">
+            <h3>VARMA({p}, {q}) Process</h3>
+            <p>X<sub>t</sub> = """
 
         # VAR part
         if p > 0:
             for i in range(p):
-                html += (
-                    r"\mathbf{\Phi}_{"
-                    + str(i + 1)
-                    + r"}\mathbf{X}_{t-"
-                    + str(i + 1)
-                    + r"} + "
-                )
+                html += f"Φ<sub>{i+1}</sub>X<sub>t-{i+1}</sub> + "
 
         # VMA part
-        html += r"\mathbf{\epsilon}_t + "
+        html += "ε<sub>t</sub> + "
         if q > 0:
             for i in range(q):
-                html += (
-                    r"\mathbf{\Theta}_{"
-                    + str(i + 1)
-                    + r"}\mathbf{\epsilon}_{t-"
-                    + str(i + 1)
-                    + r"}"
-                )
+                html += f"Θ<sub>{i+1}</sub>ε<sub>t-{i+1}</sub>"
                 if i < q - 1:
                     html += " + "
 
-        html += r"$$"
-        html += r"$$\mathbf{\epsilon}_t \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$$"
+        html += "</p>"
+        html += "<p>ε<sub>t</sub> ~ N(0, Σ)</p>"
 
         # VAR coefficients
         html += "<h4>VAR coefficients:</h4>"
         for i in range(p):
-            html += (
-                r"$$\mathbf{\Phi}_{"
-                + str(i + 1)
-                + r"} = "
-                + self._matrix_to_latex(self.var_coeffs[i])
-                + "$$"
-            )
+            html += f"<p>Φ<sub>{i+1}</sub> = {self._matrix_to_html(self.var_coeffs[i])}</p>"
 
         # VMA coefficients
         html += "<h4>VMA coefficients:</h4>"
         for i in range(q):
-            html += (
-                r"$$\mathbf{\Theta}_{"
-                + str(i + 1)
-                + r"} = "
-                + self._matrix_to_latex(self.vma_coeffs[i])
-                + "$$"
-            )
+            html += f"<p>Θ<sub>{i+1}</sub> = {self._matrix_to_html(self.vma_coeffs[i])}</p>"
 
         # Sigma
         html += "<h4>Covariance matrix:</h4>"
-        html += (
-            r"$$\mathbf{\Sigma} = " + self._matrix_to_latex(self.sigma) + "$$"
-        )
+        html += f"<p>Σ = {self._matrix_to_html(self.sigma)}</p>"
 
+        html += "</div>"
         return html
 
-    def _matrix_to_latex(self, matrix):
+    def _matrix_to_html(self, matrix):
         """
-        Convert a numpy array to a LaTeX matrix representation.
+        Convert a numpy array to an HTML table representation.
         """
-        latex = r"\begin{bmatrix} "
-        for i in range(matrix.shape[0]):
-            latex += " & ".join([f"{x:.2f}" for x in matrix[i]])
-            if i < matrix.shape[0] - 1:
-                latex += r"\\ "
-        latex += r" \end{bmatrix}"
-        return latex
+        html = "<table style='border-collapse: collapse;'>"
+        for row in matrix:
+            html += "<tr>"
+            for val in row:
+                html += f"<td style='border: 1px solid black; padding: 4px;'>{val:.2f}</td>"
+            html += "</tr>"
+        html += "</table>"
+        return html
 
 
 def _calculate_true_varma_psd(freq, dim, var_coeffs, vma_coeffs, sigma):
