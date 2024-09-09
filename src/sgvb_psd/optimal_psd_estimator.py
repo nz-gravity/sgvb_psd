@@ -3,12 +3,11 @@ from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
-from hyperopt import hp, tpe, fmin
+from hyperopt import fmin, hp, tpe
 
 from .backend import SpecVI
-from .postproc import plot_psdq, plot_peridogram, plot_single_psd, format_axes
+from .postproc import format_axes, plot_peridogram, plot_psdq, plot_single_psd
 from .utils.periodogram import get_periodogram
-
 
 
 class OptimalPSDEstimator:
@@ -23,15 +22,15 @@ class OptimalPSDEstimator:
     """
 
     def __init__(
-            self,
-            x: np.ndarray,
-            N_theta: int = 30,
-            nchunks: int = 1,
-            duration: float = 1.0,
-            ntrain_map=10000,
-            N_samples: int = 500,
-            max_hyperparm_eval: int = 100,
-            psd_scaling: float = 1.0
+        self,
+        x: np.ndarray,
+        N_theta: int = 30,
+        nchunks: int = 1,
+        duration: float = 1.0,
+        ntrain_map=10000,
+        N_samples: int = 500,
+        max_hyperparm_eval: int = 100,
+        psd_scaling: float = 1.0,
     ):
         """
         :param x: the input multivariate time series
@@ -64,8 +63,6 @@ class OptimalPSDEstimator:
         self.model_info = {}
         self.psd_quantiles = None
         self.psd_all = None
-        
-    
 
     def __learning_rate_optimisation_objective(self, lr):
         """Objective function for the hyperopt optimisation of the learning rate for the MAP
@@ -128,8 +125,9 @@ class OptimalPSDEstimator:
 
         return best_samp
 
-    def _compute_spectral_density(self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]) -> Tuple[
-        np.ndarray, np.ndarray]:
+    def _compute_spectral_density(
+        self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         This function is used to compute the spectral density given best surrogate posterior parameters
         :param post_sample: the surrogate posterior parameters
@@ -177,17 +175,11 @@ class OptimalPSDEstimator:
         spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
         self.psd_all = np.linalg.inv(spectral_density_inverse_all)
 
-        self.psd_q = np.zeros(
-            (3, num_freq, p_dim, p_dim), dtype=complex
-        )
+        self.psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
 
         diag_indices = np.diag_indices(p_dim)
-        self.psd_q[
-        :, :, diag_indices[0], diag_indices[1]
-        ] = np.quantile(
-            np.real(
-                self.psd_all[:, :, diag_indices[0], diag_indices[1]]
-            ),
+        self.psd_q[:, :, diag_indices[0], diag_indices[1]] = np.quantile(
+            np.real(self.psd_all[:, :, diag_indices[0], diag_indices[1]]),
             quantiles,
             axis=0,
         )
@@ -202,8 +194,8 @@ class OptimalPSDEstimator:
 
         for i, q in enumerate(quantiles):
             self.psd_q[i, :, triu_indices[1], triu_indices[0]] = (
-                    np.quantile(real_part, q, axis=0)
-                    + 1j * np.quantile(imag_part, q, axis=0)
+                np.quantile(real_part, q, axis=0)
+                + 1j * np.quantile(imag_part, q, axis=0)
             ).T
 
         self.psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
@@ -215,8 +207,10 @@ class OptimalPSDEstimator:
 
         # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
         true_fmax = self.sampling_freq / 2
-        self.psd_quantiles = self.psd_quantiles / self.psd_scaling ** 2 / (true_fmax / 0.5)
-        self.psd_all = self.psd_all / self.psd_scaling ** 2 / (true_fmax / 0.5)
+        self.psd_quantiles = (
+            self.psd_quantiles / self.psd_scaling**2 / (true_fmax / 0.5)
+        )
+        self.psd_all = self.psd_all / self.psd_scaling**2 / (true_fmax / 0.5)
 
     def run(self) -> Tuple[np.ndarray, np.ndarray]:
         best_samp = self.find_optimal_surrogate_params()
@@ -231,24 +225,25 @@ class OptimalPSDEstimator:
 
         fmax_true = self.sampling_freq / 2
         self._freq = np.fft.fftfreq(self.n_per_chunk, d=1 / self.sampling_freq)
-        
+
         n = self.n_per_chunk
-        if np.mod(n,2)== 0:
-            #the length per chunk is even
-            self._freq = self._freq[0:int(n/2)]
+        if np.mod(n, 2) == 0:
+            # the length per chunk is even
+            self._freq = self._freq[0 : int(n / 2)]
         else:
-            #the length per chunk is odd
-            self._freq = self._freq[0:int((n-1)/2)]
-        
+            # the length per chunk is odd
+            self._freq = self._freq[0 : int((n - 1) / 2)]
+
         # use fftshift to get the freq in the correct order
-        fmax_idx = int(self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2)
+        fmax_idx = int(
+            self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2
+        )
         return self._freq[0:fmax_idx]
 
     @property
     def n_per_chunk(self):
         """Return the number of points per chunk"""
         return self.x.shape[0] // self.nchunks
-
 
     @property
     def sampling_freq(self):
@@ -260,26 +255,13 @@ class OptimalPSDEstimator:
 
         return self._sampling_freq
 
-
     def plot(self, true_psd=None, **kwargs) -> "matplotlib.pyplot.figure":
-        axes = plot_psdq(self.psd_quantiles,self.freq, **kwargs)
+        axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
         axes = plot_peridogram(*self.pdgrm, axs=axes, **kwargs)
-        
+
         if true_psd is not None:
             plot_single_psd(*true_psd, axes, **kwargs)
-
 
         format_axes(axes, **kwargs)
 
         return axes
-
-
-
-
-
-
-
-
-
-
-
