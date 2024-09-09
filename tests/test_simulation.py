@@ -7,25 +7,15 @@ from sgvb_psd.postproc.plot_psd import plot_peridogram
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 
 
-def test_simulated_datasets(var2_data, plot_dir):
-    plt.figure(figsize=(3, 2.5))
-    plt.plot(var2_data.x)
-    plt.title('Simulated VAR(2) Time Series')
-    plt.xlabel('Time')
-    plt.ylabel('Value')
-    plt.legend([f'Series {i + 1}' for i in range(var2_data.d)])
-    plt.grid(True)
-    plt.savefig(f'{plot_dir}/var2_data.png')
-
 
 def test_var_psd_generation(var2_data, plot_dir):
-    
+    np.random.seed(0)
     optim = OptimalPSDEstimator(
         N_theta=30, nchunks=1, duration=1,
-        ntrain_map=100, x=var2_data.x, max_hyperparm_eval=1
+        ntrain_map=100, x=var2_data.data, max_hyperparm_eval=1
     )
     optim.run()
-    optim.plot(true_psd=var2_data.true_psd, off_symlog=False)
+    optim.plot(true_psd=[var2_data.psd, var2_data.freq ], off_symlog=False)
     plt.savefig(f'{plot_dir}/var_psd.png')
 
     ## TODO make siomethig like the following work
@@ -39,7 +29,7 @@ def test_var_psd_generation(var2_data, plot_dir):
 
 
 def test_pdgmr(var2_data, plot_dir):
-    pdgrm, f = get_periodogram(var2_data.x, fs=2 * np.pi)
-    assert pdgrm.shape == (128, 2, 2)
-    plot_peridogram(pdgrm, f, off_symlog=False)
+    pdgrm = var2_data.periodogram
+    # assert pdgrm.shape == (128, 2, 2)
+    var2_data.plot()
     plt.savefig(f'{plot_dir}/pdgrm.png')

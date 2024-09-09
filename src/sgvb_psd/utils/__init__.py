@@ -1,1 +1,1 @@
-from .sim_varma import sim_varma
+from .sim_varma import SimVARMA

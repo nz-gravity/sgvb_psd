@@ -254,7 +254,7 @@ class OptimalPSDEstimator:
     def sampling_freq(self):
         """Return the sampling frequency"""
         if self.duration == 1:
-            self._sampling_freq = 2 * np.pi # angular frequency
+            self._sampling_freq = 1
         else:
             self._sampling_freq = self.x[0] / self.duration
 
