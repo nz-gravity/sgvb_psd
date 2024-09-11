@@ -32,10 +32,9 @@ class SimVARMA:
         self.vma_coeffs = vma_coeffs
         self.sigma = sigma
         self.dim = vma_coeffs.shape[1]
-        self.freq = np.arange(0, np.floor_divide(n_samples, 2), 1) / (
-            n_samples
-        )
-        self.fs = self.freq[-1]
+        self.f = np.arange(0, np.floor_divide(n_samples, 2), 1) / (n_samples)
+        self.freq = np.arange(0, np.floor_divide(n_samples, 2), 1) / (n_samples) * (2*np.pi)
+        self.fs = self.f[-1]
         self.data = None
         self.periodogram = None
         self.resimulate(seed=seed)
@@ -113,7 +112,7 @@ class SimVARMA:
             np.ndarray: Computed PSD.
         """
         return _calculate_true_varma_psd(
-            self.freq, self.dim, self.var_coeffs, self.vma_coeffs, self.sigma
+            self.f, self.dim, self.var_coeffs, self.vma_coeffs, self.sigma
         )
 
     def plot(self, axs=None, **kwargs):
@@ -202,7 +201,7 @@ def _calculate_true_varma_psd(freq, dim, var_coeffs, vma_coeffs, sigma):
         axis=1,
         arr=freq.reshape(-1, 1),
     )
-    return spec_matrix * 2
+    return spec_matrix / (2*np.pi)
 
 
 def _calculate_spec_matrix_helper(f, dim, var_coeffs, vma_coeffs, sigma):

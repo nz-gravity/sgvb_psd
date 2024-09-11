@@ -249,7 +249,7 @@ class OptimalPSDEstimator:
     def sampling_freq(self):
         """Return the sampling frequency"""
         if self.duration == 1:
-            self._sampling_freq = 1
+            self._sampling_freq = 2*np.pi  #this is for the duration time is unit 1, the situation like simulation study
         else:
             self._sampling_freq = self.x[0] / self.duration
 
