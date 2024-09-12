@@ -13,23 +13,21 @@ class PSDAnalyzer:
         self,
         spec_true,
         spectral_density_q,
-        n_freq,
-        psd_estimator,
-        task_id=None,
+#        psd_estimator,
+        task_id=1,
     ):
         """
 
-        :param spec_true:
-        :param spectral_density_q:
-        :param n_freq:
-        :param task_id:
-        :param psd_estimator:
+        :param spec_true: the true psd
+        :param spectral_density_q: An array containing the estimated PSD, including the lower bound (5th percentile), 
+        median (50th percentile), and upper bound (95th percentile) for the 90% pointwise confidence interval (CI).
+        :param task_id: the number of the analysis task, the default is set to 1, which is one realization
         """
         self.spec_true = spec_true
         self.spectral_density_q = spectral_density_q
-        self.n_freq = n_freq
+        self.n_freq = spectral_density_q.shape[1]
         self.task_id = task_id
-        self.psd_estimator = psd_estimator
+#        self.psd_estimator = psd_estimator
         self.real_spec_true = self._transform_spec_true_to_real()
 
     def _transform_spec_true_to_real(self):
@@ -108,7 +106,7 @@ class PSDAnalyzer:
         )
         return coverage_point_CI
 
-    def run_analysis(self, iteration_start_time):
+    def run_analysis(self):
         """What does this do?"""
         L2_VI = self.calculate_L2_error()
         (
@@ -119,8 +117,8 @@ class PSDAnalyzer:
         ) = self.calculate_CI_length()
         coverage_point_CI = self.calculate_coverage()
 
-        iteration_end_time = time.time()
-        total_iteration_time = iteration_end_time - iteration_start_time
+#        iteration_end_time = time.time()
+#        total_iteration_time = iteration_end_time - iteration_start_time
 
         results = {
             "task_id": self.task_id,
@@ -130,9 +128,9 @@ class PSDAnalyzer:
             "len_point_CI_im_f12": len_point_CI_im_f12,
             "len_point_CI_f22": len_point_CI_f22,
             "coverage_pointwise": coverage_point_CI,
-            "optimal_lr": self.psd_estimator.optimal_lr,
-            "hyperopt_time": self.psd_estimator.hyperopt_time,
-            "total_iteration_time": total_iteration_time,
+#            "optimal_lr": self.psd_estimator.optimal_lr,
+#            "hyperopt_time": self.psd_estimator.hyperopt_time,
+#            "total_iteration_time": total_iteration_time,
         }
 
         result_df = pd.DataFrame([results])

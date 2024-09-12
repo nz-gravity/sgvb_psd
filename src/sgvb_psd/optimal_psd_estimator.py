@@ -109,15 +109,15 @@ class OptimalPSDEstimator:
         space = {"lr_map": hp.uniform("lr_map", 0.002, 0.02)}
         algo = tpe.suggest
 
-        hyperopt_start_time = time.time()
+#        hyperopt_start_time = time.time()
         fmin(
             self.__learning_rate_optimisation_objective,
             space,
             algo=algo,
             max_evals=self.max_hyperparm_eval,
         )
-        hyperopt_end_time = time.time()
-        self.hyperopt_time = hyperopt_end_time - hyperopt_start_time
+#        hyperopt_end_time = time.time()
+#        self.hyperopt_time = hyperopt_end_time - hyperopt_start_time
 
         min_loss_index = self.loss_values.index(min(self.loss_values))
         self.optimal_lr = self.lr_map_values[min_loss_index]

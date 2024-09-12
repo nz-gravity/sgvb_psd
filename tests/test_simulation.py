@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+import time
 from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
 from sgvb_psd.postproc.plot_psd import plot_peridogram
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
@@ -9,6 +9,8 @@ from sgvb_psd.utils.periodogram import get_periodogram
 
 def test_var_psd_generation(var2_data, plot_dir):
     np.random.seed(0)
+    
+    start_time = time.time()
     optim = OptimalPSDEstimator(
         N_theta=30,
         nchunks=1,
@@ -17,9 +19,13 @@ def test_var_psd_generation(var2_data, plot_dir):
         x=var2_data.data,
         max_hyperparm_eval=1,
     )
-    optim.run()
+    psd_all, psd_quantiles = optim.run()
     optim.plot(true_psd=[var2_data.psd, var2_data.freq], off_symlog=False)
     plt.savefig(f"{plot_dir}/var_psd.png")
+    
+    end_time = time.time()
+    estimation_time = end_time - start_time
+    print('The estimation time is', estimation_time, 'seconds')
 
     ## TODO make siomethig like the following work
     # we need to ensure that we are getting correct range of
@@ -28,7 +34,11 @@ def test_var_psd_generation(var2_data, plot_dir):
     # run_statistics = PSDAnalyzer(optim).
     # assert run_statistics.coverage > 0.95
     # assert run_statistics.l2_error < 0.3
-
+    
+    psd_analyzer = PSDAnalyzer(spec_true=var2_data.psd, 
+                               spectral_density_q=psd_quantiles, task_id=1)
+    psd_analyzer.run_analysis()
+    
 
 def test_pdgmr(var2_data, plot_dir):
     pdgrm = var2_data.periodogram
