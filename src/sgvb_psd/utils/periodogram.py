@@ -2,9 +2,26 @@ import numpy as np
 from scipy import signal
 
 
-def get_periodogram(x, fs):
+def get_chunked_median_periodogram(x, fs, n_chunks=1) -> np.ndarray:
     """Given a multivariate time series, return the periodogram."""
+    chunked_x = np.array(np.array_split(x, n_chunks))
+    _, n, p = chunked_x.shape
 
+    assert (
+        n > p
+    ), "The number of samples must be greater than the number of variables."
+
+    f = None
+    pdgm = np.zeros((n_chunks, n // 2, p, p))
+    for i in range(n_chunks):
+        pdgm[i], f = get_one_periodogram(x, fs)
+    pdgm = np.median(pdgm, axis=0)
+
+    assert pdgm.shape == (n // 2, p, p)
+    return pdgm, f
+
+
+def get_periodogram(x, fs, **kwargs):
     n, p = x.shape
     periodogram = np.zeros((n // 2, p, p), dtype=complex)
     for row_i in range(p):
