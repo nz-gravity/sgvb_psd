@@ -1,6 +1,9 @@
+import os.path
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-import time
+
 from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
 from sgvb_psd.postproc.plot_psd import plot_peridogram
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
@@ -9,7 +12,6 @@ from sgvb_psd.utils.periodogram import get_periodogram
 
 def test_var_psd_generation(var2_data, plot_dir):
     np.random.seed(0)
-    
     start_time = time.time()
     optim = OptimalPSDEstimator(
         N_theta=30,
@@ -18,30 +20,28 @@ def test_var_psd_generation(var2_data, plot_dir):
         ntrain_map=100,
         x=var2_data.data,
         max_hyperparm_eval=1,
+        seed=0,
     )
     psd_all, psd_quantiles = optim.run()
     optim.plot(true_psd=[var2_data.psd, var2_data.freq], off_symlog=False)
     plt.savefig(f"{plot_dir}/var_psd.png")
-    
+
     end_time = time.time()
     estimation_time = end_time - start_time
-    print('The estimation time is', estimation_time, 'seconds')
+    assert estimation_time < 30
 
-    ## TODO make siomethig like the following work
-    # we need to ensure that we are getting correct range of
-    # l2 error and coverage
+    csv = f"{plot_dir}/var_psd.csv"
+    psd_analyzer = PSDAnalyzer(
+        spec_true=var2_data.psd,
+        spectral_density_q=psd_quantiles,
+        task_id=1,
+        csv_file=csv,
+    )
+    assert isinstance(psd_analyzer.coverage_point_CI, float)
+    assert isinstance(psd_analyzer.l2_error, float)
+    assert os.path.exists(csv)
 
-    # run_statistics = PSDAnalyzer(optim).
-    # assert run_statistics.coverage > 0.95
-    # assert run_statistics.l2_error < 0.3
-    
-    psd_analyzer = PSDAnalyzer(spec_true=var2_data.psd, 
-                               spectral_density_q=psd_quantiles, task_id=1)
-    psd_analyzer.run_analysis()
-    
 
 def test_pdgmr(var2_data, plot_dir):
-    pdgrm = var2_data.periodogram
-    # assert pdgrm.shape == (128, 2, 2)
     var2_data.plot()
     plt.savefig(f"{plot_dir}/pdgrm.png")

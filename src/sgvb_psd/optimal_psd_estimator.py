@@ -1,11 +1,11 @@
-import time
 from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
 from hyperopt import fmin, hp, tpe
 
-from .backend import SpecVI
+from .backend import SpecVI, set_seed
+from .logging import logger
 from .postproc import format_axes, plot_peridogram, plot_psdq, plot_single_psd
 from .utils.periodogram import get_periodogram
 
@@ -31,6 +31,7 @@ class OptimalPSDEstimator:
         N_samples: int = 500,
         max_hyperparm_eval: int = 100,
         psd_scaling: float = 1.0,
+        seed=None,
     ):
         """
         :param x: the input multivariate time series
@@ -45,6 +46,9 @@ class OptimalPSDEstimator:
 
         """
 
+        if seed is not None:
+            set_seed(seed)
+
         self.N_theta = N_theta
         self.N_samples = N_samples
         self.nchunks = nchunks
@@ -52,9 +56,21 @@ class OptimalPSDEstimator:
         self.ntrain_map = ntrain_map
         self.fmax_for_analysis = x.shape[0] / 2
         self.x = x
-        self.pdgrm = get_periodogram(x, fs=self.sampling_freq)
+        self.n, self.p = x.shape
+        self.pdgrm = get_periodogram(
+            x, fs=self.sampling_freq, n_chunks=nchunks
+        )
         self.max_hyperparm_eval = max_hyperparm_eval
         self.psd_scaling = psd_scaling
+
+        if self.nchunks > 1:
+            logger.info(
+                f"Dividing data {x.shape} into "
+                f"({nchunks}, {self.n // self.nchunks}, {self.p}) chunks"
+            )
+            # if nchunks is not a power of 2, wil be slower
+            if np.log2(nchunks) % 1 != 0:
+                logger.warning("nchunks must be a power of 2 for faster FFTs")
 
         # Internal variables
         self.lr_map_values = []
@@ -109,15 +125,15 @@ class OptimalPSDEstimator:
         space = {"lr_map": hp.uniform("lr_map", 0.002, 0.02)}
         algo = tpe.suggest
 
-#        hyperopt_start_time = time.time()
+        #        hyperopt_start_time = time.time()
         fmin(
             self.__learning_rate_optimisation_objective,
             space,
             algo=algo,
             max_evals=self.max_hyperparm_eval,
         )
-#        hyperopt_end_time = time.time()
-#        self.hyperopt_time = hyperopt_end_time - hyperopt_start_time
+        #        hyperopt_end_time = time.time()
+        #        self.hyperopt_time = hyperopt_end_time - hyperopt_start_time
 
         min_loss_index = self.loss_values.index(min(self.loss_values))
         self.optimal_lr = self.lr_map_values[min_loss_index]
@@ -249,7 +265,9 @@ class OptimalPSDEstimator:
     def sampling_freq(self):
         """Return the sampling frequency"""
         if self.duration == 1:
-            self._sampling_freq = 2*np.pi  #this is for the duration time is unit 1, the situation like simulation study
+            self._sampling_freq = (
+                2 * np.pi
+            )  # this is for the duration time is unit 1, the situation like simulation study
         else:
             self._sampling_freq = self.x[0] / self.duration
 

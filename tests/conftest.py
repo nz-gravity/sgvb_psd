@@ -11,7 +11,8 @@ from sgvb_psd.utils import SimVARMA
 # set random seed
 np.random.seed(0)
 tf.random.set_seed(0)
-
+os.environ["TF_CUDNN_DETERMINISTIC"] = "0"
+os.environ["PYTHONHASHSEED"] = str(0)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 

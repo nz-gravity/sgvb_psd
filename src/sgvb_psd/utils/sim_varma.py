@@ -32,14 +32,25 @@ class SimVARMA:
         self.vma_coeffs = vma_coeffs
         self.sigma = sigma
         self.dim = vma_coeffs.shape[1]
-        self.f = np.arange(0, np.floor_divide(n_samples, 2), 1) / (n_samples)
-        self.freq = np.arange(0, np.floor_divide(n_samples, 2), 1) / (n_samples) * (2*np.pi)
-        self.fs = self.f[-1]
-        self.data = None
-        self.periodogram = None
+
+        self.n_freq_samples = n_samples // 2
+
+        self.fs = 2 * np.pi
+        self.freq = (
+            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
+        )
+
+        self.data = None  # set in "resimulate"
+        self.periodogram = None  # set in "resimulate"
         self.resimulate(seed=seed)
 
-        self.psd = self._compute_psd()
+        self.psd = _calculate_true_varma_psd(
+            self.n_freq_samples,
+            self.dim,
+            self.var_coeffs,
+            self.vma_coeffs,
+            self.sigma,
+        )
 
     def resimulate(self, seed=None):
         """
@@ -91,29 +102,7 @@ class SimVARMA:
             )
 
         self.data = x[101:]
-        self.periodogram = self._compute_periodogram()
-
-    def _compute_periodogram(self):
-        """
-        Compute the periodogram of the simulated data.
-
-        Returns:
-            np.ndarray: Computed periodogram.
-        """
-        # Implement periodogram computation here using self.frequencies
-        # This is a placeholder implementation
-        return get_periodogram(self.data, fs=self.fs)[0]
-
-    def _compute_psd(self):
-        """
-        Compute the true Power Spectral Density (PSD) of the VARMA process.
-
-        Returns:
-            np.ndarray: Computed PSD.
-        """
-        return _calculate_true_varma_psd(
-            self.f, self.dim, self.var_coeffs, self.vma_coeffs, self.sigma
-        )
+        self.periodogram = get_periodogram(self.data, fs=self.fs)[0]
 
     def plot(self, axs=None, **kwargs):
         kwargs["off_symlog"] = kwargs.get("off_symlog", False)
@@ -181,19 +170,26 @@ class SimVARMA:
         return html
 
 
-def _calculate_true_varma_psd(freq, dim, var_coeffs, vma_coeffs, sigma):
+def _calculate_true_varma_psd(
+    n_samples: int,
+    dim: int,
+    var_coeffs: np.ndarray,
+    vma_coeffs: np.ndarray,
+    sigma: np.ndarray,
+) -> np.ndarray:
     """
     Calculate the spectral matrix for given frequencies.
 
     Args:
-        frequencies (np.ndarray): Array of frequencies.
+        n_samples int: Number of samples to generate for the true PSD (up to 0.5).
         var_coeffs (np.ndarray): VAR coefficient array.
         vma_coeffs (np.ndarray): VMA coefficient array.
         sigma (np.ndarray): Covariance matrix or scalar variance.
 
     Returns:
-        np.ndarray: Calculated spectral matrix.
+        np.ndarray: VARMA spectral matrix (PSD) for freq from 0 to 0.5.
     """
+    freq = np.linspace(0, 0.5, n_samples, endpoint=False)
     spec_matrix = np.apply_along_axis(
         lambda f: _calculate_spec_matrix_helper(
             f, dim, var_coeffs, vma_coeffs, sigma
@@ -201,7 +197,7 @@ def _calculate_true_varma_psd(freq, dim, var_coeffs, vma_coeffs, sigma):
         axis=1,
         arr=freq.reshape(-1, 1),
     )
-    return spec_matrix / (2*np.pi)
+    return spec_matrix / (2 * np.pi)
 
 
 def _calculate_spec_matrix_helper(f, dim, var_coeffs, vma_coeffs, sigma):
