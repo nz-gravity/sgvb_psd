@@ -38,7 +38,8 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
                 ax.plot(freqs, psd_ij[1], **plt_kwargs)
             else:
                 ax.plot(freqs.ravel(), psd_ij.ravel(), **plt_kwargs)
-
+                
+            
     return axs
 
 
@@ -71,6 +72,8 @@ def plot_peridogram(pdgrm, freq, axs=None, **kwargs):
 
             ax = axs[row_i, col_j]
             ax.plot(freq, psd_ij, **plt_kwargs)
+            
+            
     return axs
 
 

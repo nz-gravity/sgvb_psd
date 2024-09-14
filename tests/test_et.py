@@ -1,5 +1,5 @@
 import os
-
+import time
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,21 +13,37 @@ def load_et_data() -> np.ndarray:
     """
     Return (n_samples, 3) array of XYZ channels
     """
-    path = os.path.join(HERE, "../docs/data/et_data.h5")
-    with h5py.File(path, "r") as f:
-        return np.array([f["X"][:], f["Y"][:], f["Z"][:]]).T
-
+    files_and_keys = [
+        ("../studies/et_study/X_ETnoise_GP.hdf5", 'E1:STRAIN'),
+        ("../studies/et_study/Y_ETnoise_GP.hdf5", 'E2:STRAIN'),
+        ("../studies/et_study/Z_ETnoise_GP.hdf5", 'E3:STRAIN')
+    ]
+    
+    channels = [h5py.File(os.path.join(HERE, file), "r")[key][:] for file, key in files_and_keys]
+    
+    return np.column_stack(channels)#[0:32768,:]
 
 def test_et(plot_dir):
+    psd_scaling = 10.0 ** 23
+    data = load_et_data()
+    N_theta = 400
+    start_time = time.time()
     optim = OptimalPSDEstimator(
-        N_theta=400,
-        nchunks=16,
-        duration=1,
-        ntrain_map=100,
-        x=load_et_data(),
-        max_hyperparm_eval=3,
+        N_theta=N_theta,
+        nchunks=125,
+        duration=2000,
+        ntrain_map=1000,
+        psd_scaling=psd_scaling,
+        x=data * psd_scaling,
+        max_hyperparm_eval=1,
+        fmax_for_analysis=128,
+        degree_fluctuate=N_theta,
         seed=0,
     )
-    optim.run()
-    optim.plot()
-    plt.savefig(f"{plot_dir}/var_psd.png")
+    psd_all, psd_quantiles = optim.run()
+    optim.plot(off_symlog=True)
+    plt.savefig(f"{plot_dir}/ET_psd.png")
+
+    end_time = time.time()
+    estimation_time = end_time - start_time
+    print('The estimation time is', estimation_time, 'seconds')

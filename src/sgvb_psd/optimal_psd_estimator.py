@@ -31,6 +31,8 @@ class OptimalPSDEstimator:
         N_samples: int = 500,
         max_hyperparm_eval: int = 100,
         psd_scaling: float = 1.0,
+        fmax_for_analysis = None,
+        degree_fluctuate=None,
         seed=None,
     ):
         """
@@ -48,20 +50,23 @@ class OptimalPSDEstimator:
 
         if seed is not None:
             set_seed(seed)
+            
+        if fmax_for_analysis is None:
+           fmax_for_analysis = x.shape[0] / 2    
 
         self.N_theta = N_theta
         self.N_samples = N_samples
         self.nchunks = nchunks
         self.duration = duration
         self.ntrain_map = ntrain_map
-        self.fmax_for_analysis = x.shape[0] / 2
+        self.fmax_for_analysis = fmax_for_analysis
         self.x = x
         self.n, self.p = x.shape
-        self.pdgrm = get_periodogram(
-            x, fs=self.sampling_freq, n_chunks=nchunks
-        )
-        self.max_hyperparm_eval = max_hyperparm_eval
         self.psd_scaling = psd_scaling
+        self.pdgrm = get_periodogram(
+            x, fs=self.sampling_freq, psd_scaling = self.psd_scaling)
+        self.max_hyperparm_eval = max_hyperparm_eval
+        self.degree_fluctuate = degree_fluctuate
 
         if self.nchunks > 1:
             logger.info(
@@ -97,6 +102,7 @@ class OptimalPSDEstimator:
             duration=self.duration,
             fmax_for_analysis=self.fmax_for_analysis,
             inference_size=self.N_samples,
+            degree_fluctuate=self.degree_fluctuate
         )
 
         losses = result_list[0]
@@ -250,10 +256,14 @@ class OptimalPSDEstimator:
             # the length per chunk is odd
             self._freq = self._freq[0 : int((n - 1) / 2)]
 
-        # use fftshift to get the freq in the correct order
-        fmax_idx = int(
-            self.fmax_for_analysis / fmax_true * self.n_per_chunk / 2
-        )
+        # Check if duration == 1
+        if self.duration == 1:
+            fmax_idx = int(self.fmax_for_analysis)  # Set fmax_idx to fmax_for_analysis
+        else:
+            # use fftshift to get the freq in the correct order
+            fmax_idx = int(
+                self.fmax_for_analysis / fmax_true * (self.n_per_chunk / 2)
+            )
         return self._freq[0:fmax_idx]
 
     @property
@@ -269,14 +279,14 @@ class OptimalPSDEstimator:
                 2 * np.pi
             )  # this is for the duration time is unit 1, the situation like simulation study
         else:
-            self._sampling_freq = self.x[0] / self.duration
+            self._sampling_freq = self.x.shape[0] / self.duration
 
         return self._sampling_freq
 
     def plot(self, true_psd=None, **kwargs) -> "matplotlib.pyplot.figure":
         axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
         axes = plot_peridogram(*self.pdgrm, axs=axes, **kwargs)
-
+        
         if true_psd is not None:
             plot_single_psd(*true_psd, axes, **kwargs)
 

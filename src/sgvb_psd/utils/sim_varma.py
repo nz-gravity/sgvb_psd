@@ -32,7 +32,7 @@ class SimVARMA:
         self.vma_coeffs = vma_coeffs
         self.sigma = sigma
         self.dim = vma_coeffs.shape[1]
-
+        self.psd_scaling = 1
         self.n_freq_samples = n_samples // 2
 
         self.fs = 2 * np.pi
@@ -102,7 +102,7 @@ class SimVARMA:
             )
 
         self.data = x[101:]
-        self.periodogram = get_periodogram(self.data, fs=self.fs)[0]
+        self.periodogram = get_periodogram(self.data, fs=self.fs, psd_scaling=self.psd_scaling)[0]
 
     def plot(self, axs=None, **kwargs):
         kwargs["off_symlog"] = kwargs.get("off_symlog", False)
