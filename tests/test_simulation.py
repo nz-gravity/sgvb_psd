@@ -4,10 +4,10 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
-from sgvb_psd.postproc.plot_psd import plot_peridogram
-from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
-from sgvb_psd.utils.periodogram import get_periodogram
+from src.sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
+from src.sgvb_psd.postproc.plot_psd import plot_peridogram
+from src.sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
+from src.sgvb_psd.utils.periodogram import get_periodogram
 
 
 def test_var_psd_generation(var2_data, plot_dir):
