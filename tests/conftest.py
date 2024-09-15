@@ -6,7 +6,7 @@ import pytest
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from sgvb_psd.utils import SimVARMA
+from src.sgvb_psd.utils import SimVARMA
 
 # set random seed
 np.random.seed(0)
