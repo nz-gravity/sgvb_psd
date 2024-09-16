@@ -3,11 +3,14 @@ from typing import Tuple
 import numpy as np
 import tensorflow as tf
 from hyperopt import fmin, hp, tpe
+import time
 
-from .backend import SpecVI, set_seed
+
+from .backend import SpecVI
 from .logging import logger
 from .postproc import format_axes, plot_peridogram, plot_psdq, plot_single_psd
 from .utils.periodogram import get_periodogram
+from .utils.tf_utils import set_seed
 
 
 class OptimalPSDEstimator:
@@ -235,8 +238,16 @@ class OptimalPSDEstimator:
         self.psd_all = self.psd_all / self.psd_scaling**2 / (true_fmax / 0.5)
 
     def run(self) -> Tuple[np.ndarray, np.ndarray]:
+        logger.info("Running hyperopt to find optimal learning rate")
+        t0 = time.time()
         best_samp = self.find_optimal_surrogate_params()
+        t1 = time.time()
+        logger.info(f"Optimal learning rate found in {t1 - t0:.2f}s")
+        logger.info("Computing optimal PSD estimation")
+        t0 = time.time()
         self._compute_spectral_density(best_samp)
+        t1 = time.time()
+        logger.info(f"Optimal PSD estimation complete in {t1 - t0:.2f}s")
         return self.psd_all, self.psd_quantiles
 
     @property

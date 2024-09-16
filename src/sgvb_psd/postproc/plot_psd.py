@@ -202,12 +202,12 @@ def _format_text(axes, channel_labels=None, **kwargs):
         for j in range(p):
             ax = axes[i, j]
             lbl = f"{channel_labels[i]}{channel_labels[j]}"
-            lbl = "\mathbf{S}_{" + lbl + "}"
+            lbl = r"\mathbf{S}_{" + lbl + "}"
 
             if i > j:  # upper triangular
-                lbl = "$\Re(" + lbl + ")$"
+                lbl = r"$\Re(" + lbl + ")$"
             elif i < j:  # lower triangular
-                lbl = "$\Im(" + lbl + ")$"
+                lbl = r"$\Im(" + lbl + ")$"
             else:
                 lbl = "$" + lbl + "$"
 

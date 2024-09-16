@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 from .spec_prep import SpecPrep
-from ..logging import logger
 
 tfd = tfp.distributions
 tfb = tfp.bijectors

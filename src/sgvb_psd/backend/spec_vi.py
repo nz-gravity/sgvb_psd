@@ -64,7 +64,7 @@ class SpecVI:
         # create tranable variables
         Spec_hs.createModelVariables_hs()
 
-        logger.info("Start Model Inference Training: ")
+        logger.debug("Starting Model Inference Training..")
 
         """
         # Phase1 obtain MAP
@@ -98,7 +98,7 @@ class SpecVI:
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
             return model.trainable_vars, lp.stack()
 
-        logger.info("Start Point Estimating: ")
+        logger.debug("Start Point Estimating... ")
         opt_vars_hs, lp_hs = train_hs(Spec_hs, optimizer_hs, n_train)
         # opt_vars_hs:         self.trainable_vars(ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
@@ -106,7 +106,7 @@ class SpecVI:
         #                                       ltau)
         # Variational inference for regression parameters
         end_map = timeit.default_timer()
-        logger.info(f"MAP Training Time: {end_map-start_map:.2f}s")
+        logger.debug(f"MAP Training Time: {end_map-start_map:.2f}s")
         self.lp = lp_hs
 
         """
@@ -160,7 +160,7 @@ class SpecVI:
         def conditioned_log_prob(*z):
             return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
 
-        logger.info("Start UQ training: ")
+        logger.debug("Start UQ training... ")
         start = timeit.default_timer()
         # For more on TF's fit_surrogate_posterior, see
         # https://www.tensorflow.org/probability/api_docs/python/tfp/vi/fit_surrogate_posterior
@@ -175,12 +175,12 @@ class SpecVI:
             conditioned_log_prob
         )  #
         stop = timeit.default_timer()
-        logger.info(f"VI Time: {stop-start:.2f}s")
+        logger.debug(f"VI Time: {stop-start:.2f}s")
         stop_total = timeit.default_timer()
         self.kld = losses
         # plt.plot(losses)
 
-        logger.info(
+        logger.debug(
             f"Total Inference Training Time: {stop_total-start_total:.2f}s"
         )
 

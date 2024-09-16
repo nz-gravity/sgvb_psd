@@ -1,8 +1,9 @@
 import numpy as np
 from scipy import signal
+from typing import Tuple
 
 
-def get_chunked_median_periodogram(x, fs, n_chunks=1) -> np.ndarray:
+def get_chunked_median_periodogram(x, fs, n_chunks=1) -> Tuple[np.ndarray, np.ndarray]:
     """Given a multivariate time series, return the periodogram."""
     chunked_x = np.array(np.array_split(x, n_chunks))
     _, n, p = chunked_x.shape
@@ -14,17 +15,18 @@ def get_chunked_median_periodogram(x, fs, n_chunks=1) -> np.ndarray:
     f = None
     pdgm = np.zeros((n_chunks, n // 2, p, p))
     for i in range(n_chunks):
-        pdgm[i], f = get_one_periodogram(x, fs)
+        pdgm[i], f = get_periodogram(x, fs)
     pdgm = np.median(pdgm, axis=0)
 
     assert pdgm.shape == (n // 2, p, p)
     return pdgm, f
 
 
-def get_periodogram(x, fs, psd_scaling, **kwargs):
+def get_periodogram(x, fs, psd_scaling, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     n, p = x.shape
     x = x/psd_scaling
     periodogram = np.zeros((n // 2, p, p), dtype=complex)
+    f = np.zeros(n // 2)
     for row_i in range(p):
         for col_j in range(p):
             if row_i == col_j:
