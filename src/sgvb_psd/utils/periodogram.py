@@ -22,7 +22,7 @@ def get_chunked_median_periodogram(x, fs, n_chunks=1) -> Tuple[np.ndarray, np.nd
     return pdgm, f
 
 
-def get_periodogram(x, fs, psd_scaling, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
+def get_periodogram(x, fs, psd_scaling=1, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     n, p = x.shape
     x = x/psd_scaling
     periodogram = np.zeros((n // 2, p, p), dtype=complex)

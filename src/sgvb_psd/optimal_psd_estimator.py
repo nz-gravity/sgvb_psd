@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import tensorflow as tf
 from hyperopt import fmin, hp, tpe
+from hyperopt.exceptions import AllTrialsFailed
 import time
 
 
@@ -11,6 +12,7 @@ from .logging import logger
 from .postproc import format_axes, plot_peridogram, plot_psdq, plot_single_psd
 from .utils.periodogram import get_periodogram
 from .utils.tf_utils import set_seed
+
 
 
 class OptimalPSDEstimator:
@@ -120,6 +122,8 @@ class OptimalPSDEstimator:
             )
             self.model_info["p_dim"] = result_list[1].p_dim
 
+        # TODO: this is taking too much memory -- do we need to store all of this?
+        # dont we just need the best point?
         self.lr_map_values.append(lr_map)
         self.loss_values.append(losses[-1].numpy())
         self.all_samp.append(samp)
@@ -134,20 +138,21 @@ class OptimalPSDEstimator:
         space = {"lr_map": hp.uniform("lr_map", 0.002, 0.02)}
         algo = tpe.suggest
 
-        #        hyperopt_start_time = time.time()
-        fmin(
-            self.__learning_rate_optimisation_objective,
-            space,
-            algo=algo,
-            max_evals=self.max_hyperparm_eval,
-        )
-        #        hyperopt_end_time = time.time()
-        #        self.hyperopt_time = hyperopt_end_time - hyperopt_start_time
+        try:
+            fmin(
+                self.__learning_rate_optimisation_objective,
+                space,
+                algo=algo,
+                max_evals=self.max_hyperparm_eval,
 
-        min_loss_index = self.loss_values.index(min(self.loss_values))
-        self.optimal_lr = self.lr_map_values[min_loss_index]
-        best_samp = self.all_samp[min_loss_index]
-
+            )
+            min_loss_index = self.loss_values.index(min(self.loss_values))
+            self.optimal_lr = self.lr_map_values[min_loss_index]
+            best_samp = self.all_samp[min_loss_index]
+        except AllTrialsFailed as e:
+            self.optimal_lr = self.lr_map_values[-1]
+            best_samp = self.all_samp[-1]
+            logger.error(f"Hyperopt failed to find optimal learning rate: {e}. Using last tested LR:{self.optimal_lr}.")
         return best_samp
 
     def _compute_spectral_density(

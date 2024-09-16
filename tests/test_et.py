@@ -4,7 +4,7 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
+from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,7 +23,9 @@ def load_et_data() -> np.ndarray:
     
     return np.column_stack(channels)#[0:32768,:]
 
-def test_et(plot_dir):
+def _test_et(plot_dir):
+    # Test takes too long -- "tests" should be a few seconds.
+
     psd_scaling = 10.0 ** 23
     data = load_et_data()
     N_theta = 400

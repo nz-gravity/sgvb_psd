@@ -1,5 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message="Attempt to set non-positive ylim on a log-scaled axis"
+)
+
 
 
 def plot_psdq(psd_q, freqs, axs=None, **kwargs):
@@ -72,8 +79,12 @@ def plot_peridogram(pdgrm, freq, axs=None, **kwargs):
 
             ax = axs[row_i, col_j]
             ax.plot(freq, psd_ij, **plt_kwargs)
-            
-            
+
+    if len(kwargs)>0:
+        format_axes(axs, **kwargs)
+
+
+
     return axs
 
 
