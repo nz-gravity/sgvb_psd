@@ -23,7 +23,7 @@ def load_et_data() -> np.ndarray:
     
     return np.column_stack(channels)#[0:32768,:]
 
-def _test_et(plot_dir):
+def test_et(plot_dir):
     # Test takes too long -- "tests" should be a few seconds.
 
     psd_scaling = 10.0 ** 23
@@ -44,7 +44,7 @@ def _test_et(plot_dir):
         seed=0,
     )
     psd_all, psd_quantiles = optim.run()
-    optim.plot(off_symlog=True)
+    optim.plot(off_symlog=True, xlims=[5, 128])
     plt.savefig(f"{plot_dir}/ET_psd.png")
 
     end_time = time.time()

@@ -46,7 +46,7 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
             else:
                 ax.plot(freqs.ravel(), psd_ij.ravel(), **plt_kwargs)
                 
-            
+
     return axs
 
 
@@ -80,10 +80,8 @@ def plot_peridogram(pdgrm, freq, axs=None, **kwargs):
             ax = axs[row_i, col_j]
             ax.plot(freq, psd_ij, **plt_kwargs)
 
-    if len(kwargs)>0:
+    if len(kwargs) > 0:
         format_axes(axs, **kwargs)
-
-
 
     return axs
 
@@ -126,6 +124,8 @@ def _format_spines(
     sylmog_thresh=1e-3,
     **kwargs,
 ):
+
+
     p = axes.shape[0]
     plt.subplots_adjust(hspace=0.0, wspace=0.0)
 
@@ -213,12 +213,12 @@ def _format_text(axes, channel_labels=None, **kwargs):
         for j in range(p):
             ax = axes[i, j]
             lbl = f"{channel_labels[i]}{channel_labels[j]}"
-            lbl = r"\mathbf{S}_{" + lbl + "}"
+            lbl = "\mathbf{S}_{" + lbl + "}"
 
-            if i > j:  # upper triangular
-                lbl = r"$\Re(" + lbl + ")$"
-            elif i < j:  # lower triangular
-                lbl = r"$\Im(" + lbl + ")$"
+            if i < j:  # upper triangular
+                lbl = "$\Re(" + lbl + ")$"
+            elif i > j:  # lower triangular
+                lbl = "$\Im(" + lbl + ")$"
             else:
                 lbl = "$" + lbl + "$"
 

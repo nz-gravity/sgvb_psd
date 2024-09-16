@@ -49,8 +49,9 @@ class OptimalPSDEstimator:
         :param N_samples: the number of parameters sampled from the surrogate distribution
         :param max_hyperparm_eval: the number of evaluations in 'Hyperopt'
         :param psd_scaling: the scale size of the input data
-
-
+        :param fmax_for_analysis: the maximum frequency in the frequency domain that needs to be analyzed.
+        :param degree_fluctuate: a hyperparameter from the prior, 
+               which should be set to a large value when dealing with a large number of basis functions.
         """
 
         if seed is not None:
@@ -309,3 +310,4 @@ class OptimalPSDEstimator:
         format_axes(axes, **kwargs)
 
         return axes
+
