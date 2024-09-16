@@ -333,6 +333,596 @@ const thebe_selector_output = ".output, .cell_output"
                   
   <section class="tex2jax_ignore mathjax_ignore" id="et-example">
 <h1>ET Example<a class="headerlink" href="#et-example" title="Permalink to this heading">#</a></h1>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">sgvb_psd.optimal_psd_estimator</span> <span class="kn">import</span> <span class="n">OptimalPSDEstimator</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2024-09-16 18:13:07.608617: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>18:13:13|SGVB-PSD|INFO| 0s |No GPU detected. Running on CPU.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">HERE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span>
+
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">HERE</span><span class="p">,</span> <span class="s2">&quot;data/et_data.h5&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5_file</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="s2">&quot;XYZ&quot;</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">h5_file</span><span class="p">[</span><span class="n">c</span><span class="p">][:]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h5_file</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][:]</span>
+    
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Y&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Z&#39;</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sgvb_psd.utils.periodogram</span> <span class="kn">import</span> <span class="n">get_periodogram</span>
+<span class="kn">from</span> <span class="nn">sgvb_psd.postproc.plot_psd</span> <span class="kn">import</span> <span class="n">plot_peridogram</span>
+
+<span class="n">dt</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">dt</span>
+<span class="c1"># scaling = 10.0 ** 23</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">Pxx</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">get_periodogram</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">nperseg</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">noverlap</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">psd_scaling</span><span class="o">=</span><span class="n">scaling</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_peridogram</span><span class="p">(</span>
+    <span class="n">Pxx</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> 
+    <span class="n">xlims</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+    <span class="n">diag_ylims</span><span class="o">=</span><span class="p">(</span><span class="mf">5e-53</span><span class="p">,</span> <span class="mf">5e-48</span><span class="p">),</span>
+    <span class="n">offdiag_ylims</span><span class="o">=</span><span class="p">(</span><span class="mf">10e-53</span><span class="p">,</span> <span class="mf">10e-48</span><span class="p">),</span>
+    <span class="n">sylmog_thresh</span><span class="o">=</span><span class="mf">10e-49</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>array([[&lt;Axes: &gt;, &lt;Axes: &gt;, &lt;Axes: &gt;],
+       [&lt;Axes: &gt;, &lt;Axes: &gt;, &lt;Axes: &gt;],
+       [&lt;Axes: &gt;, &lt;Axes: &gt;, &lt;Axes: &gt;]], dtype=object)
+</pre></div>
+</div>
+<img alt="../_images/977b176bb47f31e83469a324150cb8ba03b60f67180115ca75584be29dfc6b5e.png" src="../_images/977b176bb47f31e83469a324150cb8ba03b60f67180115ca75584be29dfc6b5e.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_peridogram</span><span class="p">(</span>
+    <span class="n">Pxx</span><span class="o">/</span><span class="mf">10e-49</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> 
+    <span class="n">xlims</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+    <span class="c1"># diag_ylims=(5e-53, 5e-48),</span>
+    <span class="c1"># offdiag_ylims=(10e-53, 10e-48),</span>
+    <span class="c1"># sylmog_thresh=10e-49</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>array([[&lt;Axes: &gt;, &lt;Axes: &gt;, &lt;Axes: &gt;],
+       [&lt;Axes: &gt;, &lt;Axes: &gt;, &lt;Axes: &gt;],
+       [&lt;Axes: &gt;, &lt;Axes: &gt;, &lt;Axes: &gt;]], dtype=object)
+</pre></div>
+</div>
+<img alt="../_images/d5393995d3148adf0bc540e54ef59d5eb69077b21dda07097a54b74d980072dc.png" src="../_images/d5393995d3148adf0bc540e54ef59d5eb69077b21dda07097a54b74d980072dc.png" />
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">optim</span> <span class="o">=</span> <span class="n">OptimalPSDEstimator</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="o">/</span><span class="mf">10e-49</span><span class="p">,</span> 
+    <span class="n">N_theta</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> 
+    <span class="n">nchunks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+    <span class="n">duration</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> 
+    <span class="n">N_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">max_hyperparm_eval</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>18:42:44|SGVB-PSD|INFO| 1770s |Running hyperopt to find optimal learning rate
+  0%|          | 0/1 [00:00&lt;?, ?trial/s, best loss=?]18:42:44|SGVB-PSD|DEBUG| 1770s |Inputted data shape: (65536, 3)
+18:42:46|SGVB-PSD|DEBUG| 1772s |Starting Model Inference Training..
+18:42:46|SGVB-PSD|DEBUG| 1772s |Start Point Estimating... 
+18:42:52|SGVB-PSD|DEBUG| 1778s |MAP Training Time: 6.05s
+18:42:52|SGVB-PSD|DEBUG| 1778s |Start UQ training... 
+18:43:34|SGVB-PSD|DEBUG| 1820s |VI Time: 42.16s
+18:43:34|SGVB-PSD|DEBUG| 1820s |Total Inference Training Time: 48.32s
+100%|██████████| 1/1 [00:52&lt;00:00, 52.00s/trial, best loss=?]
+18:43:36|SGVB-PSD|ERROR| 1822s |Hyperopt failed to find optimal learning rate: . Using last value tested.
+18:43:36|SGVB-PSD|INFO| 1822s |Optimal learning rate found in 52.01s
+18:43:36|SGVB-PSD|INFO| 1822s |Computing optimal PSD estimation
+18:44:01|SGVB-PSD|INFO| 1847s |Optimal PSD estimation complete in 24.60s
+</pre></div>
+</div>
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(array([[[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        ...,
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]]], dtype=complex64),
+ array([[[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]],
+ 
+ 
+        [[[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         ...,
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]],
+ 
+         [[nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj],
+          [nan+nanj, nan+nanj, nan+nanj]]]]))
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">optim</span><span class="o">.</span><span class="n">all_samp</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[[&lt;tf.Tensor: shape=(500, 3, 402), dtype=float32, numpy=
+  array([[[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         ...,
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 400), dtype=float32, numpy=
+  array([[[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         ...,
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 402), dtype=float32, numpy=
+  array([[[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         ...,
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 402), dtype=float32, numpy=
+  array([[[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         ...,
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 402), dtype=float32, numpy=
+  array([[[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         ...,
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 402), dtype=float32, numpy=
+  array([[[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         ...,
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]],
+  
+         [[nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan],
+          [nan, nan, nan, ..., nan, nan, nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 1), dtype=float32, numpy=
+  array([[[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         ...,
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]]], dtype=float32)&gt;,
+  &lt;tf.Tensor: shape=(500, 3, 1), dtype=float32, numpy=
+  array([[[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         ...,
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]],
+  
+         [[nan],
+          [nan],
+          [nan]]], dtype=float32)&gt;]]
+</pre></div>
+</div>
+</div>
+</div>
 </section>
 
     <script type="text/x-thebe-config">

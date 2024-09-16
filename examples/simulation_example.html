@@ -368,12 +368,6 @@ const thebe_selector_output = ".output, .cell_output"
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/avaj040/Documents/projects/sgvb_psd/src/sgvb_psd/postproc/plot_psd.py:180: UserWarning: Attempt to set non-positive ylim on a log-scaled axis will be ignored.
-  ax.set_ylim(diag_ylims)
-</pre></div>
-</div>
-</div>
 </div>
 <p><img alt="VAR(2) Data" src="../_images/var2_data.png" /></p>
 <div class="cell docutils container">
@@ -385,36 +379,34 @@ const thebe_selector_output = ".output, .cell_output"
     <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">var2</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">max_hyperparm_eval</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">)</span>
 <span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span> <span class="n">off_symlog</span><span class="o">=</span><span class="kc">False</span><span class="p">);</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span> 
+    <span class="n">off_symlog</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">],</span>
+<span class="p">);</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_psd.png&#39;</span><span class="p">);</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2024-09-09 18:07:16.954722: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
-2024-09-09 18:07:16.962414: I external/local_xla/xla/tsl/cuda/cudart_stub.cc:32] Could not find cuda drivers on your machine, GPU will not be used.
-2024-09-09 18:07:17.047489: I external/local_xla/xla/tsl/cuda/cudart_stub.cc:32] Could not find cuda drivers on your machine, GPU will not be used.
-2024-09-09 18:07:17.137065: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:485] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
-2024-09-09 18:07:17.198193: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:8454] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-2024-09-09 18:07:17.217788: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1452] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-2024-09-09 18:07:17.340972: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
-To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2024-09-09 18:07:18.476309: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2024-09-16 17:46:40.695470: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/1 [00:00&lt;?, ?trial/s, best loss=?]|18:07:19|SGVB-PSD|DEBUG| Inputted data shape: (1024, 2)
-|18:07:19|SGVB-PSD|INFO| Start Model Inference Training: 
-|18:07:19|SGVB-PSD|INFO| Start Point Estimating: 
-|18:07:21|SGVB-PSD|INFO| MAP Training Time: 2.36s
-|18:07:22|SGVB-PSD|INFO| Start UQ training: 
-|18:07:27|SGVB-PSD|INFO| VI Time: 5.78s
-|18:07:27|SGVB-PSD|INFO| Total Inference Training Time: 8.20s
-100%|██████████| 1/1 [00:08&lt;00:00,  8.40s/trial, best loss: 915.7213134765625]
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/avaj040/Documents/projects/sgvb_psd/src/sgvb_psd/postproc/plot_psd.py:180: UserWarning: Attempt to set non-positive ylim on a log-scaled axis will be ignored.
-  ax.set_ylim(diag_ylims)
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>17:46:45|SGVB-PSD|INFO| 0s |No GPU detected. Running on CPU.
+17:46:45|SGVB-PSD|INFO| 0s |Running hyperopt to find optimal learning rate
+  0%|          | 0/1 [00:00&lt;?, ?trial/s, best loss=?]17:46:45|SGVB-PSD|DEBUG| 0s |Inputted data shape: (1024, 2)
+17:46:45|SGVB-PSD|DEBUG| 0s |Starting Model Inference Training..
+17:46:45|SGVB-PSD|DEBUG| 0s |Start Point Estimating... 
+17:46:48|SGVB-PSD|DEBUG| 3s |MAP Training Time: 3.11s
+17:46:48|SGVB-PSD|DEBUG| 3s |Start UQ training... 
+17:46:57|SGVB-PSD|DEBUG| 12s |VI Time: 9.16s
+17:46:57|SGVB-PSD|DEBUG| 12s |Total Inference Training Time: 12.34s
+100%|██████████| 1/1 [00:12&lt;00:00, 12.63s/trial, best loss: 904.1318359375]
+17:46:58|SGVB-PSD|INFO| 12s |Optimal learning rate found in 12.65s
+17:46:58|SGVB-PSD|INFO| 12s |Computing optimal PSD estimation
+17:46:59|SGVB-PSD|INFO| 13s |Optimal PSD estimation complete in 1.11s
 </pre></div>
 </div>
 </div>
