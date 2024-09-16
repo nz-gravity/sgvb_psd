@@ -1,6 +1,7 @@
 from sgvb_psd.utils.sim_varma import SimVARMA
 from sgvb_psd.utils.tf_utils import set_seed
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def test_data_generation(plot_dir):
