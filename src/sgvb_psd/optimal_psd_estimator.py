@@ -182,6 +182,7 @@ class OptimalPSDEstimator:
             logger.error(
                 f"Hyperopt failed to find optimal learning rate: {e}. Using last tested LR:{self.optimal_lr}."
             )
+        logger.info(f"Optimal learning rate: {self.optimal_lr}")
         return best_samp
 
     def _compute_spectral_density(
