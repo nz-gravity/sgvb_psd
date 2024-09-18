@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
+from sgvb_psd.backend.spec_vi import SpecVI
 from sgvb_psd.postproc import plot_peridogram
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,44 +38,43 @@ def load_et_data(npts=None) -> np.ndarray:
     return channels, t
 
 
+
+
+
 # Jianan -- please stop this test, it takes too long, and takes up
 # too many minutes in the online pipeline (i only have limited minutes)!
 def test_et(plot_dir):
     # Test takes too long -- "tests" should be a few seconds.
     data, t = load_et_data(2**14)
-    dt = t[1] - t[0]
 
-    N_theta = 10
-    fmax_for_analysis = 128
     start_time = time.time()
+    N_theta = 300
     optim = OptimalPSDEstimator(
         N_theta=N_theta,
         nchunks=8,
         duration=t[-1],
-        ntrain_map=10,
+        ntrain_map=1000,
         fs=2048,
         x=data,
         max_hyperparm_eval=1,
-        fmax_for_analysis=fmax_for_analysis,
+        fmax_for_analysis=128,
         degree_fluctuate=N_theta,
         seed=0,
+        lr_range=(0.002, 0.003),
     )
 
-    prev_fs = optim.x.shape[0] / 2000
 
-    plot_peridogram(
-        optim.pdgrm,
-        optim.pdgrm_freq,
+    kwargs = dict(
         channel_labels="XYZ",
         sylmog_thresh=1e-49,
         xlims=[5, 128],
     )
+    plot_peridogram(optim.pdgrm, optim.pdgrm_freq, **kwargs)
     plt.savefig(f"{plot_dir}/ET_peridogram.png")
 
-    psd_all, psd_quantiles = optim.run()
-    optim.plot(off_symlog=True, xlims=[5, 128])
-
-    # plt.savefig(f"{plot_dir}/ET_psd.png")
+    optim.run()
+    optim.plot(**kwargs, plot_periodogram=False)
+    plt.savefig(f"{plot_dir}/ET_psd.png")
     #
     # end_time = time.time()
     # estimation_time = end_time - start_time
@@ -116,3 +116,24 @@ def test_et(plot_dir):
     # plt.ylim([0, 0.7])
     # plt.legend(loc='upper left', fontsize='medium')
     # plt.savefig(f"{plot_dir}/ET_squared_coherence.png")
+
+
+
+def test_et_SpecVI(et_data):
+    data, t = et_data
+    data = data - np.mean(data, axis=0)
+    data = data / np.std(data, axis=0)
+
+    spec = SpecVI(data)
+    spec.runModel(
+        N_theta=300,
+        nchunks=8,
+        duration=t[-1],
+        ntrain_map=4000,
+        fs=2048,
+        fmax_for_analysis=128,
+        degree_fluctuate=300,
+        lr_map=0.0005,
+    )
+
+    # jianan -- can we try juust this?
