@@ -10,9 +10,11 @@ import time
 from .backend import SpecVI
 from .logging import logger
 from .postproc import format_axes, plot_peridogram, plot_psdq, plot_single_psd
-from .utils.periodogram import get_periodogram
+from .postproc import plot_coherence
+from .utils.periodogram import get_periodogram, get_welch_periodogram
 from .utils.tf_utils import set_seed
 
+import matplotlib.pyplot as plt
 
 
 class OptimalPSDEstimator:
@@ -204,44 +206,42 @@ class OptimalPSDEstimator:
         D_all_inv = np.linalg.inv(D_all)
 
         spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
-        self.psd_all = np.linalg.inv(spectral_density_inverse_all)
+        psd_all = np.linalg.inv(spectral_density_inverse_all)
 
-        self.psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
+        psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
 
         diag_indices = np.diag_indices(p_dim)
-        self.psd_q[:, :, diag_indices[0], diag_indices[1]] = np.quantile(
-            np.real(self.psd_all[:, :, diag_indices[0], diag_indices[1]]),
+        psd_q[:, :, diag_indices[0], diag_indices[1]] = np.quantile(
+            np.real(psd_all[:, :, diag_indices[0], diag_indices[1]]),
             quantiles,
             axis=0,
         )
 
         triu_indices = np.triu_indices(p_dim, k=1)
         real_part = np.real(
-            self.psd_all[:, :, triu_indices[1], triu_indices[0]]
+            psd_all[:, :, triu_indices[1], triu_indices[0]]
         )
         imag_part = np.imag(
-            self.psd_all[:, :, triu_indices[1], triu_indices[0]]
+            psd_all[:, :, triu_indices[1], triu_indices[0]]
         )
 
         for i, q in enumerate(quantiles):
-            self.psd_q[i, :, triu_indices[1], triu_indices[0]] = (
+            psd_q[i, :, triu_indices[1], triu_indices[0]] = (
                 np.quantile(real_part, q, axis=0)
                 + 1j * np.quantile(imag_part, q, axis=0)
             ).T
 
-        self.psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
-            self.psd_q[:, :, triu_indices[1], triu_indices[0]]
+        psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
+            psd_q[:, :, triu_indices[1], triu_indices[0]]
         )
 
-        self.psd_quantiles = self.psd_q
-        self.psd_all = self.psd_all
 
         # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
         true_fmax = self.sampling_freq / 2
         self.psd_quantiles = (
-            self.psd_quantiles / self.psd_scaling**2 / (true_fmax / 0.5)
+            psd_q / self.psd_scaling**2 / (true_fmax / 0.5)
         )
-        self.psd_all = self.psd_all / self.psd_scaling**2 / (true_fmax / 0.5)
+        self.psd_all = psd_all / self.psd_scaling**2 / (true_fmax / 0.5)
 
     def run(self) -> Tuple[np.ndarray, np.ndarray]:
         logger.info("Running hyperopt to find optimal learning rate")
@@ -300,7 +300,7 @@ class OptimalPSDEstimator:
 
         return self._sampling_freq
 
-    def plot(self, true_psd=None, **kwargs) -> "matplotlib.pyplot.figure":
+    def plot(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
         axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
         axes = plot_peridogram(*self.pdgrm, axs=axes, **kwargs)
         
@@ -311,3 +311,10 @@ class OptimalPSDEstimator:
 
         return axes
 
+
+    def plot_coherence(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
+        labels = kwargs.pop("labels", '123456789')
+        ax = plot_coherence(self.psd_all, self.freq, **kwargs, labels=labels)
+        if true_psd is not None:
+            ax = plot_coherence(true_psd[0], true_psd[1], **kwargs, ax=ax, ls='--', color='k')
+        return ax

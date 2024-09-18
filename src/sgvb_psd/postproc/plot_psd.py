@@ -67,6 +67,7 @@ def plot_peridogram(pdgrm, freq, axs=None, **kwargs):
     plt_kwargs = dict(
         color=kwargs.get("color", "lightgray"),
         zorder=kwargs.get("zorder", -10),
+        alpha=kwargs.get("alpha", 0.5),
     )
 
     if axs is None:
@@ -91,9 +92,9 @@ def _fmt_ij_elements(psd, i, j):
     This is a utility function to get the real and imaginary parts of the PSD.
     """
     if i > j:  # lower triangular
-        return np.imag(psd)
+        return np.abs(np.imag(psd))
     else:  # diag and upper triangular
-        return np.real(psd)
+        return np.abs(np.real(psd))
 
 
 def _generate_fig(p):
@@ -202,6 +203,15 @@ def _format_spines(
                     ax.set_yscale("symlog", linthresh=sylmog_thresh)
 
 
+            # turn off xticks-LABELS for all but the bottom row
+            if i < p - 1:
+                ax.set_xticklabels([])
+            # turn off yticks-LABELS for all but the left column
+            if j > 0:
+                ax.set_yticklabels([])
+
+
+
 def _format_text(axes, channel_labels=None, **kwargs):
     p = axes.shape[0]
     if channel_labels is None:
@@ -232,8 +242,10 @@ def _format_text(axes, channel_labels=None, **kwargs):
                 fontsize="small",
             )
 
-    fig = axes[0, 0].get_figure()
-    # yaxis label
-    fig.text(0.075, 0.5, "PSD [1/Hz]", va="center", rotation="vertical")
-    # xaxis label
-    fig.text(0.5, 0.0325, "Frequency [Hz]", ha="center")
+    add_axes_labels = kwargs.get("add_axes_labels", True)
+    if add_axes_labels:
+        fig = axes[0, 0].get_figure()
+        # yaxis label
+        fig.text(0.075, 0.5, "PSD [1/Hz]", va="center", rotation="vertical")
+        # xaxis label
+        fig.text(0.5, 0.0325, "Frequency [Hz]", ha="center")
