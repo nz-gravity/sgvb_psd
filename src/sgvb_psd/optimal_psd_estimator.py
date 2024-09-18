@@ -63,12 +63,13 @@ class OptimalPSDEstimator:
         if seed is not None:
             set_seed(seed)
 
+
         self.N_theta = N_theta
         self.N_samples = N_samples
         self.nchunks = nchunks
         self.duration = duration
         self.ntrain_map = ntrain_map
-        self.fmax_for_analysis = fmax_for_analysis
+
         self.sampling_freq = fs
         self.lr_range = lr_range
 
@@ -77,6 +78,10 @@ class OptimalPSDEstimator:
         self.psd_offset = np.mean(x, axis=0)
         self.x = (x - self.psd_offset) / self.psd_scaling
         self.n, self.p = x.shape
+        if fmax_for_analysis is None:
+            fmax_for_analysis = self.n // 2
+
+        self.fmax_for_analysis = fmax_for_analysis
 
         self.pdgrm, self.pdgrm_freq = get_periodogram(
             self.x, fs=self.sampling_freq
@@ -94,16 +99,12 @@ class OptimalPSDEstimator:
             if np.log2(nchunks) % 1 != 0:
                 logger.warning("nchunks must be a power of 2 for faster FFTs")
 
-        if self.fmax_for_analysis is not None:
-            if self.fmax_for_analysis > self.sampling_freq / 2:
-                raise ValueError(
-                    f"fmax_for_analysis ({fmax_for_analysis}) must be less than or equal to the Nyquist frequency: {self.sampling_freq / 2}"
-                )
-            else:
-                logger.info(
-                    f"Reducing the number of frequencies to be analyzed from "
-                    f"{self.nt_per_chunk//2} to {self.fmax_for_analysis}..."
-                )
+        if self.fmax_for_analysis < self.nt_per_chunk//2:
+            logger.info(
+                f"Reducing the number of frequencies to be analyzed from "
+                f"{self.nt_per_chunk // 2} to {self.fmax_for_analysis}..."
+            )
+
         logger.info(
             f"Final PSD will be of shape: {self.nfreq_per_chunk} x {self.p} x {self.p}"
         )
@@ -277,7 +278,6 @@ class OptimalPSDEstimator:
         if hasattr(self, "_freq"):
             return self._freq
 
-        fmax_true = self.sampling_freq / 2
         dt = 1 / self.sampling_freq
         self._freq = np.fft.fftfreq(self.nt_per_chunk, d=dt)
         n = self.nt_per_chunk
