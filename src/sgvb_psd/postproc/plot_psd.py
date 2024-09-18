@@ -1,12 +1,11 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import warnings
 
-warnings.filterwarnings(
-    "ignore",
-    message="Attempt to set non-positive ylim on a log-scaled axis"
-)
+import matplotlib.pyplot as plt
+import numpy as np
 
+warnings.filterwarnings(
+    "ignore", message="Attempt to set non-positive ylim on a log-scaled axis"
+)
 
 
 def plot_psdq(psd_q, freqs, axs=None, **kwargs):
@@ -45,7 +44,6 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
                 ax.plot(freqs, psd_ij[1], **plt_kwargs)
             else:
                 ax.plot(freqs.ravel(), psd_ij.ravel(), **plt_kwargs)
-                
 
     return axs
 
@@ -92,9 +90,9 @@ def _fmt_ij_elements(psd, i, j):
     This is a utility function to get the real and imaginary parts of the PSD.
     """
     if i > j:  # lower triangular
-        return np.abs(np.imag(psd))
+        return np.imag(psd)
     else:  # diag and upper triangular
-        return np.abs(np.real(psd))
+        return np.real(psd)
 
 
 def _generate_fig(p):
@@ -125,7 +123,6 @@ def _format_spines(
     sylmog_thresh=1e-3,
     **kwargs,
 ):
-
 
     p = axes.shape[0]
     plt.subplots_adjust(hspace=0.0, wspace=0.0)
@@ -202,14 +199,9 @@ def _format_spines(
                 if off_symlog:
                     ax.set_yscale("symlog", linthresh=sylmog_thresh)
 
-
             # turn off xticks-LABELS for all but the bottom row
-            if i < p - 1:
+            if i != p - 1:
                 ax.set_xticklabels([])
-            # turn off yticks-LABELS for all but the left column
-            if j > 0:
-                ax.set_yticklabels([])
-
 
 
 def _format_text(axes, channel_labels=None, **kwargs):

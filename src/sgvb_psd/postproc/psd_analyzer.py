@@ -23,6 +23,14 @@ class PSDAnalyzer:
         """
         self.spec_true = spec_true
         self.spectral_density_q = spectral_density_q
+
+        if self.spec_true.shape != spectral_density_q[0].shape:
+            raise ValueError(
+                "The true PSD and the estimated PSD should have the same shape. "
+                f" True PSD shape: {self.spec_true.shape}, "
+                f"Estimated PSD shape: {spectral_density_q[0].shape}"
+            )
+
         self.n_freq = spectral_density_q.shape[1]
         self.task_id = task_id
         self.real_spec_true = self._transform_spec_true_to_real()

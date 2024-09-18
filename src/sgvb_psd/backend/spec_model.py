@@ -1,9 +1,10 @@
 import timeit
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+
 from .spec_prep import SpecPrep
 
 tfd = tfp.distributions
@@ -14,7 +15,7 @@ class SpecModel(SpecPrep):
     def __init__(
         self, x, hyper, nchunks=128, duration=2048, fmax_for_analysis=128
     ):
-        super().__init__(x)
+        super().__init__(x, nchunks, duration, fmax_for_analysis)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior
         # ts:     time series == x
@@ -25,9 +26,6 @@ class SpecModel(SpecPrep):
         # Zar:    arry of design matrix Z_k for every freq k
         self.hyper = hyper
         self.trainable_vars = []  # all trainable variables
-        self.nchunks = nchunks
-        self.duration = duration
-        self.fmax_for_analysis = fmax_for_analysis
 
     def toTensor(self):
         # convert to tensorflow object
