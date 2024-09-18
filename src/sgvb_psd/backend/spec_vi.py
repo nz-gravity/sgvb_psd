@@ -198,3 +198,11 @@ class SpecVI:
         Spec_hs.toTensor()
 
         return losses, Spec_hs, samp
+
+    # TODO: _compute_psd()
+    # TODO: _compute_coherence()
+    # TODO: _compute_psd_quantiles()
+
+
+
+
