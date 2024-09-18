@@ -112,9 +112,6 @@ class OptimalPSDEstimator:
         )
 
         # Internal variables
-        self.lr_map_values = []
-        self.loss_values = []
-        self.all_samp = []
         self.model_info = {}
         self.psd_quantiles = None
         self.psd_all = None
@@ -153,10 +150,13 @@ class OptimalPSDEstimator:
 
         # TODO: this is taking too much memory -- do we need to store all of this?
         # dont we just need the best point?
-        self.lr_map_values.append(lr_map)
-        self.loss_values.append(losses[-1].numpy())
-        self.all_samp.append(samp)
-        return losses[-1].numpy()
+        current_loss = losses[-1].numpy()
+        if not hasattr(self, "best_loss") or current_loss < self.best_loss:
+            self.best_loss = current_loss
+            self.optimal_lr = lr_map
+            self.best_samp = samp  # Update best sample
+    
+        return current_loss
 
     def find_optimal_surrogate_params(self):
         """
@@ -173,17 +173,13 @@ class OptimalPSDEstimator:
                 algo=algo,
                 max_evals=self.max_hyperparm_eval,
             )
-            min_loss_index = self.loss_values.index(min(self.loss_values))
-            self.optimal_lr = self.lr_map_values[min_loss_index]
-            best_samp = self.all_samp[min_loss_index]
+            
         except AllTrialsFailed as e:
-            self.optimal_lr = self.lr_map_values[-1]
-            best_samp = self.all_samp[-1]
             logger.error(
                 f"Hyperopt failed to find optimal learning rate: {e}. Using last tested LR:{self.optimal_lr}."
             )
         logger.info(f"Optimal learning rate: {self.optimal_lr}")
-        return best_samp
+        return self.best_samp
 
     def _compute_spectral_density(
         self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]

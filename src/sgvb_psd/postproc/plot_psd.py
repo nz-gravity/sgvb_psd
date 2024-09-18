@@ -120,7 +120,7 @@ def _format_spines(
     off_ylims=None,
     diag_log=True,
     off_symlog=True,
-    sylmog_thresh=1e-3,
+    sylmog_thresh=1e-49,
     **kwargs,
 ):
 

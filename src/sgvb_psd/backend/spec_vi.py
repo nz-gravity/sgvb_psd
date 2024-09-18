@@ -169,7 +169,7 @@ class SpecVI:
                 target_log_prob_fn=l,
                 surrogate_posterior=trainable_Mvnormal,
                 optimizer=optimizer_vi,
-                num_steps=500 * 2,
+                num_steps=600,
             )
         )(
             conditioned_log_prob
