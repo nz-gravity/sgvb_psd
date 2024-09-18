@@ -3,43 +3,44 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
+import tensorflow as tf
 
 from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
 from sgvb_psd.postproc.plot_psd import plot_peridogram
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 from sgvb_psd.utils.periodogram import get_periodogram
 from sgvb_psd.utils.sim_varma import SimVARMA
-import tensorflow as tf
 from sgvb_psd.utils.tf_utils import set_seed
 
-import pytest
 
-
-@pytest.fixture
-def var2_data()->SimVARMA:
+def get_var_data(npts):
     set_seed(0)
     tf.config.experimental.enable_op_determinism()
 
     sigma = np.array([[1.0, 0.9], [0.9, 1.0]])
     varCoef = np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]])
     vmaCoef = np.array([[[1.0, 0.0], [0.0, 1.0]]])
-    n = 1024
+    n = 2**12
+    print(f"Generating VARMA data: {n} samples")
     var2 = SimVARMA(
         n_samples=n, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma
     )
     return var2
 
 
-
-def test_var_psd_generation(var2_data, plot_dir):
+def test_var_psd_generation(plot_dir):
+    var2_data = get_var_data(2**12)
+    print("Starting VAR PSD generation test")
     start_time = time.time()
     optim = OptimalPSDEstimator(
         N_theta=30,
-        nchunks=1,
+        nchunks=8,
         duration=1,
-        ntrain_map=100,
+        ntrain_map=300,
         x=var2_data.data,
-        max_hyperparm_eval=1,
+        max_hyperparm_eval=2,
+        fs=2 * np.pi,
         seed=0,
     )
     psd_all, psd_quantiles = optim.run()
@@ -51,13 +52,26 @@ def test_var_psd_generation(var2_data, plot_dir):
     plt.savefig(f"{plot_dir}/var_psd.png")
     optim.plot_coherence(
         true_psd=[var2_data.psd, var2_data.freq],
-
     )
     plt.savefig(f"{plot_dir}/var_coherence.png")
     end_time = time.time()
     estimation_time = end_time - start_time
-    assert estimation_time < 30
+    assert estimation_time < 60
 
+
+def test_psd_analyser(plot_dir):
+    var2_data = get_var_data(2**8)
+    optim = OptimalPSDEstimator(
+        N_theta=10,
+        nchunks=1,
+        duration=1,
+        ntrain_map=50,
+        x=var2_data.data,
+        max_hyperparm_eval=1,
+        fs=2 * np.pi,
+        seed=0,
+    )
+    psd_all, psd_quantiles = optim.run()
     csv = f"{plot_dir}/var_psd.csv"
     psd_analyzer = PSDAnalyzer(
         spec_true=var2_data.psd,
@@ -68,5 +82,3 @@ def test_var_psd_generation(var2_data, plot_dir):
     assert isinstance(psd_analyzer.coverage_point_CI, float)
     assert isinstance(psd_analyzer.l2_error, float)
     assert os.path.exists(csv)
-
-
