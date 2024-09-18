@@ -73,16 +73,18 @@ class OptimalPSDEstimator:
         self.ntrain_map = ntrain_map
         self.fmax_for_analysis = fmax_for_analysis
         self.sampling_freq = fs
+        self.lr_range = lr_range
 
         # normalize the data
         self.psd_scaling = np.std(x)
-        self.x = x / self.psd_scaling
+        self.psd_offset = np.mean(x)
+        self.x = (x - self.psd_offset) / self.psd_scaling
         self.n, self.p = x.shape
 
         self.pdgrm, self.pdgrm_freq = get_periodogram(
             self.x, fs=self.sampling_freq
         )
-        self.pdgrm = self.pdgrm * self.psd_scaling**2
+        self.pdgrm = (self.pdgrm * self.psd_scaling**2) + self.psd_offset**2
         self.max_hyperparm_eval = max_hyperparm_eval
         self.degree_fluctuate = degree_fluctuate
 
@@ -162,7 +164,7 @@ class OptimalPSDEstimator:
         This function is used to find the optimal learning rate
         :return: Best surrogate posterior parameters given the optimal learning rate
         """
-        space = {"lr_map": hp.uniform("lr_map", 0.002, 0.02)}
+        space = {"lr_map": hp.uniform("lr_map", *self.lr_range)}
         algo = tpe.suggest
 
         try:
@@ -233,7 +235,7 @@ class OptimalPSDEstimator:
         spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
         psd_all = (
             np.linalg.inv(spectral_density_inverse_all) * self.psd_scaling**2
-        )
+        ) + self.psd_offset**2
 
         psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
 
