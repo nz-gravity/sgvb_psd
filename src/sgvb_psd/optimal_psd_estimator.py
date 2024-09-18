@@ -44,6 +44,7 @@ class OptimalPSDEstimator:
         fmax_for_analysis=None,
         degree_fluctuate=None,
         seed=None,
+        lr_range = (0.002, 0.02),
     ):
         """
         :param x: the input multivariate time series
@@ -115,6 +116,7 @@ class OptimalPSDEstimator:
         self.model_info = {}
         self.psd_quantiles = None
         self.psd_all = None
+        self.Spec = SpecVI(self.x)
 
     def __learning_rate_optimisation_objective(self, lr):
         """Objective function for the hyperopt optimisation of the learning rate for the MAP
@@ -123,9 +125,8 @@ class OptimalPSDEstimator:
         :return: ELBO loss
         """
         lr_map = lr["lr_map"]
-        Spec = SpecVI(self.x)
-        result_list = Spec.runModel(
-            N_delta=self.N_theta,  # N_delta is set to N_theta -- they must be the same
+
+        result_list = self.Spec.runModel(
             N_theta=self.N_theta,
             lr_map=lr_map,
             ntrain_map=self.ntrain_map,
@@ -134,6 +135,7 @@ class OptimalPSDEstimator:
             fmax_for_analysis=self.fmax_for_analysis,
             inference_size=self.N_samples,
             degree_fluctuate=self.degree_fluctuate,
+            fs=self.sampling_freq,
         )
 
         losses = result_list[0]
@@ -153,7 +155,6 @@ class OptimalPSDEstimator:
         self.lr_map_values.append(lr_map)
         self.loss_values.append(losses[-1].numpy())
         self.all_samp.append(samp)
-
         return losses[-1].numpy()
 
     def find_optimal_surrogate_params(self):
@@ -300,7 +301,8 @@ class OptimalPSDEstimator:
         else:
             fmax_idx = np.searchsorted(self._freq, self.fmax_for_analysis)
 
-        return self._freq[0:fmax_idx]
+        self._freq = self._freq[0:fmax_idx]
+        return self._freq
 
     @property
     def nt_per_chunk(self):
@@ -324,9 +326,10 @@ class OptimalPSDEstimator:
     #
     #     return self._sampling_freq
 
-    def plot(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
+    def plot(self, true_psd=None, plot_periodogram=True, **kwargs) -> np.ndarray[plt.Axes]:
         axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
-        axes = plot_peridogram(self.pdgrm, self.pdgrm_freq, axs=axes, **kwargs)
+        if plot_periodogram:
+            axes = plot_peridogram(self.pdgrm, self.pdgrm_freq, axs=axes, **kwargs)
 
         if true_psd is not None:
             plot_single_psd(*true_psd, axes, **kwargs)

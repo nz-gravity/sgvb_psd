@@ -1,9 +1,8 @@
-import timeit
-
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+
+from ..logging import logger
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -31,6 +30,7 @@ class SpecPrep:  # Parent used to create SpecModel object
         self.Zar = []
         self.nchunks = nchunks
         self.duration = duration
+        self.fs = fs
         self.fmax_for_analysis = fmax_for_analysis
 
     # scaled fft and get the elements of freq = 1:[Nquist]
@@ -61,35 +61,29 @@ class SpecPrep:  # Parent used to create SpecModel object
 
         Ts = 1
         fq_y = np.fft.fftfreq(np.size(x, axis=1), Ts)
+        ftrue_y = np.fft.fftfreq(n, d=1/self.fs)
 
-        if np.mod(n, 2) == 0:
-            # n is even
-            y = y[:, 0 : int(n / 2), :]
-            fq_y = fq_y[0 : int(n / 2)]
-        else:
-            # n is odd
-            y = y[:, 0 : int((n - 1) / 2), :]
-            fq_y = fq_y[0 : int((n - 1) / 2)]
+        if np.mod(n, 2) == 0: # n is even
+            idx = int(n / 2)
+        else: # n is odd
+            idx = int((n - 1) / 2)
 
-        chunk_ln = x.shape[1]
-        nyquist_freq = chunk_ln / (2 * duration)
-        scale_fmax = fmax_for_analysis / nyquist_freq
+        y = y[:, 0: idx, :]
+        fq_y = fq_y[0: idx]
+        ftrue_y = ftrue_y[0: idx]
 
-        fmax_idx = np.searchsorted(fq_y, fmax_for_analysis)
-        # FIXME: we are not truncating the frequency range correctly
-
-        # y = y[:, 0: int(fmax_for_analysis / freq_range * y.shape[1]), :]
-        # fq_y = fq_y[0: int(fmax_for_analysis / freq_range * fq_y.shape[0])]
-
+        if fmax_for_analysis is None:
+            fmax_for_analysis = ftrue_y[-1]
+        fmax_idx = np.searchsorted(ftrue_y, fmax_for_analysis)
         y = y[:, 0:fmax_idx, :]
         fq_y = fq_y[0:fmax_idx]
-
         p_dim = x.shape[2]
 
         self.y_ft = y
         self.freq = fq_y
         self.p_dim = p_dim
         self.num_obs = fq_y.shape[0]
+
         return dict(y=y, fq_y=fq_y, p_dim=p_dim)
 
     # Demmler-Reinsch basis for linear smoothing splines (Eubank,1999)
@@ -140,9 +134,8 @@ class SpecPrep:  # Parent used to create SpecModel object
             return self.Xmat_delta, self.Xmat_theta
 
     def set_y_work(self):
-        y_work = self.y_ft
-        self.y_work = y_work
-        return y_work
+        self.y_work = self.y_ft
+        return self.y_work
 
     def dmtrix_k(self, y_k):
 
@@ -175,3 +168,12 @@ class SpecPrep:  # Parent used to create SpecModel object
         )  # add new variables to self, if Zar not defined in init at the beginning
         self.Zar_im = np.imag(Z_)
         return self.Zar_re, self.Zar_im
+
+
+    def __repr__(self):
+        x = self.ts.shape
+        y = self.y_work.shape
+        xmat_delta = self.Xmat_delta.shape
+        xmat_theta = self.Xmat_theta.shape
+        return f"SpecPrep(x(t)={x}, y(f)={y}, Xmat_delta={xmat_delta}, Xmat_theta={xmat_theta})"
+

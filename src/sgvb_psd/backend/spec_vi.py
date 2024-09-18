@@ -16,7 +16,6 @@ class SpecVI:
 
     def runModel(
         self,
-        N_delta=30,
         N_theta=30,
         lr_map=5e-4,
         ntrain_map=5e3,
@@ -25,6 +24,7 @@ class SpecVI:
         variation_factor=0,
         duration=2048,
         fmax_for_analysis=128,
+        fs=2048,
         degree_fluctuate=None,
     ):
 
@@ -32,7 +32,8 @@ class SpecVI:
         logger.debug(f"Inputted data shape: {x.shape}")
 
         ## Hyperparameter
-        ##
+        ## N_delta + N_theta are always set the same
+        N_delta = N_theta
         if degree_fluctuate is None:
             degree_fluctuate = N_delta / 2
         hyper_hs = []
@@ -49,6 +50,7 @@ class SpecVI:
             nchunks=nchunks,
             duration=duration,
             fmax_for_analysis=fmax_for_analysis,
+            fs=fs,
         )
         self.model = Spec_hs  # save model object
         # comput fft
@@ -63,7 +65,7 @@ class SpecVI:
         Spec_hs.toTensor()
         # create tranable variables
         Spec_hs.createModelVariables_hs()
-
+        logger.debug(f"Model instantiated: {Spec_hs}")
         logger.debug("Starting Model Inference Training..")
 
         """

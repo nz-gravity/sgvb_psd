@@ -13,9 +13,9 @@ tfb = tfp.bijectors
 
 class SpecModel(SpecPrep):
     def __init__(
-        self, x, hyper, nchunks=128, duration=2048, fmax_for_analysis=128
+        self, x, hyper, nchunks, duration, fmax_for_analysis, fs
     ):
-        super().__init__(x, nchunks, duration, fmax_for_analysis)
+        super().__init__(x, nchunks, duration, fmax_for_analysis, fs)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior
         # ts:     time series == x
