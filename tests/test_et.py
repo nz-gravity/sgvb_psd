@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
-from sgvb_psd.backend.spec_vi import SpecVI
-from sgvb_psd.postproc import plot_peridogram
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
