@@ -1,20 +1,23 @@
+import time
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from hyperopt import fmin, hp, tpe
 from hyperopt.exceptions import AllTrialsFailed
-import time
-
 
 from .backend import SpecVI
 from .logging import logger
-from .postproc import format_axes, plot_peridogram, plot_psdq, plot_single_psd
-from .postproc import plot_coherence
+from .postproc import (
+    format_axes,
+    plot_coherence,
+    plot_peridogram,
+    plot_psdq,
+    plot_single_psd,
+)
 from .utils.periodogram import get_periodogram, get_welch_periodogram
 from .utils.tf_utils import set_seed
-
-import matplotlib.pyplot as plt
 
 
 class OptimalPSDEstimator:
@@ -36,9 +39,9 @@ class OptimalPSDEstimator:
         duration: float = 1.0,
         ntrain_map=10000,
         N_samples: int = 500,
+        fs=1.0,
         max_hyperparm_eval: int = 100,
-        psd_scaling: float = 1.0,
-        fmax_for_analysis = None,
+        fmax_for_analysis=None,
         degree_fluctuate=None,
         seed=None,
     ):
@@ -52,15 +55,15 @@ class OptimalPSDEstimator:
         :param max_hyperparm_eval: the number of evaluations in 'Hyperopt'
         :param psd_scaling: the scale size of the input data
         :param fmax_for_analysis: the maximum frequency in the frequency domain that needs to be analyzed.
-        :param degree_fluctuate: a hyperparameter from the prior, 
+        :param degree_fluctuate: a hyperparameter from the prior,
                which should be set to a large value when dealing with a large number of basis functions.
         """
 
         if seed is not None:
             set_seed(seed)
-            
+
         if fmax_for_analysis is None:
-           fmax_for_analysis = x.shape[0] / 2    
+            fmax_for_analysis = x.shape[0] / 2
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -68,22 +71,42 @@ class OptimalPSDEstimator:
         self.duration = duration
         self.ntrain_map = ntrain_map
         self.fmax_for_analysis = fmax_for_analysis
-        self.x = x
+        self.sampling_freq = fs
+
+        # normalize the data
+        self.psd_scaling = np.std(x)
+        self.x = x / self.psd_scaling
         self.n, self.p = x.shape
-        self.psd_scaling = psd_scaling
-        self.pdgrm = get_periodogram(
-            x, fs=self.sampling_freq, psd_scaling = self.psd_scaling)
+
+        self.pdgrm, self.pdgrm_freq = get_periodogram(
+            self.x, fs=self.sampling_freq
+        )
+        self.pdgrm = self.pdgrm * self.psd_scaling**2
         self.max_hyperparm_eval = max_hyperparm_eval
         self.degree_fluctuate = degree_fluctuate
 
         if self.nchunks > 1:
             logger.info(
-                f"Dividing data {x.shape} into "
-                f"({nchunks}, {self.n // self.nchunks}, {self.p}) chunks"
+                f"Dividing data {self.x.shape} into "
+                f"({self.nchunks}, {self.nt_per_chunk}, {self.p}) chunks"
             )
             # if nchunks is not a power of 2, wil be slower
             if np.log2(nchunks) % 1 != 0:
                 logger.warning("nchunks must be a power of 2 for faster FFTs")
+
+        if self.fmax_for_analysis is not None:
+            if self.fmax_for_analysis > self.sampling_freq / 2:
+                raise ValueError(
+                    f"fmax_for_analysis must be less than or equal to the Nyquist frequency: {self.sampling_freq / 2}"
+                )
+            else:
+                logger.info(
+                    f"Reducing the number of frequencies to be analyzed from "
+                    f"{self.nt_per_chunk//2} to {self.fmax_for_analysis}..."
+                )
+        logger.info(
+            f"Final PSD will be of shape: {self.nfreq_per_chunk} x {self.p} x {self.p}"
+        )
 
         # Internal variables
         self.lr_map_values = []
@@ -110,7 +133,7 @@ class OptimalPSDEstimator:
             duration=self.duration,
             fmax_for_analysis=self.fmax_for_analysis,
             inference_size=self.N_samples,
-            degree_fluctuate=self.degree_fluctuate
+            degree_fluctuate=self.degree_fluctuate,
         )
 
         losses = result_list[0]
@@ -147,7 +170,6 @@ class OptimalPSDEstimator:
                 space,
                 algo=algo,
                 max_evals=self.max_hyperparm_eval,
-
             )
             min_loss_index = self.loss_values.index(min(self.loss_values))
             self.optimal_lr = self.lr_map_values[min_loss_index]
@@ -155,7 +177,9 @@ class OptimalPSDEstimator:
         except AllTrialsFailed as e:
             self.optimal_lr = self.lr_map_values[-1]
             best_samp = self.all_samp[-1]
-            logger.error(f"Hyperopt failed to find optimal learning rate: {e}. Using last tested LR:{self.optimal_lr}.")
+            logger.error(
+                f"Hyperopt failed to find optimal learning rate: {e}. Using last tested LR:{self.optimal_lr}."
+            )
         return best_samp
 
     def _compute_spectral_density(
@@ -206,7 +230,9 @@ class OptimalPSDEstimator:
         D_all_inv = np.linalg.inv(D_all)
 
         spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
-        psd_all = np.linalg.inv(spectral_density_inverse_all)
+        psd_all = (
+            np.linalg.inv(spectral_density_inverse_all) * self.psd_scaling**2
+        )
 
         psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
 
@@ -218,12 +244,8 @@ class OptimalPSDEstimator:
         )
 
         triu_indices = np.triu_indices(p_dim, k=1)
-        real_part = np.real(
-            psd_all[:, :, triu_indices[1], triu_indices[0]]
-        )
-        imag_part = np.imag(
-            psd_all[:, :, triu_indices[1], triu_indices[0]]
-        )
+        real_part = np.real(psd_all[:, :, triu_indices[1], triu_indices[0]])
+        imag_part = np.imag(psd_all[:, :, triu_indices[1], triu_indices[0]])
 
         for i, q in enumerate(quantiles):
             psd_q[i, :, triu_indices[1], triu_indices[0]] = (
@@ -235,13 +257,10 @@ class OptimalPSDEstimator:
             psd_q[:, :, triu_indices[1], triu_indices[0]]
         )
 
-
         # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
         true_fmax = self.sampling_freq / 2
-        self.psd_quantiles = (
-            psd_q / self.psd_scaling**2 / (true_fmax / 0.5)
-        )
-        self.psd_all = psd_all / self.psd_scaling**2 / (true_fmax / 0.5)
+        self.psd_quantiles = psd_q / (true_fmax / 0.5)
+        self.psd_all = psd_all / (true_fmax / 0.5)
 
     def run(self) -> Tuple[np.ndarray, np.ndarray]:
         logger.info("Running hyperopt to find optimal learning rate")
@@ -263,9 +282,9 @@ class OptimalPSDEstimator:
             return self._freq
 
         fmax_true = self.sampling_freq / 2
-        self._freq = np.fft.fftfreq(self.n_per_chunk, d=1 / self.sampling_freq)
-
-        n = self.n_per_chunk
+        dt = 1 / self.sampling_freq
+        self._freq = np.fft.fftfreq(self.nt_per_chunk, d=dt)
+        n = self.nt_per_chunk
         if np.mod(n, 2) == 0:
             # the length per chunk is even
             self._freq = self._freq[0 : int(n / 2)]
@@ -275,35 +294,40 @@ class OptimalPSDEstimator:
 
         # Check if duration == 1
         if self.duration == 1:
-            fmax_idx = int(self.fmax_for_analysis)  # Set fmax_idx to fmax_for_analysis
-        else:
-            # use fftshift to get the freq in the correct order
             fmax_idx = int(
-                self.fmax_for_analysis / fmax_true * (self.n_per_chunk / 2)
-            )
+                self.fmax_for_analysis
+            )  # Set fmax_idx to fmax_for_analysis
+        else:
+            fmax_idx = np.searchsorted(self._freq, self.fmax_for_analysis)
+
         return self._freq[0:fmax_idx]
 
     @property
-    def n_per_chunk(self):
+    def nt_per_chunk(self):
         """Return the number of points per chunk"""
-        return self.x.shape[0] // self.nchunks
+        return self.n // self.nchunks
 
     @property
-    def sampling_freq(self):
-        """Return the sampling frequency"""
-        if self.duration == 1:
-            self._sampling_freq = (
-                2 * np.pi
-            )  # this is for the duration time is unit 1, the situation like simulation study
-        else:
-            self._sampling_freq = self.x.shape[0] / self.duration
+    def nfreq_per_chunk(self):
+        """Return the number of frequencies per chunk"""
+        return len(self.freq)
 
-        return self._sampling_freq
+    # @property
+    # def sampling_freq(self):
+    #     """Return the sampling frequency"""
+    #     if self.duration == 1:
+    #         self._sampling_freq = (
+    #             2 * np.pi
+    #         )  # this is for the duration time is unit 1, the situation like simulation study
+    #     else:
+    #         self._sampling_freq = self.x.shape[0] / self.duration
+    #
+    #     return self._sampling_freq
 
     def plot(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
         axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
-        axes = plot_peridogram(*self.pdgrm, axs=axes, **kwargs)
-        
+        axes = plot_peridogram(self.pdgrm, self.pdgrm_freq, axs=axes, **kwargs)
+
         if true_psd is not None:
             plot_single_psd(*true_psd, axes, **kwargs)
 
@@ -311,10 +335,11 @@ class OptimalPSDEstimator:
 
         return axes
 
-
     def plot_coherence(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
-        labels = kwargs.pop("labels", '123456789')
+        labels = kwargs.pop("labels", "123456789")
         ax = plot_coherence(self.psd_all, self.freq, **kwargs, labels=labels)
         if true_psd is not None:
-            ax = plot_coherence(true_psd[0], true_psd[1], **kwargs, ax=ax, ls='--', color='k')
+            ax = plot_coherence(
+                true_psd[0], true_psd[1], **kwargs, ax=ax, ls="--", color="k"
+            )
         return ax

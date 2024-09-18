@@ -10,7 +10,9 @@ tfb = tfp.bijectors
 
 
 class SpecPrep:  # Parent used to create SpecModel object
-    def __init__(self, x):
+    def __init__(
+        self, x, nchunks=128, duration=2048, fmax_for_analysis=128, fs=2048
+    ):
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # ts:     time series x
         # y_ft:   fourier transformed time series
@@ -27,6 +29,9 @@ class SpecPrep:  # Parent used to create SpecModel object
         self.p_dim = []
         # self.Xmat = []
         self.Zar = []
+        self.nchunks = nchunks
+        self.duration = duration
+        self.fmax_for_analysis = fmax_for_analysis
 
     # scaled fft and get the elements of freq = 1:[Nquist]
     # discarding the rest of freqs
@@ -55,7 +60,7 @@ class SpecPrep:  # Parent used to create SpecModel object
         # discard 0 freq
 
         Ts = 1
-        fq_y = np.fft.fftfreq(np.size(x, 1), Ts)
+        fq_y = np.fft.fftfreq(np.size(x, axis=1), Ts)
 
         if np.mod(n, 2) == 0:
             # n is even
@@ -66,9 +71,18 @@ class SpecPrep:  # Parent used to create SpecModel object
             y = y[:, 0 : int((n - 1) / 2), :]
             fq_y = fq_y[0 : int((n - 1) / 2)]
 
-        freq_range = total_len / duration / 2
-        y = y[:, 0 : int(fmax_for_analysis / freq_range * y.shape[1]), :]
-        fq_y = fq_y[0 : int(fmax_for_analysis / freq_range * fq_y.shape[0])]
+        chunk_ln = x.shape[1]
+        nyquist_freq = chunk_ln / (2 * duration)
+        scale_fmax = fmax_for_analysis / nyquist_freq
+
+        fmax_idx = np.searchsorted(fq_y, fmax_for_analysis)
+        # FIXME: we are not truncating the frequency range correctly
+
+        # y = y[:, 0: int(fmax_for_analysis / freq_range * y.shape[1]), :]
+        # fq_y = fq_y[0: int(fmax_for_analysis / freq_range * fq_y.shape[0])]
+
+        y = y[:, 0:fmax_idx, :]
+        fq_y = fq_y[0:fmax_idx]
 
         p_dim = x.shape[2]
 
