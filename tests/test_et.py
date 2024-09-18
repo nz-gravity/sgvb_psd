@@ -53,6 +53,7 @@ def test_et(plot_dir):
         seed=0,
         lr_range=(0.002, 0.003),
     )
+    optim.run()
 
     kwargs = dict(
         channel_labels="XYZ",

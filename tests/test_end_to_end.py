@@ -39,11 +39,11 @@ def test_var_psd_generation(plot_dir):
         duration=1,
         ntrain_map=300,
         x=var2_data.data,
-        max_hyperparm_eval=2,
+        max_hyperparm_eval=1,
         fs=2 * np.pi,
         seed=0,
     )
-    psd_all, psd_quantiles = optim.run()
+    optim.run()
     optim.plot(
         true_psd=[var2_data.psd, var2_data.freq],
         off_symlog=False,
