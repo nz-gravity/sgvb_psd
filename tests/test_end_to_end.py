@@ -35,7 +35,7 @@ def test_var_psd_generation(plot_dir):
     start_time = time.time()
     optim = OptimalPSDEstimator(
         N_theta=30,
-        nchunks=8,
+        nchunks=16,
         duration=1,
         ntrain_map=300,
         x=var2_data.data,

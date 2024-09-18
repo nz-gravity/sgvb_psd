@@ -22,7 +22,7 @@ class SpecVI:
         inference_size=500,
         nchunks=400,
         variation_factor=0,
-        fmax_for_analysis=128,
+        fmax_for_analysis=None,
         fs=2048,
         degree_fluctuate=None,
     ):
