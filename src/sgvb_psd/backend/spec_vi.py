@@ -22,7 +22,6 @@ class SpecVI:
         inference_size=500,
         nchunks=400,
         variation_factor=0,
-        duration=2048,
         fmax_for_analysis=128,
         fs=2048,
         degree_fluctuate=None,
@@ -48,7 +47,6 @@ class SpecVI:
             x,
             hyper_hs,
             nchunks=nchunks,
-            duration=duration,
             fmax_for_analysis=fmax_for_analysis,
             fs=fs,
         )
@@ -162,7 +160,7 @@ class SpecVI:
         def conditioned_log_prob(*z):
             return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
 
-        logger.debug("Start UQ training... ")
+        logger.debug("Start ELBO maximisation... ")
         start = timeit.default_timer()
         # For more on TF's fit_surrogate_posterior, see
         # https://www.tensorflow.org/probability/api_docs/python/tfp/vi/fit_surrogate_posterior
@@ -202,6 +200,8 @@ class SpecVI:
     # TODO: _compute_psd()
     # TODO: _compute_coherence()
     # TODO: _compute_psd_quantiles()
+    # TODO: _plot_basis
+    # TODO: _plot_loss
 
 
 
