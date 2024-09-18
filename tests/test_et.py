@@ -38,22 +38,22 @@ def load_et_data(npts=None) -> np.ndarray:
     return channels, t
 
 
-
-
-
-# Jianan -- please stop this test, it takes too long, and takes up
-# too many minutes in the online pipeline (i only have limited minutes)!
 def test_et(plot_dir):
     # Test takes too long -- "tests" should be a few seconds.
-    data, t = load_et_data(2**14)
+    data, t = load_et_data(2**13)
+
+    # HACK -- but works! How do we rescale after??
+    # Also -- this should be done innternally in the OptimalPSDEstimator
+    data = data - np.mean(data, axis=0)
+    data = data / np.std(data, axis=0)
 
     start_time = time.time()
     N_theta = 300
     optim = OptimalPSDEstimator(
         N_theta=N_theta,
-        nchunks=8,
+        nchunks=4,
         duration=t[-1],
-        ntrain_map=1000,
+        ntrain_map=100,
         fs=2048,
         x=data,
         max_hyperparm_eval=1,
@@ -66,7 +66,7 @@ def test_et(plot_dir):
 
     kwargs = dict(
         channel_labels="XYZ",
-        sylmog_thresh=1e-49,
+        sylmog_thresh=1e-4,
         xlims=[5, 128],
     )
     plot_peridogram(optim.pdgrm, optim.pdgrm_freq, **kwargs)
@@ -75,6 +75,10 @@ def test_et(plot_dir):
     optim.run()
     optim.plot(**kwargs, plot_periodogram=False)
     plt.savefig(f"{plot_dir}/ET_psd.png")
+
+    optim.plot(**kwargs, plot_periodogram=True)
+    plt.savefig(f"{plot_dir}/ET_psd_period.png")
+
     #
     # end_time = time.time()
     # estimation_time = end_time - start_time
