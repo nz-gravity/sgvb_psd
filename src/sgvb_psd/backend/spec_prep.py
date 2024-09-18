@@ -10,7 +10,7 @@ tfb = tfp.bijectors
 
 class SpecPrep:  # Parent used to create SpecModel object
     def __init__(
-        self, x, nchunks=128, duration=2048, fmax_for_analysis=128, fs=2048
+        self, x, nchunks=128,  fmax_for_analysis=128, fs=2048
     ):
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # ts:     time series x
@@ -29,7 +29,7 @@ class SpecPrep:  # Parent used to create SpecModel object
         # self.Xmat = []
         self.Zar = []
         self.nchunks = nchunks
-        self.duration = duration
+
         self.fs = fs
         self.fmax_for_analysis = fmax_for_analysis
 
@@ -39,9 +39,9 @@ class SpecPrep:  # Parent used to create SpecModel object
         # x is a n-by-p matrix
         # unscaled fft
         x = self.ts
-        total_len = x.shape[0]
+
         num_segments = self.nchunks
-        duration = self.duration
+
         fmax_for_analysis = self.fmax_for_analysis
         len_chunk = x.shape[0] // num_segments
         x = np.array(

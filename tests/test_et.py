@@ -40,11 +40,11 @@ def load_et_data(npts=None) -> np.ndarray:
 
 def test_et(plot_dir):
     # Test takes too long -- "tests" should be a few seconds.
-    data, t = load_et_data(2**13)
+    data, t = load_et_data(2**14)
     N_theta = 300
     optim = OptimalPSDEstimator(
         N_theta=N_theta,
-        nchunks=4,
+        nchunks=8,
         duration=t[-1],
         ntrain_map=100,
         fs=2048,
@@ -61,15 +61,9 @@ def test_et(plot_dir):
         sylmog_thresh=1e-49,
         xlims=[5, 128],
     )
-    plot_peridogram(optim.pdgrm, optim.pdgrm_freq, **kwargs)
-    plt.savefig(f"{plot_dir}/ET_peridogram.png")
-
-    optim.run()
-    optim.plot(**kwargs, plot_periodogram=False)
-    plt.savefig(f"{plot_dir}/ET_psd.png")
 
     optim.plot(**kwargs, plot_periodogram=True)
-    plt.savefig(f"{plot_dir}/ET_psd_period.png")
+    plt.savefig(f"{plot_dir}/ET_psd.png")
 
     optim.plot_coherence(labels='XYZ')
     plt.savefig(f"{plot_dir}/ET_coherence.png")

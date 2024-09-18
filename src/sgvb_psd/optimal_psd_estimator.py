@@ -64,7 +64,7 @@ class OptimalPSDEstimator:
             set_seed(seed)
 
         if fmax_for_analysis is None:
-            fmax_for_analysis = x.shape[0] / 2
+            fmax_for_analysis = fs / 2
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -100,7 +100,7 @@ class OptimalPSDEstimator:
         if self.fmax_for_analysis is not None:
             if self.fmax_for_analysis > self.sampling_freq / 2:
                 raise ValueError(
-                    f"fmax_for_analysis must be less than or equal to the Nyquist frequency: {self.sampling_freq / 2}"
+                    f"fmax_for_analysis ({fmax_for_analysis}) must be less than or equal to the Nyquist frequency: {self.sampling_freq / 2}"
                 )
             else:
                 logger.info(
@@ -133,7 +133,6 @@ class OptimalPSDEstimator:
             lr_map=lr_map,
             ntrain_map=self.ntrain_map,
             nchunks=self.nchunks,
-            duration=self.duration,
             fmax_for_analysis=self.fmax_for_analysis,
             inference_size=self.N_samples,
             degree_fluctuate=self.degree_fluctuate,
