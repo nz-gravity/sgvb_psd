@@ -1,0 +1,109 @@
+# Book settings
+title = "SGVB-psd"
+author = "Jianan, Avi and friends"
+copyright = "2024"
+logo = None
+
+# Execution settings
+execute:
+  execute_notebooks = "off"
+
+# Parse and render settings
+parse:
+  myst_enable_extensions = [
+    "colon_fence",
+    "dollarmath",
+    "linkify",
+    "substitution",
+    "tasklist",
+  ]
+  myst_url_schemes = ["mailto", "http", "https"]
+
+# HTML-specific settings
+html:
+  favicon = "_static/favicon.ico"
+  use_edit_page_button = False
+  use_repository_button = True
+  use_issues_button = True
+  use_multitoc_numbering = True
+  extra_navbar = ""
+  google_analytics_id = ""
+  home_page_in_navbar = True
+  baseurl = ""
+  comments:
+    hypothesis: false
+    utterances: false
+
+# LaTeX-specific settings
+latex:
+  latex_engine = "pdflatex"
+
+# Interact link settings
+notebook_interface = "notebook"
+
+# Bibliography settings
+bibtex_bibfiles = []
+
+# Advanced and power-user settings
+sphinx:
+  extra_extensions = [
+    "sphinx_togglebutton",
+    "sphinx_copybutton",
+    "myst_nb",
+    "jupyter_book",
+    "sphinx_thebe",
+    "sphinx_comments",
+    "sphinx_external_toc",
+    "sphinx.ext.intersphinx",
+    "sphinx_design",
+    "sphinx.ext.autodoc",
+    "sphinx_jupyterbook_latex",
+    "IPython.sphinxext.ipython_console_highlighting",
+  ]
+  config:
+    html_theme = "pydata_sphinx_theme"
+    html_theme_options = {
+      "search_bar_text": "Search this book...",
+      "external_links": [
+        {
+          "name": "Paper",
+          "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        },
+      ],
+      "icon_links": [
+        {
+          "name": "GitHub",
+          "url": "https://github.com/nz-gravity/sgvb_psd",
+          "icon": "fa-brands fa-square-github",
+          "type": "fontawesome",
+        }
+      ],
+      "show_prev_next": False,
+      "footer_start": ["copyright"],
+      "footer_end": ["author"],
+      "navbar_start": ["navbar-logo", "navbar-nav"],
+      "navbar_center": [],
+      "navbar_end": ["navbar-icon-links"],
+    }
+    html_context = {
+      "github_user": "nz-gravity",
+      "github_repo": "sgvb_psd",
+      "github_version": "main",
+      "doc_path": "docs",
+    }
+    exclude_patterns = ["**.ipynb_checkpoints", ".DS_Store", "Thumbs.db", "_build"]
+    pygments_style = "sphinx"
+    suppress_warnings = ["myst.domains"]
+    numfig = True
+
+# Launch button settings
+launch_buttons:
+  notebook_interface: "classic"
+  binderhub_url: ""
+  jupyterhub_url: ""
+  thebe: False
+
+repository:
+  url: https://github.com/nz-gravity/sgvb_psd
+  path_to_book: docs
+  branch: main

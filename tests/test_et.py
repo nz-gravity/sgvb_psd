@@ -23,7 +23,10 @@ def load_et_data() -> np.ndarray:
     
     return np.column_stack(channels)#[0:32768,:]
 
-def test_et(plot_dir):
+
+# Jianan -- please stop this test, it takes too long, and takes up
+# too many minutes in the online pipeline (i only have limited minutes)!
+def _test_et(plot_dir):
     # Test takes too long -- "tests" should be a few seconds.
 
     psd_scaling = 10.0 ** 23

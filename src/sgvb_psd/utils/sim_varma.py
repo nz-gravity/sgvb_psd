@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ..postproc.plot_psd import format_axes, plot_peridogram, plot_single_psd
-from ..utils.periodogram import get_periodogram
+from ..utils.periodogram import get_periodogram, get_welch_periodogram
 
 
 class SimVARMA:
@@ -11,12 +11,12 @@ class SimVARMA:
     """
 
     def __init__(
-        self,
-        n_samples: int,
-        var_coeffs: np.ndarray,
-        vma_coeffs: np.ndarray,
-        sigma=np.array([1.0]),
-        seed=None,
+            self,
+            n_samples: int,
+            var_coeffs: np.ndarray,
+            vma_coeffs: np.ndarray,
+            sigma=np.array([1.0]),
+            seed=None,
     ):
         """
         Initialize the SimVARMA class.
@@ -37,11 +37,13 @@ class SimVARMA:
 
         self.fs = 2 * np.pi
         self.freq = (
-            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
+                np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
         )
 
         self.data = None  # set in "resimulate"
         self.periodogram = None  # set in "resimulate"
+        self.welch_psd = None  # set in "resimulate"
+        self.welch_f = None  # set in "resimulate"
         self.resimulate(seed=seed)
 
         self.psd = _calculate_true_varma_psd(
@@ -93,7 +95,7 @@ class SimVARMA:
             x[i] = np.sum(
                 np.matmul(
                     self.var_coeffs,
-                    x[i - 1 : i - lag_ar - 1 : -1][..., np.newaxis],
+                    x[i - 1: i - lag_ar - 1: -1][..., np.newaxis],
                 ),
                 axis=(0, -1),
             ) + np.sum(
@@ -103,10 +105,20 @@ class SimVARMA:
 
         self.data = x[101:]
         self.periodogram = get_periodogram(self.data, fs=self.fs, psd_scaling=self.psd_scaling)[0]
+        self.compute_welch_periodogram(n_chunks=1)
 
-    def plot(self, axs=None, **kwargs):
+    def compute_welch_periodogram(self, n_chunks=1):
+        (
+            self.welch_psd,
+            self.welch_f
+        ) = get_welch_periodogram(self.data, fs=self.fs, n_chunks=n_chunks)
+
+    def plot(self, axs=None, welch_nchunks=None, **kwargs):
         kwargs["off_symlog"] = kwargs.get("off_symlog", False)
         axs = plot_peridogram(self.periodogram, self.freq, axs=axs, **kwargs)
+        if welch_nchunks is not None:
+            self.compute_welch_periodogram(n_chunks=welch_nchunks)
+            axs = plot_peridogram(self.welch_psd, self.welch_f, axs=axs, **kwargs, color="gray", alpha=0.5, zorder=-1)
         plot_single_psd(self.psd, self.freq, axs=axs, **kwargs)
         format_axes(axs, **kwargs)
         return axs
@@ -126,13 +138,13 @@ class SimVARMA:
         # VAR part
         if p > 0:
             for i in range(p):
-                html += f"Φ<sub>{i+1}</sub>X<sub>t-{i+1}</sub> + "
+                html += f"Φ<sub>{i + 1}</sub>X<sub>t-{i + 1}</sub> + "
 
         # VMA part
         html += "ε<sub>t</sub> + "
         if q > 0:
             for i in range(q):
-                html += f"Θ<sub>{i+1}</sub>ε<sub>t-{i+1}</sub>"
+                html += f"Θ<sub>{i + 1}</sub>ε<sub>t-{i + 1}</sub>"
                 if i < q - 1:
                     html += " + "
 
@@ -142,12 +154,12 @@ class SimVARMA:
         # VAR coefficients
         html += "<h4>VAR coefficients:</h4>"
         for i in range(p):
-            html += f"<p>Φ<sub>{i+1}</sub> = {self._matrix_to_html(self.var_coeffs[i])}</p>"
+            html += f"<p>Φ<sub>{i + 1}</sub> = {self._matrix_to_html(self.var_coeffs[i])}</p>"
 
         # VMA coefficients
         html += "<h4>VMA coefficients:</h4>"
         for i in range(q):
-            html += f"<p>Θ<sub>{i+1}</sub> = {self._matrix_to_html(self.vma_coeffs[i])}</p>"
+            html += f"<p>Θ<sub>{i + 1}</sub> = {self._matrix_to_html(self.vma_coeffs[i])}</p>"
 
         # Sigma
         html += "<h4>Covariance matrix:</h4>"
@@ -171,11 +183,11 @@ class SimVARMA:
 
 
 def _calculate_true_varma_psd(
-    n_samples: int,
-    dim: int,
-    var_coeffs: np.ndarray,
-    vma_coeffs: np.ndarray,
-    sigma: np.ndarray,
+        n_samples: int,
+        dim: int,
+        var_coeffs: np.ndarray,
+        vma_coeffs: np.ndarray,
+        sigma: np.ndarray,
 ) -> np.ndarray:
     """
     Calculate the spectral matrix for given frequencies.

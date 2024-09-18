@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import signal
+from scipy.signal import csd
 from typing import Tuple
 
 
@@ -12,7 +13,12 @@ def get_periodogram(x, fs, psd_scaling=1, **kwargs) -> Tuple[np.ndarray, np.ndar
     for row_i in range(p):
         for col_j in range(p):
             if row_i == col_j:
-                f, Pxx_den0 = signal.periodogram(x[:, row_i], fs=fs)
+                # TODO: the default is 'density' -- does that make sense
+                # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.periodogram.html
+                f, Pxx_den0 = signal.periodogram(
+                    x[:, row_i], fs=fs,
+                    scaling='density', detrend=False
+                )
                 f = f[1:]
                 Pxx_den0 = Pxx_den0[1:]
                 periodogram[..., row_i, col_j] = Pxx_den0/2
@@ -31,3 +37,27 @@ def get_periodogram(x, fs, psd_scaling=1, **kwargs) -> Tuple[np.ndarray, np.ndar
                 periodogram[..., row_i, col_j] = cross_spectrum_fij
 
     return periodogram, f
+
+
+
+def get_welch_periodogram(x, fs, n_chunks=1) -> Tuple[np.ndarray, np.ndarray]:
+    """Given a multivariate time series, return the periodogram."""
+    n, p = x.shape
+    nperseg = n // n_chunks
+    n, p = x.shape
+    n_freq = (nperseg//2)
+    periodogram = np.zeros((n_freq, p, p), dtype=complex)
+    for row_i in range(p):
+        for col_j in range(p):
+            xi = x[:, row_i]
+            xj = x[:, col_j]
+            f, Pxx_den0 = signal.csd(
+                xi, xj, fs=fs,
+                nperseg=nperseg,
+                return_onesided=True,
+                scaling='density',
+                average='median',
+                detrend=False
+            )
+            periodogram[..., row_i, col_j] = Pxx_den0[1:]
+    return periodogram, f[1:]

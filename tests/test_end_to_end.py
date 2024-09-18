@@ -46,10 +46,14 @@ def test_var_psd_generation(var2_data, plot_dir):
     optim.plot(
         true_psd=[var2_data.psd, var2_data.freq],
         off_symlog=False,
-        xlims=[0, np.pi]
+        xlims=[0, np.pi],
     )
     plt.savefig(f"{plot_dir}/var_psd.png")
+    optim.plot_coherence(
+        true_psd=[var2_data.psd, var2_data.freq],
 
+    )
+    plt.savefig(f"{plot_dir}/var_coherence.png")
     end_time = time.time()
     estimation_time = end_time - start_time
     assert estimation_time < 30
