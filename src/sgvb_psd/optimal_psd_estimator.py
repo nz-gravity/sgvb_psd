@@ -76,15 +76,15 @@ class OptimalPSDEstimator:
         self.lr_range = lr_range
 
         # normalize the data
-        self.psd_scaling = np.std(x)
-        self.psd_offset = np.mean(x)
+        self.psd_scaling = np.std(x, axis=0)
+        self.psd_offset = np.mean(x, axis=0)
         self.x = (x - self.psd_offset) / self.psd_scaling
         self.n, self.p = x.shape
 
         self.pdgrm, self.pdgrm_freq = get_periodogram(
             self.x, fs=self.sampling_freq
         )
-        self.pdgrm = (self.pdgrm * self.psd_scaling**2) + self.psd_offset**2
+        self.pdgrm = (self.pdgrm * self.psd_scaling**2)
         self.max_hyperparm_eval = max_hyperparm_eval
         self.degree_fluctuate = degree_fluctuate
 
@@ -235,7 +235,7 @@ class OptimalPSDEstimator:
         spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
         psd_all = (
             np.linalg.inv(spectral_density_inverse_all) * self.psd_scaling**2
-        ) + self.psd_offset**2
+        )
 
         psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
 
@@ -315,18 +315,6 @@ class OptimalPSDEstimator:
     def nfreq_per_chunk(self):
         """Return the number of frequencies per chunk"""
         return len(self.freq)
-
-    # @property
-    # def sampling_freq(self):
-    #     """Return the sampling frequency"""
-    #     if self.duration == 1:
-    #         self._sampling_freq = (
-    #             2 * np.pi
-    #         )  # this is for the duration time is unit 1, the situation like simulation study
-    #     else:
-    #         self._sampling_freq = self.x.shape[0] / self.duration
-    #
-    #     return self._sampling_freq
 
     def plot(self, true_psd=None, plot_periodogram=True, **kwargs) -> np.ndarray[plt.Axes]:
         axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
