@@ -63,9 +63,6 @@ class OptimalPSDEstimator:
         if seed is not None:
             set_seed(seed)
 
-        if fmax_for_analysis is None:
-            fmax_for_analysis = fs / 2
-
         self.N_theta = N_theta
         self.N_samples = N_samples
         self.nchunks = nchunks
@@ -291,15 +288,10 @@ class OptimalPSDEstimator:
             # the length per chunk is odd
             self._freq = self._freq[0 : int((n - 1) / 2)]
 
-        # Check if duration == 1
-        if self.duration == 1:
-            fmax_idx = int(
-                self.fmax_for_analysis
-            )  # Set fmax_idx to fmax_for_analysis
-        else:
+        if self.fmax_for_analysis != None:
             fmax_idx = np.searchsorted(self._freq, self.fmax_for_analysis)
+            self._freq = self._freq[0:fmax_idx]
 
-        self._freq = self._freq[0:fmax_idx]
         return self._freq
 
     @property
