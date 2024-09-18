@@ -30,10 +30,11 @@ start_time = time.time()
 optim = OptimalPSDEstimator(
     N_theta=N_theta,
     nchunks=125,
+    duration=2000,
     fs=2048,
     ntrain_map=1000,
     x=data,
-    max_hyperparm_eval=100,
+    max_hyperparm_eval=1,
     fmax_for_analysis=128,
     degree_fluctuate=N_theta,
     seed=0,
@@ -47,5 +48,5 @@ print('The estimation time is', estimation_time, 'seconds')
 optim.plot_coherence(labels='XYZ')
 plt.savefig("ET_coherence.png")
 
-optim.plot_psd(labels='XYZ')
+optim.plot(xlims=[5,128], labels='XYZ')
 plt.savefig("ET_psd.png")
