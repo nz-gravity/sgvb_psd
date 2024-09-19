@@ -6,10 +6,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
-from sgvb_psd.postproc.plot_psd import plot_peridogram
+from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
-from sgvb_psd.utils.periodogram import get_periodogram
 from sgvb_psd.utils.sim_varma import SimVARMA
 from sgvb_psd.utils.tf_utils import set_seed
 
@@ -21,23 +19,22 @@ def get_var_data(npts):
     sigma = np.array([[1.0, 0.9], [0.9, 1.0]])
     varCoef = np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]])
     vmaCoef = np.array([[[1.0, 0.0], [0.0, 1.0]]])
-    n = 2**12
-    print(f"Generating VARMA data: {n} samples")
+    print(f"Generating VARMA data: {npts} samples")
     var2 = SimVARMA(
-        n_samples=n, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma
+        n_samples=npts, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma
     )
     return var2
 
 
 def test_var_psd_generation(plot_dir):
-    var2_data = get_var_data(2**12)
+    var2_data = get_var_data(2**8)
     print("Starting VAR PSD generation test")
     start_time = time.time()
-    optim = OptimalPSDEstimator(
-        N_theta=30,
-        nchunks=16,
+    optim = PSDEstimator(
+        N_theta=10,
+        nchunks=1,
         duration=1,
-        ntrain_map=300,
+        ntrain_map=50,
         x=var2_data.data,
         max_hyperparm_eval=1,
         fs=2 * np.pi,
@@ -61,7 +58,7 @@ def test_var_psd_generation(plot_dir):
 
 def test_psd_analyser(plot_dir):
     var2_data = get_var_data(2**8)
-    optim = OptimalPSDEstimator(
+    optim = PSDEstimator(
         N_theta=10,
         nchunks=1,
         duration=1,

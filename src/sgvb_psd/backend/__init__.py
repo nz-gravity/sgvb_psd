@@ -1,5 +1,5 @@
-from .spec_model import SpecModel
-from .spec_prep import SpecPrep
-from .spec_vi import SpecVI
+from .bayesian_model import BayesianModel
+from .analysis_data import AnalysisData
+from .vi_runner import ViRunner
 
 

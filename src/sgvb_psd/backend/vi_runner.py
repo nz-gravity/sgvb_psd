@@ -4,79 +4,86 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 from ..logging import logger
-from .spec_model import SpecModel
+from .bayesian_model import BayesianModel
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class SpecVI:
-    def __init__(self, x):
-        self.data = x
-
-    def runModel(
-        self,
-        N_theta=30,
-        lr_map=5e-4,
-        ntrain_map=5e3,
-        inference_size=500,
-        nchunks=400,
-        variation_factor=0,
-        fmax_for_analysis=None,
-        fs=2048,
-        degree_fluctuate=None,
+class ViRunner:
+    def __init__(
+            self,
+            x,
+            N_theta=30,
+            nchunks=400,
+            variation_factor=0,
+            fmax_for_analysis=None,
+            fs=2048,
+            degree_fluctuate=None,
     ):
-
-        x = self.data
-        logger.debug(f"Inputted data shape: {x.shape}")
+        self.data = x
+        logger.debug(f"Inputted data shape: {self.data.shape}")
 
         ## Hyperparameter
         ## N_delta + N_theta are always set the same
-        N_delta = N_theta
+        self.N_delta = self.N_theta = N_theta
         if degree_fluctuate is None:
-            degree_fluctuate = N_delta / 2
+            degree_fluctuate = self.N_delta / 2
+        self.degree_fluctuate = degree_fluctuate
+
         hyper_hs = []
         tau0 = 0.01
         c2 = 4
         sig2_alp = 10
-        hyper_hs.extend([tau0, c2, sig2_alp, degree_fluctuate])
+        self.hyper_hs = [tau0, c2, sig2_alp, degree_fluctuate]
 
         ## Define Model
-        ##
-        Spec_hs = SpecModel(
+        self.model = BayesianModel(
             x,
-            hyper_hs,
+            self.hyper_hs,
             nchunks=nchunks,
             fmax_for_analysis=fmax_for_analysis,
             fs=fs,
-        )
-        self.model = Spec_hs  # save model object
+        )  # save model object
         # comput fft
-        Spec_hs.sc_fft()
+        self.model.sc_fft()
         # compute array of design matrix Z, 3d
-
-        Spec_hs.Zmtrix()
-
+        self.model.Zmtrix()
         # compute X matrix related to basis function on ffreq
-        Spec_hs.Xmtrix(N_delta, N_theta)
+        self.model.Xmtrix(self.N_delta, self.N_theta)
         # convert all above to tensorflow object
-        Spec_hs.toTensor()
+        self.model.toTensor()
         # create tranable variables
-        Spec_hs.createModelVariables_hs()
-        logger.debug(f"Model instantiated: {Spec_hs}")
+        self.model.createModelVariables_hs()
+        logger.debug(f"Model instantiated: {self.model}")
+
+        self.variation_factor = variation_factor
+
+
+
+    def runModel(
+        self,
+        lr_map=5e-4,
+        ntrain_map=5e3,
+        inference_size=500,
+    ):
+
+
         logger.debug("Starting Model Inference Training..")
+
+        lr = lr_map
+        n_train = ntrain_map
 
         """
         # Phase1 obtain MAP
         """
-        lr = lr_map
-        n_train = ntrain_map  #
         optimizer_hs = tf.keras.optimizers.Adam(lr)
 
         start_total = timeit.default_timer()
         start_map = timeit.default_timer()
 
         # train
+
         @tf.function
         def train_hs(model, optimizer, n_train):
             # model:    model object
@@ -99,7 +106,7 @@ class SpecVI:
             return model.trainable_vars, lp.stack()
 
         logger.debug("Start Point Estimating... ")
-        opt_vars_hs, lp_hs = train_hs(Spec_hs, optimizer_hs, n_train)
+        opt_vars_hs, lp_hs = train_hs(self.model, optimizer_hs, n_train)
         # opt_vars_hs:         self.trainable_vars(ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
         #                                       ga_theta_im, lla_theta_im,
@@ -113,7 +120,7 @@ class SpecVI:
         Phase 2 UQ
         """
         optimizer_vi = tf.optimizers.Adam(5e-2)
-        if variation_factor <= 0:
+        if self.variation_factor <= 0:
             trainable_Mvnormal = tfd.JointDistributionSequential(
                 [
                     tfd.Independent(
@@ -146,7 +153,7 @@ class SpecVI:
                             ),
                             scale_perturb_factor=tfp.util.TransformedVariable(
                                 tf.random_uniform_initializer()(
-                                    opt_vars_hs[i][0].shape + variation_factor
+                                    opt_vars_hs[i][0].shape + self.variation_factor
                                 ),
                                 tfb.Identity(),
                             ),
@@ -158,7 +165,7 @@ class SpecVI:
             )
 
         def conditioned_log_prob(*z):
-            return Spec_hs.loglik(z) + Spec_hs.logprior_hs(z)
+            return self.model.loglik(z) + self.model.logprior_hs(z)
 
         logger.debug("Start ELBO maximisation... ")
         start = timeit.default_timer()
@@ -178,8 +185,6 @@ class SpecVI:
         logger.debug(f"VI Time: {stop-start:.2f}s")
         stop_total = timeit.default_timer()
         self.kld = losses
-        # plt.plot(losses)
-
         logger.debug(
             f"Total Inference Training Time: {stop_total-start_total:.2f}s"
         )
@@ -188,14 +193,16 @@ class SpecVI:
         self.posteriorPointEstStd = trainable_Mvnormal.stddev()
         self.variationalDistribution = trainable_Mvnormal
 
-        samp = trainable_Mvnormal.sample(inference_size)
-        Spec_hs.freq = Spec_hs.sc_fft()["fq_y"]
-        Xmat_delta, Xmat_theta = Spec_hs.Xmtrix(
-            N_delta=N_delta, N_theta=N_theta
-        )
-        Spec_hs.toTensor()
 
-        return losses, Spec_hs, samp
+        # once model is trained -- we should be able to sample from it
+        samp = trainable_Mvnormal.sample(inference_size)
+        self.model.freq = self.model.sc_fft()["fq_y"]
+        Xmat_delta, Xmat_theta = self.model.Xmtrix(
+            N_delta=self.N_delta, N_theta=self.N_theta
+        )
+        self.model.toTensor()
+
+        return losses, self.model, samp
 
     # TODO: _compute_psd()
     # TODO: _compute_coherence()

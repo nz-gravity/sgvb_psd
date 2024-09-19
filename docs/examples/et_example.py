@@ -6,7 +6,7 @@ import time
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
+from sgvb_psd.psd_estimator import PSDEstimator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -27,7 +27,7 @@ data = load_et_data()
 
 N_theta = 400
 start_time = time.time()
-optim = OptimalPSDEstimator(
+optim = PSDEstimator(
     N_theta=N_theta,
     nchunks=125,
     duration=2000,

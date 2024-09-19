@@ -5,13 +5,13 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from .spec_prep import SpecPrep
+from .analysis_data import AnalysisData
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class SpecModel(SpecPrep):
+class BayesianModel(AnalysisData):
     def __init__(
         self, x, hyper, nchunks, fmax_for_analysis, fs
     ):
