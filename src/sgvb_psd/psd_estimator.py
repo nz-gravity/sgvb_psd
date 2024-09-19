@@ -245,4 +245,6 @@ class PSDEstimator:
         plt.plot(self.vi_losses)
         plt.xlabel("Iteration")
         plt.ylabel("ELBO")
+        # use exponential offset  y-axis
+        plt.gca().ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
         return plt.gca()
