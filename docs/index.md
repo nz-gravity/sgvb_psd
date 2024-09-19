@@ -12,14 +12,14 @@ pip install git+https//github.com/nz-gravity/sgvb_psd
 
 ## Usage
 
-- [API Documentation]()
-- [Simulated data Example](VAR2_example.ipynb)
-- [ET Example](et_example.ipynb)
+- [API Documentation](api.md)
+- [Simulated data Example](examples/simulation_example.ipynb)
+- [ET Example](examples/ET_example.ipynb)
 
 ## Paper
 
-The paper for SGVB PSD can be found [here](XXX).
-Code to generate the plots for the paper are available [here](XXX)
+The paper for SGVB PSD can be found [here](https://arxiv.org/).
+Code to generate the plots for the paper are available [here](https://github.com/nz-gravity/sgvb_psd_paper)
 
 
 ## Acknowledging SGVB PSD
