@@ -8,37 +8,21 @@ import numpy as np
 from sgvb_psd.psd_estimator import PSDEstimator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+DOCS_DIR = os.path.join(HERE, "..", "docs")
+FNAME = os.path.join(DOCS_DIR, "examples", "et_data.h5")
 
-
-def load_et_data(npts=None) -> np.ndarray:
-    """
-    Return (n_samples, 3) array of XYZ channels
-    """
-    files_and_keys = [
-        ("../docs/data/X_ETnoise_GP.hdf5", "E1:STRAIN"),
-        ("../docs/data/Y_ETnoise_GP.hdf5", "E2:STRAIN"),
-        ("../docs/data/Z_ETnoise_GP.hdf5", "E3:STRAIN"),
-    ]
-
-    channels = [
-        h5py.File(os.path.join(HERE, file), "r")[key][:]
-        for file, key in files_and_keys
-    ]
-    channels = np.column_stack(channels)
-    duration = 2000
-    total_npts = len(channels[0])
-    dt = duration / total_npts
-    t = np.arange(0, duration, dt)
-
-    if npts is not None:
-        channels = channels[0:npts]
-        t = t[0:npts]
-    return channels, t
+def load_et_data(npts):
+    with h5py.File(FNAME, "r") as f:
+        channels = np.column_stack([
+            f["X"][:npts],
+            f["Y"][:npts],
+            f["Z"][:npts]
+        ])
+        return channels
 
 
 def test_et(plot_dir):
-    # Test takes too long -- "tests" should be a few seconds.
-    data, t = load_et_data(2**14)
+    data = load_et_data(2**14)
     N_theta = 300
     optim = PSDEstimator(
         N_theta=N_theta,
