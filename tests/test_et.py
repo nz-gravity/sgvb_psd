@@ -5,7 +5,7 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sgvb_psd.optimal_psd_estimator import OptimalPSDEstimator
+from sgvb_psd.psd_estimator import PSDEstimator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,7 +40,7 @@ def test_et(plot_dir):
     # Test takes too long -- "tests" should be a few seconds.
     data, t = load_et_data(2**14)
     N_theta = 300
-    optim = OptimalPSDEstimator(
+    optim = PSDEstimator(
         N_theta=N_theta,
         nchunks=8,
         duration=t[-1],

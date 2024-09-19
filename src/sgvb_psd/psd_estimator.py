@@ -7,7 +7,7 @@ import tensorflow as tf
 from hyperopt import fmin, hp, tpe
 from hyperopt.exceptions import AllTrialsFailed
 
-from .backend import SpecVI
+from .backend import ViRunner
 from .logging import logger
 from .postproc import (
     format_axes,
@@ -20,7 +20,7 @@ from .utils.periodogram import get_periodogram, get_welch_periodogram
 from .utils.tf_utils import set_seed
 
 
-class OptimalPSDEstimator:
+class PSDEstimator:
     """
     This class is used to run SGVB and estimate the posterior PSD
 
@@ -113,7 +113,14 @@ class OptimalPSDEstimator:
         self.model_info = {}
         self.psd_quantiles = None
         self.psd_all = None
-        self.Spec = SpecVI(self.x)
+        self.inference_runner = ViRunner(
+            self.x,
+            N_theta=self.N_theta,
+            nchunks=self.nchunks,
+            fmax_for_analysis=self.fmax_for_analysis,
+            degree_fluctuate=self.degree_fluctuate,
+            fs=self.sampling_freq,
+        )
 
     def __learning_rate_optimisation_objective(self, lr):
         """Objective function for the hyperopt optimisation of the learning rate for the MAP
@@ -121,63 +128,45 @@ class OptimalPSDEstimator:
         :param lr: learning rate to be optimised
         :return: ELBO loss
         """
-        lr_map = lr["lr_map"]
-
-        result_list = self.Spec.runModel(
-            N_theta=self.N_theta,
-            lr_map=lr_map,
+        vi_losses, _, _ = self.inference_runner.runModel(
+            lr_map=lr["lr_map"],
             ntrain_map=self.ntrain_map,
-            nchunks=self.nchunks,
-            fmax_for_analysis=self.fmax_for_analysis,
-            inference_size=self.N_samples,
-            degree_fluctuate=self.degree_fluctuate,
-            fs=self.sampling_freq,
+            inference_size=self.N_samples
         )
+        return vi_losses[-1].numpy()
 
-        losses = result_list[0]
-        samp = result_list[2]
 
-        if self.model_info == {}:
-            (
-                self.model_info["Xmat_delta"],
-                self.model_info["Xmat_theta"],
-            ) = result_list[1].Xmtrix(
-                N_delta=self.N_theta, N_theta=self.N_theta
-            )
-            self.model_info["p_dim"] = result_list[1].p_dim
 
-        # TODO: this is taking too much memory -- do we need to store all of this?
-        # dont we just need the best point?
-        current_loss = losses[-1].numpy()
-        if not hasattr(self, "best_loss") or current_loss < self.best_loss:
-            self.best_loss = current_loss
-            self.optimal_lr = lr_map
-            self.best_samp = samp  # Update best sample
-    
-        return current_loss
-
-    def find_optimal_surrogate_params(self):
+    def find_optimal_learing_rate(self):
         """
         This function is used to find the optimal learning rate
         :return: Best surrogate posterior parameters given the optimal learning rate
         """
-        space = {"lr_map": hp.uniform("lr_map", *self.lr_range)}
-        algo = tpe.suggest
-
-        try:
-            fmin(
-                self.__learning_rate_optimisation_objective,
-                space,
-                algo=algo,
-                max_evals=self.max_hyperparm_eval,
-            )
-            
-        except AllTrialsFailed as e:
-            logger.error(
-                f"Hyperopt failed to find optimal learning rate: {e}. Using last tested LR:{self.optimal_lr}."
-            )
+        self.optimal_lr = fmin(
+            self.__learning_rate_optimisation_objective,
+            space={"lr_map": hp.uniform("lr_map", *self.lr_range)},
+            algo=tpe.suggest,
+            max_evals=self.max_hyperparm_eval,
+        )["lr_map"]
         logger.info(f"Optimal learning rate: {self.optimal_lr}")
-        return self.best_samp
+
+    def train_model(self):
+        vi_losses, model, samples = self.inference_runner.runModel(
+            lr_map=self.optimal_lr,
+            ntrain_map=self.ntrain_map,
+            inference_size=self.N_samples
+        )
+        (
+            self.model_info["Xmat_delta"],
+            self.model_info["Xmat_theta"],
+        ) = model.Xmtrix(
+            N_delta=self.N_theta, N_theta=self.N_theta
+        )
+        self.model_info["p_dim"] = model.p_dim
+        self.samps = samples
+        self.vi_losses = vi_losses.numpy()
+
+
 
     def _compute_spectral_density(
         self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]
@@ -259,15 +248,27 @@ class OptimalPSDEstimator:
         self.psd_quantiles = psd_q / (true_fmax / 0.5)
         self.psd_all = psd_all / (true_fmax / 0.5)
 
-    def run(self) -> Tuple[np.ndarray, np.ndarray]:
+    def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray]:
         logger.info("Running hyperopt to find optimal learning rate")
+
+        if lr:
+            logger.info(f"Using provided learning rate: {lr}")
+            self.optimal_lr = lr
+        else:
+            t0 = time.time()
+            self.find_optimal_learing_rate()
+            t1 = time.time()
+            logger.info(f"Optimal learning rate found in {t1 - t0:.2f}s")
+
+        logger.info("Training model")
         t0 = time.time()
-        best_samp = self.find_optimal_surrogate_params()
+        self.train_model()
         t1 = time.time()
-        logger.info(f"Optimal learning rate found in {t1 - t0:.2f}s")
+        logger.info(f"Model trained in {t1 - t0:.2f}s")
+
         logger.info("Computing optimal PSD estimation")
         t0 = time.time()
-        self._compute_spectral_density(best_samp)
+        self._compute_spectral_density(self.samps)
         t1 = time.time()
         logger.info(f"Optimal PSD estimation complete in {t1 - t0:.2f}s")
         return self.psd_all, self.psd_quantiles

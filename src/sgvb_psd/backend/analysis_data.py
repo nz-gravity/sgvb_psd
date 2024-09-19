@@ -8,7 +8,7 @@ tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class SpecPrep:  # Parent used to create SpecModel object
+class AnalysisData:  # Parent used to create BayesianModel object
     def __init__(
         self, x, nchunks=128,  fmax_for_analysis=128, fs=2048
     ):
