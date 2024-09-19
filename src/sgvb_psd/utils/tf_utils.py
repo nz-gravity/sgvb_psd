@@ -13,4 +13,3 @@ def set_seed(seed: int):
     np.random.seed(seed)
     random.seed(seed)
     logger.debug(f"Seed set to {seed}")
-

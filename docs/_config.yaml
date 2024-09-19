@@ -6,6 +6,7 @@ exclude_patterns: [_build, Thumbs.db, .DS_Store, "**.ipynb_checkpoints"]
 only_build_toc_files: true
 logo: "_static/logo.png"
 
+
 execute:
   execute_notebooks: off
 
@@ -14,6 +15,7 @@ html:
   use_issues_button: true
   use_multitoc_numbering: false
   home_page_in_navbar: false
+  favicon: "_static/logo.png"
   comments:
     hypothesis: false
     utterances: false

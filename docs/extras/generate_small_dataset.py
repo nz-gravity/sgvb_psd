@@ -4,7 +4,7 @@ import numpy as np
 data = []
 CHANNELS = ["X", "Y", "Z"]
 for i, channel in enumerate(CHANNELS):
-    with h5py.File(f'{channel}_ETnoise_GP.hdf5', "r") as f:
+    with h5py.File(f"{channel}_ETnoise_GP.hdf5", "r") as f:
         data.append(f[f"E{i+1}:STRAIN"][:])
 time = np.linspace(0, 2000, len(data[0]))
 data = np.array(data)

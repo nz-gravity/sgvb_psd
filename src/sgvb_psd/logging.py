@@ -7,7 +7,7 @@ import tensorflow as tf
 
 
 def log_if_gpu_or_cpu():
-    gpus = tf.config.list_physical_devices('GPU')
+    gpus = tf.config.list_physical_devices("GPU")
     if gpus:
         logger.info(f"GPU found: {gpus}")
     else:
@@ -27,7 +27,7 @@ class RelativeSecondsColoredFormatter(logging.Formatter):
         "CRITICAL": Fore.RED + Style.BRIGHT,
     }
 
-    def __init__(self, fmt=None, datefmt=None, style='%'):
+    def __init__(self, fmt=None, datefmt=None, style="%"):
         super().__init__(fmt, datefmt, style)
         self.start_time = time.time()
 
@@ -52,7 +52,9 @@ def setup_logger(name):
     console_handler.setLevel(logging.DEBUG)
 
     # Define the log message format
-    log_format = "%(asctime)s|%(name)s|%(levelname)s| %(relativeSeconds)ds |%(message)s"
+    log_format = (
+        "%(asctime)s|%(name)s|%(levelname)s| %(relativeSeconds)ds |%(message)s"
+    )
     formatter = RelativeSecondsColoredFormatter(log_format, datefmt="%H:%M:%S")
     console_handler.setFormatter(formatter)
 

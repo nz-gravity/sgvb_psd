@@ -12,14 +12,14 @@ tfb = tfp.bijectors
 
 class ViRunner:
     def __init__(
-            self,
-            x,
-            N_theta=30,
-            nchunks=400,
-            variation_factor=0,
-            fmax_for_analysis=None,
-            fs=2048,
-            degree_fluctuate=None,
+        self,
+        x,
+        N_theta=30,
+        nchunks=400,
+        variation_factor=0,
+        fmax_for_analysis=None,
+        fs=2048,
+        degree_fluctuate=None,
     ):
         self.data = x
         logger.debug(f"Inputted data shape: {self.data.shape}")
@@ -59,15 +59,12 @@ class ViRunner:
 
         self.variation_factor = variation_factor
 
-
-
     def runModel(
         self,
         lr_map=5e-4,
         ntrain_map=5e3,
         inference_size=500,
     ):
-
 
         logger.debug("Starting Model Inference Training..")
 
@@ -153,7 +150,8 @@ class ViRunner:
                             ),
                             scale_perturb_factor=tfp.util.TransformedVariable(
                                 tf.random_uniform_initializer()(
-                                    opt_vars_hs[i][0].shape + self.variation_factor
+                                    opt_vars_hs[i][0].shape
+                                    + self.variation_factor
                                 ),
                                 tfb.Identity(),
                             ),
@@ -193,7 +191,6 @@ class ViRunner:
         self.posteriorPointEstStd = trainable_Mvnormal.stddev()
         self.variationalDistribution = trainable_Mvnormal
 
-
         # once model is trained -- we should be able to sample from it
         samp = trainable_Mvnormal.sample(inference_size)
         self.model.freq = self.model.sc_fft()["fq_y"]
@@ -209,7 +206,3 @@ class ViRunner:
     # TODO: _compute_psd_quantiles()
     # TODO: _plot_basis
     # TODO: _plot_loss
-
-
-
-

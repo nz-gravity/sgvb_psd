@@ -16,8 +16,6 @@ def test_data_generation(plot_dir):
         n_samples=n, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma
     )
 
-
-
     set_seed(0)
     var2 = SimVARMA(
         n_samples=n, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma
@@ -46,7 +44,9 @@ def test_data_generation(plot_dir):
     ax1.plot(var.data[:, 1])
 
     assert np.all(var.data == var2.data)
-    var2.plot(axs=axes, add_axes_labels=False, xlims=[0, np.pi], welch_nchunks=8)
+    var2.plot(
+        axs=axes, add_axes_labels=False, xlims=[0, np.pi], welch_nchunks=8
+    )
 
     for ax in [ax12, ax13]:
         ax.set_xlabel("Frequency [Hz]", fontsize=12)
@@ -65,14 +65,13 @@ def test_data_generation(plot_dir):
     ax1.annotate("Channel 2", xy=(0.6, 0.9), xycoords="axes fraction")
     ax0.set_xticklabels([])
 
-
     # Draw an arrow from ax0 (bottom right corner) to ax02 (bottom left corner)
-    ax0.annotate("",
-                 xy=(0.4, 0.5),  # end point
-                 xytext=(0.3, 0.5),  # start point
-                 xycoords='figure fraction',
-                 arrowprops=dict(arrowstyle="->", color="black", lw=1.5))
+    ax0.annotate(
+        "",
+        xy=(0.4, 0.5),  # end point
+        xytext=(0.3, 0.5),  # start point
+        xycoords="figure fraction",
+        arrowprops=dict(arrowstyle="->", color="black", lw=1.5),
+    )
 
     plt.savefig(f"{plot_dir}/pdgrm.png")
-
-

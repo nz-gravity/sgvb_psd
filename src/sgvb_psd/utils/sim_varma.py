@@ -11,12 +11,12 @@ class SimVARMA:
     """
 
     def __init__(
-            self,
-            n_samples: int,
-            var_coeffs: np.ndarray,
-            vma_coeffs: np.ndarray,
-            sigma=np.array([1.0]),
-            seed=None,
+        self,
+        n_samples: int,
+        var_coeffs: np.ndarray,
+        vma_coeffs: np.ndarray,
+        sigma=np.array([1.0]),
+        seed=None,
     ):
         """
         Initialize the SimVARMA class.
@@ -37,7 +37,7 @@ class SimVARMA:
 
         self.fs = 2 * np.pi
         self.freq = (
-                np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
+            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
         )
 
         self.data = None  # set in "resimulate"
@@ -95,7 +95,7 @@ class SimVARMA:
             x[i] = np.sum(
                 np.matmul(
                     self.var_coeffs,
-                    x[i - 1: i - lag_ar - 1: -1][..., np.newaxis],
+                    x[i - 1 : i - lag_ar - 1 : -1][..., np.newaxis],
                 ),
                 axis=(0, -1),
             ) + np.sum(
@@ -104,21 +104,30 @@ class SimVARMA:
             )
 
         self.data = x[101:]
-        self.periodogram = get_periodogram(self.data, fs=self.fs, psd_scaling=self.psd_scaling)[0]
+        self.periodogram = get_periodogram(
+            self.data, fs=self.fs, psd_scaling=self.psd_scaling
+        )[0]
         self.compute_welch_periodogram(n_chunks=1)
 
     def compute_welch_periodogram(self, n_chunks=1):
-        (
-            self.welch_psd,
-            self.welch_f
-        ) = get_welch_periodogram(self.data, fs=self.fs, n_chunks=n_chunks)
+        (self.welch_psd, self.welch_f) = get_welch_periodogram(
+            self.data, fs=self.fs, n_chunks=n_chunks
+        )
 
     def plot(self, axs=None, welch_nchunks=None, **kwargs):
         kwargs["off_symlog"] = kwargs.get("off_symlog", False)
         axs = plot_peridogram(self.periodogram, self.freq, axs=axs, **kwargs)
         if welch_nchunks is not None:
             self.compute_welch_periodogram(n_chunks=welch_nchunks)
-            axs = plot_peridogram(self.welch_psd, self.welch_f, axs=axs, **kwargs, color="gray", alpha=0.5, zorder=-1)
+            axs = plot_peridogram(
+                self.welch_psd,
+                self.welch_f,
+                axs=axs,
+                **kwargs,
+                color="gray",
+                alpha=0.5,
+                zorder=-1,
+            )
         plot_single_psd(self.psd, self.freq, axs=axs, **kwargs)
         format_axes(axs, **kwargs)
         return axs
@@ -183,11 +192,11 @@ class SimVARMA:
 
 
 def _calculate_true_varma_psd(
-        n_samples: int,
-        dim: int,
-        var_coeffs: np.ndarray,
-        vma_coeffs: np.ndarray,
-        sigma: np.ndarray,
+    n_samples: int,
+    dim: int,
+    var_coeffs: np.ndarray,
+    vma_coeffs: np.ndarray,
+    sigma: np.ndarray,
 ) -> np.ndarray:
     """
     Calculate the spectral matrix for given frequencies.

@@ -43,9 +43,7 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
             ax = axs[row_i, col_j]
             if nquantiles > 1:
 
-                ax.fill_between(
-                    freqs, psd_ij[0], psd_ij[2], **fill_kwargs
-                )
+                ax.fill_between(freqs, psd_ij[0], psd_ij[2], **fill_kwargs)
                 ax.plot(freqs, psd_ij[1], **plt_kwargs)
             else:
                 ax.plot(freqs.ravel(), psd_ij.ravel(), **plt_kwargs)
@@ -161,7 +159,6 @@ def _format_spines(
     if xlims is None:
         xlims = axes[0, 0].get_xlim()
 
-
     # formatting for spline axes
     for i in range(p):
         for j in range(p):
@@ -205,8 +202,6 @@ def _format_spines(
 
                 if off_symlog:
                     ax.set_yscale("symlog", linthresh=sylmog_thresh)
-
-
 
 
 def _format_text(axes, channel_labels=None, **kwargs):
