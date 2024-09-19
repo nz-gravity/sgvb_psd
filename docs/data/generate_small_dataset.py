@@ -8,8 +8,8 @@ for i, channel in enumerate(CHANNELS):
         data.append(f[f"E{i+1}:STRAIN"][:])
 time = np.linspace(0, 2000, len(data[0]))
 data = np.array(data)
-data = data[:, : 2**16]
-time = time[: 2**16]
+data = data[:, : 2**19]
+time = time[: 2**19]
 with h5py.File("et_data.h5", "w") as f:
     # Create datasets for X, Y, Z
     f.create_dataset("X", data=data[0])
