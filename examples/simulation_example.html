@@ -63,6 +63,7 @@ const thebe_selector_output = ".output, .cell_output"
 </script>
     <script async="async" src="../_static/sphinx-thebe.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/simulation_example';</script>
+    <link rel="shortcut icon" href="../_static/favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="ET Example" href="ET_example.html" />
@@ -153,8 +154,8 @@ const thebe_selector_output = ".output, .cell_output"
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="SGVB-psd - Home"/>
-    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="SGVB-psd - Home"/>`);</script>
+    <img src="../_static/logo_100.png" class="logo__image only-light" alt="SGVB-psd - Home"/>
+    <script>document.write(`<img src="../_static/logo_100.png" class="logo__image only-dark" alt="SGVB-psd - Home"/>`);</script>
   
   
 </a></div>
@@ -406,9 +407,11 @@ document.write(`
 
 <span class="n">var2</span> <span class="o">=</span> <span class="n">SimVARMA</span><span class="p">(</span>
     <span class="n">n_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
-    <span class="n">var_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]]]),</span>
-    <span class="n">vma_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]]),</span>
-    <span class="n">sigma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]])</span>
+    <span class="n">var_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]]]</span>
+    <span class="p">),</span>
+    <span class="n">vma_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]]),</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]),</span>
 <span class="p">)</span>
 <span class="n">var2</span>
 </pre></div>
@@ -422,11 +425,8 @@ document.write(`
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">var2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">off_symlog</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_data.png&#39;</span><span class="p">)</span>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">var2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">off_symlog</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;var2_data.png&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">();</span>
 </pre></div>
 </div>
@@ -439,18 +439,19 @@ document.write(`
 
 <span class="n">optim</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="n">var2</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-    <span class="n">N_theta</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">nchunks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
-    <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>  
+    <span class="n">N_theta</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">nchunks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
     <span class="n">max_hyperparm_eval</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">fs</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span>
+    <span class="n">fs</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.003</span><span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span> 
+    <span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span>
     <span class="n">off_symlog</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">],</span>
-<span class="p">);</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_psd.png&#39;</span><span class="p">);</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;var2_psd.png&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -477,11 +478,8 @@ document.write(`
 <p><img alt="VAR(2) PSD" src="../_images/var2_psd.png" /></p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot_coherence</span><span class="p">(</span>
-    <span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span> 
-    <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;XY&#39;</span>
-<span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_coh.png&#39;</span><span class="p">);</span>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot_coherence</span><span class="p">(</span><span class="n">true_psd</span><span class="o">=</span><span class="p">[</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span> <span class="n">var2</span><span class="o">.</span><span class="n">freq</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="s2">&quot;XY&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;var2_coh.png&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -491,7 +489,7 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">plot_vi_losses</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;var2_vi_losses.png&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;var2_vi_losses.png&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>

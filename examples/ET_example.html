@@ -63,6 +63,7 @@ const thebe_selector_output = ".output, .cell_output"
 </script>
     <script async="async" src="../_static/sphinx-thebe.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/ET_example';</script>
+    <link rel="shortcut icon" href="../_static/favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="Simulation Example" href="simulation_example.html" />
@@ -152,8 +153,8 @@ const thebe_selector_output = ".output, .cell_output"
       
     
     
-    <img src="../_static/logo.png" class="logo__image only-light" alt="SGVB-psd - Home"/>
-    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="SGVB-psd - Home"/>`);</script>
+    <img src="../_static/logo_100.png" class="logo__image only-light" alt="SGVB-psd - Home"/>
+    <script>document.write(`<img src="../_static/logo_100.png" class="logo__image only-dark" alt="SGVB-psd - Home"/>`);</script>
   
   
 </a></div>
@@ -415,15 +416,11 @@ The data is a small subset of the ET data used in the paper for this work.</p>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
         <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span>
             <span class="s2">&quot;https://github.com/nz-gravity/sgvb_psd/raw/main/docs/examples/et_data.h5&quot;</span><span class="p">,</span>
-            <span class="n">fname</span>
+            <span class="n">fname</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;et_data.h5&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">channels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
-            <span class="n">f</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">][:],</span>
-            <span class="n">f</span><span class="p">[</span><span class="s2">&quot;Y&quot;</span><span class="p">][:],</span>
-            <span class="n">f</span><span class="p">[</span><span class="s2">&quot;Z&quot;</span><span class="p">][:]</span>
-        <span class="p">])</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">][:],</span> <span class="n">f</span><span class="p">[</span><span class="s2">&quot;Y&quot;</span><span class="p">][:],</span> <span class="n">f</span><span class="p">[</span><span class="s2">&quot;Z&quot;</span><span class="p">][:]])</span>
         <span class="k">return</span> <span class="n">channels</span>
 
 
@@ -445,13 +442,13 @@ The data is a small subset of the ET data used in the paper for this work.</p>
 <span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.003</span><span class="p">)</span>  <span class="c1"># remove lr to run-hyperoptimisation (takes a long time)</span>
 <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">estimation_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The estimation time is </span><span class="si">{</span><span class="n">estimation_time</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">s&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The estimation time is </span><span class="si">{</span><span class="n">estimation_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
 
-<span class="n">optim</span><span class="o">.</span><span class="n">plot_coherence</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="s1">&#39;XYZ&#39;</span><span class="p">)</span>
+<span class="n">optim</span><span class="o">.</span><span class="n">plot_coherence</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="s2">&quot;XYZ&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;ET_coherence.png&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-<span class="n">optim</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;XYZ&#39;</span><span class="p">)</span>
+<span class="n">optim</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="s2">&quot;XYZ&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;ET_psd.png&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 

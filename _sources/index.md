@@ -12,7 +12,7 @@ pip install git+https//github.com/nz-gravity/sgvb_psd
 
 ## Usage
 
-- [API Documentation](api.md)
+- [API Documentation](api.rst)
 - [Simulated data Example](examples/simulation_example.ipynb)
 - [ET Example](examples/ET_example.ipynb)
 
