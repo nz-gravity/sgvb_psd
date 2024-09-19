@@ -36,7 +36,6 @@ class PSDEstimator:
         x: np.ndarray,
         N_theta: int = 30,
         nchunks: int = 1,
-        duration: float = 1.0,
         ntrain_map=10000,
         N_samples: int = 500,
         fs=1.0,
@@ -50,7 +49,6 @@ class PSDEstimator:
         :param x: the input multivariate time series
         :param N_theta: the number of basis functions for the theta component
         :param nchunks: the number of blocks that multivariate time series is divided into
-        :param duration: the total observation time
         :param ntrain_map: the number of iterations in gradient ascent for MAP
         :param N_samples: the number of parameters sampled from the surrogate distribution
         :param max_hyperparm_eval: the number of evaluations in 'Hyperopt'
@@ -67,10 +65,9 @@ class PSDEstimator:
         self.N_theta = N_theta
         self.N_samples = N_samples
         self.nchunks = nchunks
-        self.duration = duration
         self.ntrain_map = ntrain_map
 
-        self.sampling_freq = fs
+        self.fs = fs
         self.lr_range = lr_range
 
         # normalize the data
@@ -84,7 +81,7 @@ class PSDEstimator:
         self.fmax_for_analysis = fmax_for_analysis
 
         self.pdgrm, self.pdgrm_freq = get_periodogram(
-            self.x, fs=self.sampling_freq
+            self.x, fs=self.fs
         )
         self.pdgrm = (self.pdgrm * self.psd_scaling**2)
         self.max_hyperparm_eval = max_hyperparm_eval
@@ -110,7 +107,9 @@ class PSDEstimator:
         )
 
         # Internal variables
-        self.model_info = {}
+        self.model = None
+        self.samps = None
+        self.vi_losses = None
         self.psd_quantiles = None
         self.psd_all = None
         self.inference_runner = ViRunner(
@@ -119,7 +118,7 @@ class PSDEstimator:
             nchunks=self.nchunks,
             fmax_for_analysis=self.fmax_for_analysis,
             degree_fluctuate=self.degree_fluctuate,
-            fs=self.sampling_freq,
+            fs=self.fs,
         )
 
     def __learning_rate_optimisation_objective(self, lr):
@@ -156,105 +155,19 @@ class PSDEstimator:
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples
         )
-        (
-            self.model_info["Xmat_delta"],
-            self.model_info["Xmat_theta"],
-        ) = model.Xmtrix(
-            N_delta=self.N_theta, N_theta=self.N_theta
-        )
-        self.model_info["p_dim"] = model.p_dim
+        self.model = model
         self.samps = samples
         self.vi_losses = vi_losses.numpy()
 
 
 
-    def _compute_spectral_density(
-        self, post_sample: np.ndarray, quantiles=[0.05, 0.5, 0.95]
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        This function is used to compute the spectral density given best surrogate posterior parameters
-        :param post_sample: the surrogate posterior parameters
-
-        Computes:
-            1. self.psd_q: the quantiles of the spectral density [n-quantiles, n-freq, dim, dim]
-            2. self.psd_all: Nsamp instances of the spectral density [Nsamp, n-freq, dim, dim]
-
-        """
-        Xmat_delta = self.model_info["Xmat_delta"]
-        Xmat_theta = self.model_info["Xmat_theta"]
-        p_dim = self.model_info["p_dim"]
-
-        delta2_all_s = tf.exp(
-            tf.matmul(Xmat_delta, tf.transpose(post_sample[0], [0, 2, 1]))
-        )  # (500, #freq, p)
-
-        theta_re_s = tf.matmul(
-            Xmat_theta, tf.transpose(post_sample[2], [0, 2, 1])
-        )  # (500, #freq, p(p-1)/2)
-        theta_im_s = tf.matmul(
-            Xmat_theta, tf.transpose(post_sample[4], [0, 2, 1])
-        )
-
-        theta_all_s = -(
-            tf.complex(theta_re_s, theta_im_s)
-        )  # (500, #freq, p(p-1)/2)
-        theta_all_np = theta_all_s.numpy()
-
-        D_all = tf.map_fn(
-            lambda x: tf.linalg.diag(x), delta2_all_s
-        ).numpy()  # (500, #freq, p, p)
-
-        num_slices, num_freq, num_elements = theta_all_np.shape
-        row_indices, col_indices = np.tril_indices(p_dim, k=-1)
-        diag_matrix = np.eye(p_dim, dtype=np.complex64)
-        T_all = np.tile(diag_matrix, (num_slices, num_freq, 1, 1))
-        T_all[:, :, row_indices, col_indices] = theta_all_np.reshape(
-            num_slices, num_freq, -1
-        )
-
-        T_all_conj_trans = np.conj(np.transpose(T_all, axes=(0, 1, 3, 2)))
-        D_all_inv = np.linalg.inv(D_all)
-
-        spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
-        psd_all = (
-            np.linalg.inv(spectral_density_inverse_all) * self.psd_scaling**2
-        )
-
-        psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
-
-        diag_indices = np.diag_indices(p_dim)
-        psd_q[:, :, diag_indices[0], diag_indices[1]] = np.quantile(
-            np.real(psd_all[:, :, diag_indices[0], diag_indices[1]]),
-            quantiles,
-            axis=0,
-        )
-
-        triu_indices = np.triu_indices(p_dim, k=1)
-        real_part = np.real(psd_all[:, :, triu_indices[1], triu_indices[0]])
-        imag_part = np.imag(psd_all[:, :, triu_indices[1], triu_indices[0]])
-
-        for i, q in enumerate(quantiles):
-            psd_q[i, :, triu_indices[1], triu_indices[0]] = (
-                np.quantile(real_part, q, axis=0)
-                + 1j * np.quantile(imag_part, q, axis=0)
-            ).T
-
-        psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
-            psd_q[:, :, triu_indices[1], triu_indices[0]]
-        )
-
-        # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
-        true_fmax = self.sampling_freq / 2
-        self.psd_quantiles = psd_q / (true_fmax / 0.5)
-        self.psd_all = psd_all / (true_fmax / 0.5)
 
     def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray]:
-        logger.info("Running hyperopt to find optimal learning rate")
-
         if lr:
             logger.info(f"Using provided learning rate: {lr}")
             self.optimal_lr = lr
         else:
+            logger.info("Running hyperopt to find optimal learning rate")
             t0 = time.time()
             self.find_optimal_learing_rate()
             t1 = time.time()
@@ -266,9 +179,11 @@ class PSDEstimator:
         t1 = time.time()
         logger.info(f"Model trained in {t1 - t0:.2f}s")
 
-        logger.info("Computing optimal PSD estimation")
+        logger.info("Computing posterior PSDs")
         t0 = time.time()
-        self._compute_spectral_density(self.samps)
+        self.psd_all, self.psd_quantiles =  self.model.compute_psd(
+            self.samps, psd_scaling=self.psd_scaling, fs=self.fs
+        )
         t1 = time.time()
         logger.info(f"Optimal PSD estimation complete in {t1 - t0:.2f}s")
         return self.psd_all, self.psd_quantiles
@@ -279,7 +194,7 @@ class PSDEstimator:
         if hasattr(self, "_freq"):
             return self._freq
 
-        dt = 1 / self.sampling_freq
+        dt = 1 / self.fs
         self._freq = np.fft.fftfreq(self.nt_per_chunk, d=dt)
         n = self.nt_per_chunk
         if np.mod(n, 2) == 0:
@@ -325,3 +240,9 @@ class PSDEstimator:
                 true_psd[0], true_psd[1], **kwargs, ax=ax, ls="--", color="k"
             )
         return ax
+
+    def plot_vi_losses(self):
+        plt.plot(self.vi_losses)
+        plt.xlabel("Iteration")
+        plt.ylabel("ELBO")
+        return plt.gca()

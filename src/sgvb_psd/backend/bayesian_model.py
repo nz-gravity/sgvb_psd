@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from typing import Tuple
+
 from .analysis_data import AnalysisData
 
 tfd = tfp.distributions
@@ -13,7 +15,7 @@ tfb = tfp.bijectors
 
 class BayesianModel(AnalysisData):
     def __init__(
-        self, x, hyper, nchunks, fmax_for_analysis, fs
+            self, x, hyper, nchunks, fmax_for_analysis, fs
     ):
         super().__init__(x, nchunks, fmax_for_analysis, fs)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
@@ -297,14 +299,116 @@ class BayesianModel(AnalysisData):
             tf.constant(0, tf.float32), self.hyper[0]
         )
         logPrior = (
-            lpriorDel
-            + lpriorThe_re
-            + lpriorThe_im
-            + tf.reduce_sum(
-                priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
-            )
-            + tf.reduce_sum(
-                priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
-            )
+                lpriorDel
+                + lpriorThe_re
+                + lpriorThe_im
+                + tf.reduce_sum(
+            priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
+        )
+                + tf.reduce_sum(
+            priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
+        )
         )
         return logPrior
+
+    def compute_psd(self,
+                    vi_samples: np.ndarray,
+                    quantiles=[0.05, 0.5, 0.95],
+                    psd_scaling=1.,
+                    fs=None,
+                    ) -> Tuple[np.ndarray, np.ndarray]:
+        return compute_psd(
+            self.Xmat_delta,
+            self.Xmat_theta,
+            self.p_dim,
+            vi_samples,
+            quantiles,
+            psd_scaling,
+            fs,
+        )
+
+def compute_psd(
+        Xmat_delta,
+        Xmat_theta,
+        p_dim,
+        vi_samples: np.ndarray,
+        quantiles=[0.05, 0.5, 0.95],
+        psd_scaling=1.,
+        fs=None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    This function is used to compute the spectral density given best surrogate posterior parameters
+    :param vi_samples: the surrogate posterior parameters
+
+    Computes:
+        1. self.psd_q: the quantiles of the spectral density [n-quantiles, n-freq, dim, dim]
+        2. self.psd_all: Nsamp instances of the spectral density [Nsamp, n-freq, dim, dim]
+
+    """
+
+    delta2_all_s = tf.exp(
+        tf.matmul(Xmat_delta, tf.transpose(vi_samples[0], [0, 2, 1]))
+    )  # (500, #freq, p)
+
+    theta_re_s = tf.matmul(
+        Xmat_theta, tf.transpose(vi_samples[2], [0, 2, 1])
+    )  # (500, #freq, p(p-1)/2)
+    theta_im_s = tf.matmul(
+        Xmat_theta, tf.transpose(vi_samples[4], [0, 2, 1])
+    )
+
+    theta_all_s = -(
+        tf.complex(theta_re_s, theta_im_s)
+    )  # (500, #freq, p(p-1)/2)
+    theta_all_np = theta_all_s.numpy()
+
+    D_all = tf.map_fn(
+        lambda x: tf.linalg.diag(x), delta2_all_s
+    ).numpy()  # (500, #freq, p, p)
+
+    num_slices, num_freq, num_elements = theta_all_np.shape
+    row_indices, col_indices = np.tril_indices(p_dim, k=-1)
+    diag_matrix = np.eye(p_dim, dtype=np.complex64)
+    T_all = np.tile(diag_matrix, (num_slices, num_freq, 1, 1))
+    T_all[:, :, row_indices, col_indices] = theta_all_np.reshape(
+        num_slices, num_freq, -1
+    )
+
+    T_all_conj_trans = np.conj(np.transpose(T_all, axes=(0, 1, 3, 2)))
+    D_all_inv = np.linalg.inv(D_all)
+
+    spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
+    psd_all = (
+        np.linalg.inv(spectral_density_inverse_all)
+    )
+
+    psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
+
+    diag_indices = np.diag_indices(p_dim)
+    psd_q[:, :, diag_indices[0], diag_indices[1]] = np.quantile(
+        np.real(psd_all[:, :, diag_indices[0], diag_indices[1]]),
+        quantiles,
+        axis=0,
+    )
+
+    triu_indices = np.triu_indices(p_dim, k=1)
+    real_part = np.real(psd_all[:, :, triu_indices[1], triu_indices[0]])
+    imag_part = np.imag(psd_all[:, :, triu_indices[1], triu_indices[0]])
+
+    for i, q in enumerate(quantiles):
+        psd_q[i, :, triu_indices[1], triu_indices[0]] = (
+                np.quantile(real_part, q, axis=0)
+                + 1j * np.quantile(imag_part, q, axis=0)
+        ).T
+
+    psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
+        psd_q[:, :, triu_indices[1], triu_indices[0]]
+    )
+
+    # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
+    if fs:
+        true_fmax = fs / 2
+        psd_q = psd_q / (true_fmax / 0.5)
+        psd_all = psd_all / (true_fmax / 0.5)
+
+    return psd_all * psd_scaling ** 2, psd_q * psd_scaling ** 2
