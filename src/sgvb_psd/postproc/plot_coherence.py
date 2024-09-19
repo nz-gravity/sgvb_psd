@@ -18,7 +18,7 @@ def compute_coherence(pxx, pyy, pxy):
     return coh
 
 
-def plot_coherence(psd, freq, labels=None, ax=None, color=None, ls='-'):
+def plot_coherence(psd, freq, labels=None, ax=None, color=None, ls="-"):
     p = psd.shape[-1]
     combinations = matrix_combinations(p)
     if ax is None:
@@ -27,9 +27,7 @@ def plot_coherence(psd, freq, labels=None, ax=None, color=None, ls='-'):
     for idx, comb in enumerate(combinations):
         (i, j), (ii, _), (jj, _) = comb
         cohs = compute_coherence(
-            psd[..., ii, ii],
-            psd[..., jj, jj],
-            psd[..., i, j]
+            psd[..., ii, ii], psd[..., jj, jj], psd[..., i, j]
         )
         if labels is not None:
             l = r"$C_{" + f"{labels[i]}{labels[j]}" + "}$"
@@ -41,13 +39,13 @@ def plot_coherence(psd, freq, labels=None, ax=None, color=None, ls='-'):
             label=l,
             color=f"C{idx}" if color is None else color,
             ax=ax,
-            ls=ls
+            ls=ls,
         )
     ax.legend()
     return ax
 
 
-def _plot_one_coherence(coh, freq, label, ax, color, ls='-'):
+def _plot_one_coherence(coh, freq, label, ax, color, ls="-"):
     """
     Plot the coherence between two signals.
     """

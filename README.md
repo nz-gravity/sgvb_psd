@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/nz-gravity/sgvb_psd/badge.svg?branch=main)](https://coveralls.io/github/nz-gravity/sgvb_psd?branch=main)
+
 # SGVB PSD Estimator
 
 This repository contains the code for the paper 

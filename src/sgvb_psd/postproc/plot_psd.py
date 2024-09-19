@@ -31,6 +31,10 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
         # generate a square figure with pxp subplots
         fig, axs = _generate_fig(p)
 
+    fill_kwargs = plt_kwargs.copy()
+    fill_kwargs["alpha"] = 0.3
+    fill_kwargs["lw"] = 0
+
     for row_i in range(p):
         for col_j in range(p):
             psd_ij = psd_q[..., row_i, col_j]
@@ -38,9 +42,8 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
 
             ax = axs[row_i, col_j]
             if nquantiles > 1:
-                ax.fill_between(
-                    freqs, psd_ij[0], psd_ij[2], alpha=0.3, lw=0, **plt_kwargs
-                )
+
+                ax.fill_between(freqs, psd_ij[0], psd_ij[2], **fill_kwargs)
                 ax.plot(freqs, psd_ij[1], **plt_kwargs)
             else:
                 ax.plot(freqs.ravel(), psd_ij.ravel(), **plt_kwargs)
@@ -207,29 +210,31 @@ def _format_text(axes, channel_labels=None, **kwargs):
         channel_labels = "".join([f"{i + 1}" for i in range(p)])
     assert len(channel_labels) == p
 
-    # formatting text associated with the plot
-    for i in range(p):
-        for j in range(p):
-            ax = axes[i, j]
-            lbl = f"{channel_labels[i]}{channel_labels[j]}"
-            lbl = "\mathbf{S}_{" + lbl + "}"
+    add_chnl_lbls = kwargs.get("add_channel_labels", True)
+    if add_chnl_lbls:
+        # formatting text associated with the plot
+        for i in range(p):
+            for j in range(p):
+                ax = axes[i, j]
+                lbl = f"{channel_labels[i]}{channel_labels[j]}"
+                lbl = "\mathbf{S}_{" + lbl + "}"
 
-            if i < j:  # upper triangular
-                lbl = "$\Re(" + lbl + ")$"
-            elif i > j:  # lower triangular
-                lbl = "$\Im(" + lbl + ")$"
-            else:
-                lbl = "$" + lbl + "$"
+                if i < j:  # upper triangular
+                    lbl = "$\Re(" + lbl + ")$"
+                elif i > j:  # lower triangular
+                    lbl = "$\Im(" + lbl + ")$"
+                else:
+                    lbl = "$" + lbl + "$"
 
-            ax.text(
-                0.95,
-                0.95,
-                lbl,
-                transform=ax.transAxes,
-                horizontalalignment="right",
-                verticalalignment="top",
-                fontsize="small",
-            )
+                ax.text(
+                    0.95,
+                    0.95,
+                    lbl,
+                    transform=ax.transAxes,
+                    horizontalalignment="right",
+                    verticalalignment="top",
+                    fontsize="small",
+                )
 
     add_axes_labels = kwargs.get("add_axes_labels", True)
     if add_axes_labels:

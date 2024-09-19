@@ -52,8 +52,10 @@ def setup_logger(name):
     console_handler.setLevel(logging.DEBUG)
 
     # Define the log message format
+
     # log_format = "%(asctime)s|%(name)s|%(levelname)s| %(relativeSeconds)ds |%(message)s"
     log_format = "%(asctime)s|%(name)s|%(levelname)s| %(message)s"
+
     formatter = RelativeSecondsColoredFormatter(log_format, datefmt="%H:%M:%S")
     console_handler.setFormatter(formatter)
 

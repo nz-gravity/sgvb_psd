@@ -15,8 +15,6 @@ def plot_dir():
     return plot_dir
 
 
-
-
 @pytest.fixture
 def et_data():
     # download and cache the dataset (small) if it doesn't exist

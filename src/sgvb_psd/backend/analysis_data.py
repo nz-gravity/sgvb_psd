@@ -9,9 +9,7 @@ tfb = tfp.bijectors
 
 
 class AnalysisData:  # Parent used to create BayesianModel object
-    def __init__(
-        self, x, nchunks=128,  fmax_for_analysis=128, fs=2048
-    ):
+    def __init__(self, x, nchunks=128, fmax_for_analysis=128, fs=2048):
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # ts:     time series x
         # y_ft:   fourier transformed time series
@@ -61,16 +59,16 @@ class AnalysisData:  # Parent used to create BayesianModel object
 
         Ts = 1
         fq_y = np.fft.fftfreq(np.size(x, axis=1), Ts)
-        ftrue_y = np.fft.fftfreq(n, d=1/self.fs)
+        ftrue_y = np.fft.fftfreq(n, d=1 / self.fs)
 
-        if np.mod(n, 2) == 0: # n is even
+        if np.mod(n, 2) == 0:  # n is even
             idx = int(n / 2)
-        else: # n is odd
+        else:  # n is odd
             idx = int((n - 1) / 2)
 
-        y = y[:, 0: idx, :]
-        fq_y = fq_y[0: idx]
-        ftrue_y = ftrue_y[0: idx]
+        y = y[:, 0:idx, :]
+        fq_y = fq_y[0:idx]
+        ftrue_y = ftrue_y[0:idx]
 
         if fmax_for_analysis is None:
             fmax_for_analysis = ftrue_y[-1]
@@ -169,11 +167,9 @@ class AnalysisData:  # Parent used to create BayesianModel object
         self.Zar_im = np.imag(Z_)
         return self.Zar_re, self.Zar_im
 
-
     def __repr__(self):
         x = self.ts.shape
         y = self.y_work.shape
         xmat_delta = self.Xmat_delta.shape
         xmat_theta = self.Xmat_theta.shape
         return f"SpecPrep(x(t)={x}, y(f)={y}, Xmat_delta={xmat_delta}, Xmat_theta={xmat_theta})"
-
