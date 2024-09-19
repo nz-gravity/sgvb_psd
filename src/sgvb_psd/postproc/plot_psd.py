@@ -156,7 +156,6 @@ def _format_spines(
     if xlims is None:
         xlims = axes[0, 0].get_xlim()
 
-
     # formatting for spline axes
     for i in range(p):
         for j in range(p):
@@ -200,27 +199,6 @@ def _format_spines(
 
                 if off_symlog:
                     ax.set_yscale("symlog", linthresh=sylmog_thresh)
-
-    for i in range(p):
-        for j in range(p):
-            ax = axes[i, j]
-            ax.annotate(
-                f"{i}{j}", xy=(0.1, 0.1),
-                xycoords="axes fraction", ha="right", va="bottom", fontsize=12)
-
-            # turn off yticks-LABELS for all but the left column
-            if i != p-1:
-                ax.set_xticklabels([])
-
-
-
-            # # turn off xticks-LABELS for all but the bottom row
-            # if i != p - 1:
-            #     ax.set_xticklabels([])
-            # else:
-            #     print(f"Xticks on for {i}, {j}")
-            #     ax.tick_params(axis="x", direction="in", pad=-10)
-
 
 
 def _format_text(axes, channel_labels=None, **kwargs):

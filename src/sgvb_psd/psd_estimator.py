@@ -43,7 +43,7 @@ class PSDEstimator:
         fmax_for_analysis=None,
         degree_fluctuate=None,
         seed=None,
-        lr_range = (0.002, 0.02),
+        lr_range=(0.002, 0.02),
     ):
         """
         :param x: the input multivariate time series
@@ -60,7 +60,6 @@ class PSDEstimator:
 
         if seed is not None:
             set_seed(seed)
-
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -80,10 +79,8 @@ class PSDEstimator:
 
         self.fmax_for_analysis = fmax_for_analysis
 
-        self.pdgrm, self.pdgrm_freq = get_periodogram(
-            self.x, fs=self.fs
-        )
-        self.pdgrm = (self.pdgrm * self.psd_scaling**2)
+        self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
+        self.pdgrm = self.pdgrm * self.psd_scaling**2
         self.max_hyperparm_eval = max_hyperparm_eval
         self.degree_fluctuate = degree_fluctuate
 
@@ -96,7 +93,7 @@ class PSDEstimator:
             if np.log2(nchunks) % 1 != 0:
                 logger.warning("nchunks must be a power of 2 for faster FFTs")
 
-        if self.fmax_for_analysis < self.nt_per_chunk//2:
+        if self.fmax_for_analysis < self.nt_per_chunk // 2:
             logger.info(
                 f"Reducing the number of frequencies to be analyzed from "
                 f"{self.nt_per_chunk // 2} to {self.fmax_for_analysis}..."
@@ -130,11 +127,9 @@ class PSDEstimator:
         vi_losses, _, _ = self.inference_runner.runModel(
             lr_map=lr["lr_map"],
             ntrain_map=self.ntrain_map,
-            inference_size=self.N_samples
+            inference_size=self.N_samples,
         )
         return vi_losses[-1].numpy()
-
-
 
     def find_optimal_learing_rate(self):
         """
@@ -153,14 +148,11 @@ class PSDEstimator:
         vi_losses, model, samples = self.inference_runner.runModel(
             lr_map=self.optimal_lr,
             ntrain_map=self.ntrain_map,
-            inference_size=self.N_samples
+            inference_size=self.N_samples,
         )
         self.model = model
         self.samps = samples
         self.vi_losses = vi_losses.numpy()
-
-
-
 
     def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray]:
         if lr:
@@ -181,7 +173,7 @@ class PSDEstimator:
 
         logger.info("Computing posterior PSDs")
         t0 = time.time()
-        self.psd_all, self.psd_quantiles =  self.model.compute_psd(
+        self.psd_all, self.psd_quantiles = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
         t1 = time.time()
@@ -220,10 +212,14 @@ class PSDEstimator:
         """Return the number of frequencies per chunk"""
         return len(self.freq)
 
-    def plot(self, true_psd=None, plot_periodogram=True, **kwargs) -> np.ndarray[plt.Axes]:
+    def plot(
+        self, true_psd=None, plot_periodogram=True, **kwargs
+    ) -> np.ndarray[plt.Axes]:
         axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
         if plot_periodogram:
-            axes = plot_peridogram(self.pdgrm, self.pdgrm_freq, axs=axes, **kwargs)
+            axes = plot_peridogram(
+                self.pdgrm, self.pdgrm_freq, axs=axes, **kwargs
+            )
 
         if true_psd is not None:
             plot_single_psd(*true_psd, axes, **kwargs)
@@ -244,7 +240,7 @@ class PSDEstimator:
     def plot_vi_losses(self):
         plt.plot(self.vi_losses)
         plt.xlabel("Iteration")
-        plt.ylabel("ELBO")
+        plt.ylabel("-ELBO")
         # use exponential offset  y-axis
         plt.gca().ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
         return plt.gca()

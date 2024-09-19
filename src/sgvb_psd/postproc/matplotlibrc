@@ -9,6 +9,14 @@ figure.figsize : 3.5, 2.625
 
 # Set default font size for various elements
 axes.labelsize : 15
+xtick.labelsize : 12
+ytick.labelsize : 12
+legend.fontsize: 12
+legend.labelspacing:  0.2  # the vertical space between the legend entries
+legend.handlelength:  1.0  # the length of the legend lines
+legend.handleheight:  1.0  # the height of the legend handle
+legend.handletextpad: 0.2  # the space between the legend line and legend text
+
 
 # Set x axis
 xtick.direction : in
@@ -46,6 +54,7 @@ font.family: STIXGeneral
 mathtext.fontset: stix
 font.cursive: STIXGeneral
 font.sans-serif: Times New Roman
+font.size: 20
 
 
 
