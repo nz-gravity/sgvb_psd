@@ -30,7 +30,6 @@ start_time = time.time()
 optim = PSDEstimator(
     N_theta=N_theta,
     nchunks=125,
-    duration=2000,
     fs=2048,
     ntrain_map=1000,
     x=data,
@@ -40,7 +39,7 @@ optim = PSDEstimator(
     seed=0,
 )
 
-optim.run()
+optim.run(lr=0.003)
 end_time = time.time()
 estimation_time = end_time - start_time
 print('The estimation time is', estimation_time, 'seconds')
@@ -50,3 +49,6 @@ plt.savefig("ET_coherence.png")
 
 optim.plot(xlims=[5,128], labels='XYZ')
 plt.savefig("ET_psd.png")
+
+optim.plot_vi_losses()
+plt.savefig("ET_vi_losses.png")

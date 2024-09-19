@@ -43,7 +43,6 @@ def test_et(plot_dir):
     optim = PSDEstimator(
         N_theta=N_theta,
         nchunks=8,
-        duration=t[-1],
         ntrain_map=100,
         fs=2048,
         x=data,

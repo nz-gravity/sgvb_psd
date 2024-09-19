@@ -33,7 +33,6 @@ def test_var_psd_generation(plot_dir):
     optim = PSDEstimator(
         N_theta=10,
         nchunks=1,
-        duration=1,
         ntrain_map=50,
         x=var2_data.data,
         max_hyperparm_eval=1,
@@ -56,12 +55,32 @@ def test_var_psd_generation(plot_dir):
     assert estimation_time < 60
 
 
+def test_chunked(plot_dir):
+    var2_data = get_var_data(2**12)
+    start_time = time.time()
+    optim = PSDEstimator(
+        N_theta=10,
+        nchunks=8,
+        ntrain_map=50,
+        x=var2_data.data,
+        max_hyperparm_eval=1,
+        fs=2 * np.pi,
+        seed=0,
+    )
+    optim.run(lr=0.003)
+    optim.plot(
+        true_psd=[var2_data.psd, var2_data.freq],
+        off_symlog=False,
+        xlims=[0, np.pi],
+    )
+    plt.savefig(f"{plot_dir}/var_chunked_psd.png")
+
+
 def test_psd_analyser(plot_dir):
     var2_data = get_var_data(2**8)
     optim = PSDEstimator(
         N_theta=10,
         nchunks=1,
-        duration=1,
         ntrain_map=50,
         x=var2_data.data,
         max_hyperparm_eval=1,
