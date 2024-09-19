@@ -20,7 +20,7 @@ from .utils.tf_utils import set_seed
 
 class PSDEstimator:
     """
-    PSDEstimator: A class for estimating the posterior Power Spectral Density (PSD) using Stochastic Gradient Variational Bayes (SGVB).
+    A class for estimating the posterior Power Spectral Density (PSD) using Stochastic Gradient Variational Bayes (SGVB).
 
     This class implements a two-step process:
     1. Optimize the learning rate to maximize the posterior and Evidence Lower Bound (ELBO).
@@ -28,61 +28,82 @@ class PSDEstimator:
 
     The main interface is the run() method, which returns the posterior PSD and its quantiles.
 
-    Attributes:
-        N_theta (int): Number of basis functions for the theta component.
-        N_samples (int): Number of parameters sampled from the surrogate distribution.
-        nchunks (int): Number of blocks the multivariate time series is divided into.
-        ntrain_map (int): Number of iterations in gradient ascent for Maximum A Posteriori (MAP) estimation.
-        fs (float): Sampling frequency of the input data.
-        lr_range (tuple): Range of learning rates to consider during optimization.
-        psd_scaling (np.ndarray): Scaling factor for the input data.
-        psd_offset (np.ndarray): Offset for the input data.
-        x (np.ndarray): Normalized input multivariate time series.
-        n (int): Number of time points in the input data.
-        p (int): Number of variables in the multivariate time series.
-        fmax_for_analysis (int): Maximum frequency in the frequency domain to be analyzed.
-        pdgrm (np.ndarray): Periodogram of the input data.
-        pdgrm_freq (np.ndarray): Frequencies corresponding to the periodogram.
-        max_hyperparm_eval (int): Number of evaluations in hyperparameter optimization.
-        degree_fluctuate (float): Hyperparameter from the prior, used when dealing with a large number of basis functions.
-        model (object): Trained model object.
-        samps (np.ndarray): Samples drawn from the posterior distribution.
-        vi_losses (np.ndarray): Variational Inference losses during training.
-        psd_quantiles (np.ndarray): Quantiles of the estimated PSD.
-        psd_all (np.ndarray): All estimated PSDs.
-        inference_runner (ViRunner): Object for running the variational inference.
-        optimal_lr (float): Optimized learning rate.
+    :ivar N_theta: Number of basis functions for the theta component.
+    :vartype N_theta: int
+    :ivar N_samples: Number of parameters sampled from the surrogate distribution.
+    :vartype N_samples: int
+    :ivar nchunks: Number of blocks the multivariate time series is divided into.
+    :vartype nchunks: int
+    :ivar ntrain_map: Number of iterations in gradient ascent for Maximum A Posteriori (MAP) estimation.
+    :vartype ntrain_map: int
+    :ivar fs: Sampling frequency of the input data.
+    :vartype fs: float
+    :ivar lr_range: Range of learning rates to consider during optimization.
+    :vartype lr_range: tuple
+    :ivar psd_scaling: Scaling factor for the input data.
+    :vartype psd_scaling: numpy.ndarray
+    :ivar psd_offset: Offset for the input data.
+    :vartype psd_offset: numpy.ndarray
+    :ivar x: Normalized input multivariate time series.
+    :vartype x: numpy.ndarray
+    :ivar n: Number of time points in the input data.
+    :vartype n: int
+    :ivar p: Number of variables in the multivariate time series.
+    :vartype p: int
+    :ivar fmax_for_analysis: Maximum frequency in the frequency domain to be analyzed.
+    :vartype fmax_for_analysis: int
+    :ivar pdgrm: Periodogram of the input data.
+    :vartype pdgrm: numpy.ndarray
+    :ivar pdgrm_freq: Frequencies corresponding to the periodogram.
+    :vartype pdgrm_freq: numpy.ndarray
+    :ivar max_hyperparm_eval: Number of evaluations in hyperparameter optimization.
+    :vartype max_hyperparm_eval: int
+    :ivar degree_fluctuate: Hyperparameter from the prior, used when dealing with a large number of basis functions.
+    :vartype degree_fluctuate: float
+    :ivar model: Trained model object.
+    :vartype model: object
+    :ivar samps: Samples drawn from the posterior distribution.
+    :vartype samps: numpy.ndarray
+    :ivar vi_losses: Variational Inference losses during training.
+    :vartype vi_losses: numpy.ndarray
+    :ivar psd_quantiles: Quantiles of the estimated PSD.
+    :vartype psd_quantiles: numpy.ndarray
+    :ivar psd_all: All estimated PSDs.
+    :vartype psd_all: numpy.ndarray
+    :ivar inference_runner: Object for running the variational inference.
+    :vartype inference_runner: ViRunner
+    :ivar optimal_lr: Optimized learning rate.
+    :vartype optimal_lr: float
     """
 
-    def __init__(
-        self,
-        x: np.ndarray,
-        N_theta: int = 30,
-        nchunks: int = 1,
-        ntrain_map=10000,
-        N_samples: int = 500,
-        fs=1.0,
-        max_hyperparm_eval: int = 100,
-        fmax_for_analysis=None,
-        degree_fluctuate=None,
-        seed=None,
-        lr_range=(0.002, 0.02),
-    ):
+    def __init__(self, x, N_theta=30, nchunks=1, ntrain_map=10000, N_samples=500, fs=1.0,
+                 max_hyperparm_eval=100, fmax_for_analysis=None, degree_fluctuate=None,
+                 seed=None, lr_range=(0.002, 0.02)):
         """
         Initialize the PSDEstimator.
 
-        Args:
-            x (np.ndarray): Input multivariate time series.
-            N_theta (int): Number of basis functions for the theta component.
-            nchunks (int): Number of blocks to divide the multivariate time series into.
-            ntrain_map (int): Number of iterations in gradient ascent for MAP.
-            N_samples (int): Number of parameters sampled from the surrogate distribution.
-            fs (float): Sampling frequency.
-            max_hyperparm_eval (int): Number of evaluations in hyperparameter optimization.
-            fmax_for_analysis (int): Maximum frequency to analyze in the frequency domain.
-            degree_fluctuate (float): Hyperparameter from the prior.
-            seed (int): Random seed for reproducibility.
-            lr_range (tuple): Range of learning rates to consider during optimization.
+        :param x: Input multivariate time series.
+        :type x: numpy.ndarray
+        :param N_theta: Number of basis functions for the theta component, defaults to 30.
+        :type N_theta: int, optional
+        :param nchunks: Number of blocks to divide the multivariate time series into, defaults to 1.
+        :type nchunks: int, optional
+        :param ntrain_map: Number of iterations in gradient ascent for MAP, defaults to 10000.
+        :type ntrain_map: int, optional
+        :param N_samples: Number of parameters sampled from the surrogate distribution, defaults to 500.
+        :type N_samples: int, optional
+        :param fs: Sampling frequency, defaults to 1.0.
+        :type fs: float, optional
+        :param max_hyperparm_eval: Number of evaluations in hyperparameter optimization, defaults to 100.
+        :type max_hyperparm_eval: int, optional
+        :param fmax_for_analysis: Maximum frequency to analyze in the frequency domain, defaults to None.
+        :type fmax_for_analysis: int, optional
+        :param degree_fluctuate: Hyperparameter from the prior, defaults to None.
+        :type degree_fluctuate: float, optional
+        :param seed: Random seed for reproducibility, defaults to None.
+        :type seed: int, optional
+        :param lr_range: Range of learning rates to consider during optimization, defaults to (0.002, 0.02).
+        :type lr_range: tuple, optional
         """
 
         if seed is not None:
@@ -198,11 +219,10 @@ class PSDEstimator:
         This method either uses a provided learning rate or finds the optimal one,
         then trains the model and computes the posterior PSD.
 
-        Args:
-            lr (float, optional): Learning rate for MAP. If None, optimal rate is found.
-
-        Returns:
-            tuple: (posterior PSD, quantiles of the PSD)
+        :param lr: Learning rate for MAP. If None, optimal rate is found, defaults to None.
+        :type lr: float, optional
+        :return: Tuple containing the posterior PSD and quantiles of the PSD.
+        :rtype: tuple(numpy.ndarray, numpy.ndarray)
         """
         if lr:
             logger.info(f"Using provided learning rate: {lr}")
@@ -267,34 +287,67 @@ class PSDEstimator:
         return len(self.freq)
 
     def plot(
-        self, true_psd=None, plot_periodogram=True, **kwargs
+        self,
+            true_psd=None,
+            plot_periodogram=True,
+            tick_ln=5,
+            diag_spline_thickness=2,
+            xlims=None,
+            diag_ylims=None,
+            off_ylims=None,
+            diag_log=True,
+            off_symlog=True,
+            sylmog_thresh=1e-49,
+            **kwargs
     ) -> np.ndarray[plt.Axes]:
         """
         Plot the estimated PSD, periodogram, and true PSD (if provided).
 
-        Args:
-            true_psd (tuple, optional): True PSD to plot for comparison.
-            plot_periodogram (bool): Whether to plot the periodogram.
-            tick_ln=5: Length of the ticks.
-            diag_spline_thickness=2: Thickness of the diagonal spline.
-            xlims=None: Limits for the x-axis.
-            diag_ylims=None: Limits for the diagonal.
-            off_ylims=None: Limits for the off-diagonal.
-            diag_log=True: Whether to use a log scale for the diagonal.
-            off_symlog=True: Whether to use a symlog scale for the off-diagonal.
-            sylmog_thresh=1e-49: Threshold for symlog.
-
+        :param true_psd: True PSD to plot for comparison
+        :type true_psd: tuple, optional
+        :param plot_periodogram: Whether to plot the periodogram
+        :type plot_periodogram: bool
+        :param tick_ln: Length of the ticks, defaults to 5
+        :type tick_ln: int, optional
+        :param diag_spline_thickness: Thickness of the diagonal spline, defaults to 2
+        :type diag_spline_thickness: int, optional
+        :param xlims: Limits for the x-axis
+        :type xlims: tuple, optional
+        :param diag_ylims: Limits for the diagonal
+        :type diag_ylims: tuple, optional
+        :param off_ylims: Limits for the off-diagonal
+        :type off_ylims: tuple, optional
+        :param diag_log: Whether to use a log scale for the diagonal, defaults to True
+        :type diag_log: bool, optional
+        :param off_symlog: Whether to use a symlog scale for the off-diagonal, defaults to True
+        :type off_symlog: bool, optional
+        :param sylmog_thresh: Threshold for symlog, defaults to 1e-49
+        :type sylmog_thresh: float, optional
+        :return: Matplotlib Axes object
+        :rtype: numpy.ndarray
         """
-        axes = plot_psdq(self.psd_quantiles, self.freq, **kwargs)
+        all_kwargs = dict(
+            tick_ln=tick_ln,
+            diag_spline_thickness=diag_spline_thickness,
+            xlims=xlims,
+            diag_ylims=diag_ylims,
+            off_ylims=off_ylims,
+            diag_log=diag_log,
+            off_symlog=off_symlog,
+            sylmog_thresh=sylmog_thresh,
+            **kwargs,
+        )
+
+        axes = plot_psdq(self.psd_quantiles, self.freq, **all_kwargs)
         if plot_periodogram:
             axes = plot_peridogram(
-                self.pdgrm, self.pdgrm_freq, axs=axes, **kwargs
+                self.pdgrm, self.pdgrm_freq, axs=axes, **all_kwargs
             )
 
         if true_psd is not None:
-            plot_single_psd(*true_psd, axes, **kwargs)
+            plot_single_psd(*true_psd, axes, **all_kwargs)
 
-        format_axes(axes, **kwargs)
+        format_axes(axes, **all_kwargs)
 
         return axes
 
@@ -302,12 +355,11 @@ class PSDEstimator:
         """
         Plot the coherence of the estimated PSD.
 
-        Args:
-            true_psd (tuple, optional): True PSD to plot for comparison.
-            **kwargs: Additional keyword arguments for plotting.
-
-        Returns:
-            plt.Axes: Matplotlib Axes object.
+        :param true_psd: True PSD to plot for comparison
+        :type true_psd: tuple, optional
+        :param kwargs: Additional keyword arguments for plotting
+        :return: Matplotlib Axes object
+        :rtype: numpy.ndarray[plt.Axes]
         """
         labels = kwargs.pop("labels", "123456789")
         ax = plot_coherence(self.psd_all, self.freq, **kwargs, labels=labels)
@@ -321,8 +373,8 @@ class PSDEstimator:
         """
         Plot the variational inference losses.
 
-        Returns:
-            plt.Axes: Matplotlib Axes object.
+        :return: Matplotlib Axes object
+        :rtype: plt.Axes
         """
         plt.plot(self.vi_losses)
         plt.xlabel("Iteration")

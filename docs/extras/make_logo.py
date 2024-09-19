@@ -20,10 +20,9 @@ estimator = PSDEstimator(
 )
 estimator.run(lr=0.01)
 
-
 TXT = "SGVB"
 
-
+fig, axs = plt.subplots(2, 2, figsize=(1, 1), sharex=True)
 axs = estimator.plot(
     plot_periodogram=False,
     tick_ln=0,
@@ -32,6 +31,7 @@ axs = estimator.plot(
     add_axes_labels=False,
     add_channel_labels=False,
     alpha=0,
+    ax=axs,
 )
 for i, ax in enumerate(axs.flatten()):
     ax.set_xticks([])
@@ -51,4 +51,26 @@ for i, ax in enumerate(axs.flatten()):
         color="C0",
         fontweight="bold",
     )
-plt.savefig("../_static/logo.png")
+plt.savefig("../_static/logo.png", bbox_inches="tight", dpi=300)
+plt.savefig("../_static/logo_100.png", bbox_inches="tight", dpi=100)
+plt.savefig("../_static/favicon.png", bbox_inches="tight", dpi=25)
+
+
+from PIL import Image, ImageDraw
+
+
+# Open the saved image
+im = Image.open("../_static/favicon.png").convert("RGBA")
+
+# Create a circular mask
+size = im.size
+mask = Image.new("L", size, 0)
+draw = ImageDraw.Draw(mask)
+draw.ellipse((0, 0) + size, fill=255)
+
+# Apply the mask to the image
+output = Image.new("RGBA", size)
+output.paste(im, (0, 0), mask)
+
+# Save the circular cropped image
+output.save("../_static/favicon.png")

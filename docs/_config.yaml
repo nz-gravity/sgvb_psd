@@ -4,7 +4,7 @@ author: "Jianan, Avi and friends"
 copyright: "2024"
 exclude_patterns: [_build, Thumbs.db, .DS_Store, "**.ipynb_checkpoints"]
 only_build_toc_files: true
-logo: "_static/logo.png"
+logo: "_static/logo_100.png"
 
 
 execute:
@@ -15,7 +15,7 @@ html:
   use_issues_button: true
   use_multitoc_numbering: false
   home_page_in_navbar: false
-  favicon: "_static/logo.png"
+  favicon: "_static/favicon.png"
   comments:
     hypothesis: false
     utterances: false
@@ -34,3 +34,5 @@ repository:
   path_to_book: docs
   branch: main
 
+sphinx:
+  extra_extensions: ['sphinx.ext.autodoc']
