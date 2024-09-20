@@ -1,54 +1,43 @@
-name: Tests and Coverage
+name: Tests and Documentation
 
 on:
   push:
     branches:
       - main
 
-
 jobs:
-  build:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: 'pip'
+      - run: pip install -e .[dev]
+      - run: pytest --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
+      - uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  docs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
           fetch-depth: 0
-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
-          cache: 'pip' # caching pip dependenciescache: 'pip' # caching pip dependencies
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
-
-      # Build the book
+          cache: 'pip'
+      - run: pip install -e .[dev]
       - name: Build the book
         run: jupyter-book build docs --config docs/_config.yaml
-
-      # Push the book's HTML to github-pages
       - name: GitHub Pages action
         uses: peaceiris/actions-gh-pages@v3.9.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/_build/html
-
-      - name: pytest
-        run: pytest --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
-
-      - name: Upload Coverage to Coveralls
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          coverage xml
-          pip install coveralls
-
-          coveralls
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
