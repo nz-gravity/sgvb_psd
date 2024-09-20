@@ -17,7 +17,8 @@ namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 name = "sgvb_psd"
 version = "0.0.1"
 requires-python = ">=3.8"
-description = "FILL ME" # TODO
+description = "A python package for estimating the power spectral density (PSD) of correlated multivariate detector noise using variational inference (VI)."
+
 readme = "README.md"
 authors = [
     {name = "Jianan Liu", email = "jliu812@aucklanduni.ac.nz" },
