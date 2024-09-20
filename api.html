@@ -34,6 +34,7 @@
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=4c969af8" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -47,6 +48,7 @@
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="_static/tabs.js?v=3ee01567"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
@@ -176,6 +178,7 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/simulation_example.html">Simulation Example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/ET_example.html">ET Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/paper_plots.html">Paper plots</a></li>
 </ul>
 
     </div>
@@ -490,7 +493,7 @@ document.write(`
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>true_psd</strong> (<em>tuple</em><em>, </em><em>optional</em>) – True PSD to plot for comparison</p></li>
+<li><p><strong>true_psd</strong> (<em>tuple</em><em>, </em><em>optional</em>) – True PSD and freq to plot for comparison (true_psd, true_freq)</p></li>
 <li><p><strong>plot_periodogram</strong> (<em>bool</em>) – Whether to plot the periodogram</p></li>
 <li><p><strong>tick_ln</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of the ticks, defaults to 5</p></li>
 <li><p><strong>diag_spline_thickness</strong> (<em>int</em><em>, </em><em>optional</em>) – Thickness of the diagonal spline, defaults to 2</p></li>
