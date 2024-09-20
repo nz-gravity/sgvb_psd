@@ -377,8 +377,8 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="paper-plots">
 <h1>Paper plots<a class="headerlink" href="#paper-plots" title="Link to this heading">#</a></h1>
-<p>Makes the plots for the cases in the study.</p>
-<p>Assumes the data from this work’s <a class="reference external" href="https://zenodo.org/records/13789536">Zenodo deposit</a> is in the same directory as this notebook.</p>
+<p>The code below will generate the Case A,B and C PSD plots
+from the paper, as shown below:</p>
 <div class="tab-set docutils">
 <input checked="True" class="tab-input" id="tab-set--0-input--1" name="tab-set--0" type="radio"><label class="tab-label" for="tab-set--0-input--1">Case A</label><div class="tab-content docutils">
 <p><img alt="Case A" src="../_images/caseA.png" /></p>
@@ -388,6 +388,86 @@ document.write(`
 </div>
 </div>
 <p>For other plots, refer to the scripts folder in this works’ <a class="reference external" href="https://github.com/nz-gravity/sgvb_psd_paper">paper repository</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Download the data from this work&#39;s Zenodo deposit </span>
+<span class="sd">to the same directory as this script. </span>
+
+<span class="sd">https://zenodo.org/records/13789536</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">sgvb_psd.postproc.plot_psd</span> <span class="kn">import</span> <span class="n">plot_psd</span>
+
+<span class="n">RESULT</span> <span class="o">=</span> <span class="s2">&quot;ET-caseABC-SGVB-PSD.h5&quot;</span>
+<span class="n">DATA</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">A</span><span class="o">=</span><span class="s2">&quot;ET_caseA_noise.h5&quot;</span><span class="p">,</span>
+    <span class="n">B</span><span class="o">=</span><span class="s2">&quot;ET_caseB_noise.h5&quot;</span><span class="p">,</span>
+    <span class="n">C</span><span class="o">=</span><span class="s2">&quot;ET_caseB_noise.h5&quot;</span>  <span class="c1"># Case C uses the same data as case B</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Case</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">case</span> <span class="o">=</span> <span class="n">case</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result_fn</span> <span class="o">=</span> <span class="n">RESULT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_fn</span> <span class="o">=</span> <span class="n">DATA</span><span class="p">[</span><span class="n">case</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psdq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_estimated_psd_quantiles</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">true</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_true_psd</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_periodogram</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loaded case &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_load_true_psd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;true_psd/freq&#39;</span><span class="p">][:]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">freq</span> <span class="o">&lt;</span> <span class="mi">128</span><span class="p">)</span>
+            <span class="n">psd</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;true_psd/psd&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+            <span class="c1"># PSD is currnelty just the XX, YY, ZZ components</span>
+            <span class="c1"># make it a 3D array (nans for off-diagonal elements)</span>
+            <span class="n">psd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">psd</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">psd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">psd</span><span class="p">,</span> <span class="n">freq</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">_load_estimated_psd_quantiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result_fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;case</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="si">}</span><span class="s1">_psd_quantiles&#39;</span><span class="p">][:],</span> <span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;freq&#39;</span><span class="p">][:]]</span>
+
+    <span class="k">def</span> <span class="nf">_load_periodogram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fn</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;periodogram/freq&#39;</span><span class="p">][:]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">freq</span> <span class="o">&lt;</span> <span class="mi">128</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;periodogram/pdgrm&#39;</span><span class="p">][:][</span><span class="n">idx</span><span class="p">],</span> <span class="n">freq</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Case </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="si">}</span><span class="s2"> [&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;psdq: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">psdq</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;true: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">true</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;data: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">axes</span> <span class="o">=</span> <span class="n">plot_psd</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">psdq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">true</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">,</span>
+            <span class="n">xlims</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span>
+            <span class="n">diag_ylims</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-52</span><span class="p">,</span> <span class="mf">1e-46</span><span class="p">],</span>
+            <span class="n">off_ylims</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">3e-47</span><span class="p">,</span> <span class="mf">3e-47</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">fname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">axes</span>
+
+
+<span class="n">Case</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s1">&#39;caseA.png&#39;</span><span class="p">)</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;C1&quot;</span><span class="p">)</span>
+<span class="n">Case</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;caseBC.png&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;C2&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 
     <script type="text/x-thebe-config">
