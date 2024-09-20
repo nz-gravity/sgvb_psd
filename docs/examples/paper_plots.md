@@ -1,11 +1,30 @@
 # Paper plots
 
-Makes the plots for the cases in the study.
 
-Assumes the data from this work's [Zenodo deposit](https://zenodo.org/records/13789536) is in the same directory as this notebook.
+The code below will generate the Case A,B and C PSD plots 
+from the paper, as shown below:
+
+````{tab} Case A
+![Case A][Case A]
+````
+````{tab} Case BC
+![Case BC][Case BC]
+````
 
 
-```{code-cell} python
+
+For other plots, refer to the scripts folder in this works' [paper repository].
+
+
+``` python
+"""
+Download the data from this work's Zenodo deposit 
+to the same directory as this script. 
+
+https://zenodo.org/records/13789536
+"""
+
+
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,14 +98,6 @@ Case('C').plot(axes, fname='caseBC.png', color="C2")
 ```
 
 
-````{tab} Case A
-![Case A][Case A]
-````
-````{tab} Case BC
-![Case BC][Case BC]
-````
-
-For other plots, refer to the scripts folder in this works' [paper repository].
 
 [paper repository]: https://github.com/nz-gravity/sgvb_psd_paper 
 [Case A]: caseA.png
