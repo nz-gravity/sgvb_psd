@@ -2,5 +2,6 @@ format: jb-book
 root: index.md
 chapters:
 - file: api
-- file: examples/simulation_example
-- file: examples/ET_example
+- file: examples/simulation_example.ipynb
+- file: examples/ET_example.ipynb
+- file: examples/paper_plots

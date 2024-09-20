@@ -3,9 +3,7 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
 from hyperopt import fmin, hp, tpe
-from hyperopt.exceptions import AllTrialsFailed
 
 from .backend import ViRunner
 from .logging import logger
@@ -16,7 +14,8 @@ from .postproc import (
     plot_psdq,
     plot_single_psd,
 )
-from .utils.periodogram import get_periodogram, get_welch_periodogram
+from .postproc.plot_psd import plot_psd
+from .utils.periodogram import get_periodogram
 from .utils.tf_utils import set_seed
 
 
@@ -316,7 +315,7 @@ class PSDEstimator:
         """
         Plot the estimated PSD, periodogram, and true PSD (if provided).
 
-        :param true_psd: True PSD to plot for comparison
+        :param true_psd: True PSD and freq to plot for comparison (true_psd, true_freq)
         :type true_psd: tuple, optional
         :param plot_periodogram: Whether to plot the periodogram
         :type plot_periodogram: bool
@@ -350,19 +349,13 @@ class PSDEstimator:
             sylmog_thresh=sylmog_thresh,
             **kwargs,
         )
-
-        axes = plot_psdq(self.psd_quantiles, self.freq, **all_kwargs)
-        if plot_periodogram:
-            axes = plot_peridogram(
-                self.pdgrm, self.pdgrm_freq, axs=axes, **all_kwargs
-            )
-
-        if true_psd is not None:
-            plot_single_psd(*true_psd, axes, **all_kwargs)
-
-        format_axes(axes, **all_kwargs)
-
-        return axes
+        pdgrm = [self.pdgrm, self.pdgrm_freq] if plot_periodogram else None
+        return plot_psd(
+            psdq=[self.psd_quantiles, self.freq],
+            pdgrm=pdgrm,
+            true_psd=true_psd,
+            **all_kwargs,
+        )
 
     def plot_coherence(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
         """

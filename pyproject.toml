@@ -48,6 +48,7 @@ dev = [
     "flake8>=5.0.4",
     "black>=22.12.0",
     "jupyter-book",
+    "sphinx-inline-tabs"
 ]
 
 [tool.setuptools_scm]

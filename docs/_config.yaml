@@ -35,4 +35,4 @@ repository:
   branch: main
 
 sphinx:
-  extra_extensions: ['sphinx.ext.autodoc']
+  extra_extensions: ['sphinx.ext.autodoc', 'sphinx_inline_tabs']

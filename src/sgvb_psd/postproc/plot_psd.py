@@ -2,10 +2,45 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import List, Optional
 
 warnings.filterwarnings(
     "ignore", message="Attempt to set non-positive ylim on a log-scaled axis"
 )
+
+
+def plot_psd(
+        psdq: List[np.ndarray],
+        true_psd: Optional[List[np.ndarray]] = None,
+        pdgrm: Optional[List[np.ndarray]] = None,
+        axes=None,
+        **kwargs
+) -> np.ndarray[plt.Axes]:
+    """
+    This is a utility function to plot the estimated PSDs.
+
+    Parameters
+    ----------
+    psdq : tuple
+        A tuple containing the estimated PSDs and the frequency vector.
+    pdgrm : tuple, optional
+        A tuple containing the periodogram and the frequency vector.
+    true_psd : tuple, optional
+        A tuple containing the true PSD and the frequency vector.
+    **kwargs : dict
+        Additional arguments to pass to the plotting functions.
+
+    Returns
+    -------
+    np.ndarray[plt.Axes]
+    """
+    axes = plot_psdq(*psdq, **kwargs, axs=axes)
+    if pdgrm:
+        axes = plot_peridogram(*pdgrm, axs=axes, **kwargs)
+    if true_psd:
+        plot_single_psd(*true_psd, axes, **kwargs)
+    format_axes(axes, **kwargs)
+    return axes
 
 
 def plot_psdq(psd_q, freqs, axs=None, **kwargs):
@@ -66,7 +101,7 @@ def plot_peridogram(pdgrm, freq, axs=None, **kwargs):
 
     # setting some default values
     plt_kwargs = dict(
-        color=kwargs.get("color", "lightgray"),
+        color="lightgray",
         zorder=kwargs.get("zorder", -10),
         alpha=kwargs.get("alpha", 0.5),
     )
@@ -115,18 +150,17 @@ def format_axes(axes, **kwargs):
 
 
 def _format_spines(
-    axes,
-    tick_ln=5,
-    diag_spline_thickness=2,
-    xlims=None,
-    diag_ylims=None,
-    off_ylims=None,
-    diag_log=True,
-    off_symlog=True,
-    sylmog_thresh=1e-49,
-    **kwargs,
+        axes,
+        tick_ln=5,
+        diag_spline_thickness=2,
+        xlims=None,
+        diag_ylims=None,
+        off_ylims=None,
+        diag_log=True,
+        off_symlog=True,
+        sylmog_thresh=1e-49,
+        **kwargs,
 ):
-
     p = axes.shape[0]
     plt.subplots_adjust(hspace=0.0, wspace=0.0)
 

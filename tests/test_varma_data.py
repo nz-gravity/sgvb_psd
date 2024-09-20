@@ -75,3 +75,5 @@ def test_data_generation(plot_dir):
     )
 
     plt.savefig(f"{plot_dir}/pdgrm.png")
+
+    assert var._repr_html_() is not None
