@@ -5,7 +5,7 @@ Makes the plots for the cases in the study.
 Assumes the data from this work's [Zenodo deposit](https://zenodo.org/records/13789536) is in the same directory as this notebook.
 
 
-```{code-cell} ipython2
+```{code-cell} python
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,7 +86,8 @@ Case('C').plot(axes, fname='caseBC.png', color="C2")
 ![Case BC][Case BC]
 ````
 
-For other plots, refer to this works' [paper repository](https://github.com/nz-gravity/sgvb_psd_paper).
+For other plots, refer to the scripts folder in this works' [paper repository].
 
+[paper repository]: https://github.com/nz-gravity/sgvb_psd_paper 
 [Case A]: caseA.png
 [Case BC]: caseBC.png
