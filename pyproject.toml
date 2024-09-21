@@ -15,8 +15,6 @@ include = ["sgvb_psd*"]  # package names should match these glob patterns (["*"]
 exclude = ["sgvb_psd.tests*"]  # exclude packages matching these glob patterns (empty by default)
 namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
-[tool.setuptools.package_data]
-"sgvb_psd.postproc" = ["matplotlibrc"]
 
 [project]
 name = "sgvb_psd"
@@ -67,7 +65,7 @@ dev = [
 "Documentation" = "https://nz-gravity.github.io/sgvb_psd/"
 
 [tool.setuptools_scm]
-version_file = "src/sbvb_psd/_version.py"
+version_file = "src/sgvb_psd/_version.py"
 
 [tool.black]
 line-length = 79
