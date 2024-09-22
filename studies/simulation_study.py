@@ -1,3 +1,9 @@
+"""
+Run a simulation study to compare the performance of the PSD estimator
+
+(currently uses lower settings than in the paper for faster execution).
+"""
+
 from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 from sgvb_psd.utils.sim_varma import SimVARMA
@@ -61,7 +67,7 @@ def plot_results(results: pd.DataFrame):
 
 def main():
     results = run_all_simulations()
-    fig = plot_results(results)
+    plot_results(results)
     plt.savefig('simulation_results.png')
 
 
