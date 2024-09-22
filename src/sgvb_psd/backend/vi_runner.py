@@ -200,9 +200,3 @@ class ViRunner:
         self.model.toTensor()
 
         return losses, self.model, samp
-
-    # TODO: _compute_psd()
-    # TODO: _compute_coherence()
-    # TODO: _compute_psd_quantiles()
-    # TODO: _plot_basis
-    # TODO: _plot_loss

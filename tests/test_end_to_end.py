@@ -92,7 +92,7 @@ def test_psd_analyser(plot_dir):
     psd_analyzer = PSDAnalyzer(
         spec_true=var2_data.psd,
         spectral_density_q=psd_quantiles,
-        task_id=1,
+        idx=1,
         csv_file=csv,
     )
     assert isinstance(psd_analyzer.coverage_point_CI, float)

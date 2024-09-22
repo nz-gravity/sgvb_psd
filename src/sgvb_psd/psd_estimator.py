@@ -75,6 +75,8 @@ class PSDEstimator:
     :vartype inference_runner: ViRunner
     :ivar optimal_lr: Optimized learning rate.
     :vartype optimal_lr: float
+    :ivar runtimes: Runtime of the different steps in the estimation process.
+    :vartype runtimes: dict
     """
 
     def __init__(
@@ -169,6 +171,7 @@ class PSDEstimator:
         self.vi_losses = None
         self.psd_quantiles = None
         self.psd_all = None
+        self.runtimes = {}
         self.inference_runner = ViRunner(
             self.x,
             N_theta=self.N_theta,
@@ -236,6 +239,8 @@ class PSDEstimator:
         :return: Tuple containing the posterior PSD and quantiles of the PSD.
         :rtype: tuple(numpy.ndarray, numpy.ndarray)
         """
+        times = {}
+
         if lr:
             logger.info(f"Using provided learning rate: {lr}")
             self.optimal_lr = lr
@@ -243,22 +248,20 @@ class PSDEstimator:
             logger.info("Running hyperopt to find optimal learning rate")
             t0 = time.time()
             self.__find_optimal_learing_rate()
-            t1 = time.time()
-            logger.info(f"Optimal learning rate found in {t1 - t0:.2f}s")
+            times['lr'] = time.time() - t0
+            logger.info(f"Optimal learning rate found in {times['lr']:.2f}s")
 
         logger.info("Training model")
         t0 = time.time()
         self.__train_model()
-        t1 = time.time()
-        logger.info(f"Model trained in {t1 - t0:.2f}s")
+        times['train'] = time.time() - t0
+        logger.info(f"Model trained in {times['train']}s")
 
         logger.info("Computing posterior PSDs")
-        t0 = time.time()
         self.psd_all, self.psd_quantiles = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
-        t1 = time.time()
-        logger.info(f"Optimal PSD estimation complete in {t1 - t0:.2f}s")
+        self.runtimes = times
         return self.psd_all, self.psd_quantiles
 
     @property

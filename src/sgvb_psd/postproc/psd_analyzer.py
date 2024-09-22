@@ -1,6 +1,16 @@
 import numpy as np
 import pandas as pd
 
+LATEX = {
+    "idx": "ID",
+    "L2_errors_VI": "L$_2$ Error",
+    "len_point_CI_S11": r"$\bold{S}_{11}$ CI Length",
+    "len_point_CI_re_S12": r"Re($\bold{S}_{12}$) CI Length",
+    "len_point_CI_im_S12": r"Im($\bold{S}_{12}$) CI Length",
+    "len_point_CI_S22": r"$\bold{S}_{22}$ CI Length",
+    "coverage_pointwise": "Coverage",
+}
+
 
 class PSDAnalyzer:
     """
@@ -8,18 +18,18 @@ class PSDAnalyzer:
     """
 
     def __init__(
-        self,
-        spec_true: np.ndarray,
-        spectral_density_q: np.ndarray,
-        task_id=1,
-        csv_file=None,
+            self,
+            spec_true: np.ndarray,
+            spectral_density_q: np.ndarray,
+            idx=None,
+            csv_file=None,
     ):
         """
 
         :param spec_true: the true psd
         :param spectral_density_q: An array containing the estimated PSD, including the lower bound (5th percentile),
         median (50th percentile), and upper bound (95th percentile) for the 90% pointwise confidence interval (CI).
-        :param task_id: the number of the analysis task, the default is set to 1, which is one realization
+        :param idx: the number of the analysis task, the default is set to 1, which is one realization
         """
         self.spec_true = spec_true
         self.spectral_density_q = spectral_density_q
@@ -32,7 +42,7 @@ class PSDAnalyzer:
             )
 
         self.n_freq = spectral_density_q.shape[1]
-        self.task_id = task_id
+        self.idx = idx
         self.real_spec_true = self._transform_spec_true_to_real()
 
         # RUN ANALYSIS
@@ -45,8 +55,8 @@ class PSDAnalyzer:
         ) = self._calculate_CI_length()
         self.coverage_point_CI = self._calculate_coverage()
 
-        csv_file = f"results_{task_id}.csv" if csv_file is None else csv_file
-        self._save_data(csv_file)
+        if csv_file:
+            self.save(csv_file)
 
     def _transform_spec_true_to_real(self):
         real_spec_true = np.zeros_like(self.spec_true, dtype=float)
@@ -117,16 +127,15 @@ class PSDAnalyzer:
             spec_mat_upper_real[j] = self._complex_to_real(
                 self.spectral_density_q[2][j]
             )
-
         coverage_point_CI = np.mean(
             (spec_mat_lower_real <= self.real_spec_true)
             & (self.real_spec_true <= spec_mat_upper_real)
         )
         return coverage_point_CI
 
-    def _save_data(self, fname):
+    def save(self, fname):
         results = {
-            "task_id": self.task_id,
+            "idx": self.idx,
             "L2_errors_VI": self.l2_error,
             "len_point_CI_S11": self.len_point_CI_f11,
             "len_point_CI_re_S12": self.len_point_CI_re_f12,
@@ -137,3 +146,24 @@ class PSDAnalyzer:
         result_df = pd.DataFrame([results])
         result_df.to_csv(fname, index=False)
         return result_df
+
+    def __dict__(self):
+        data = {
+            "L2_errors_VI": self.l2_error,
+            "len_point_CI_S11": self.len_point_CI_f11,
+            "len_point_CI_re_S12": self.len_point_CI_re_f12,
+            "len_point_CI_im_S12": self.len_point_CI_im_f12,
+            "len_point_CI_S22": self.len_point_CI_f22,
+            "coverage_pointwise": self.coverage_point_CI,
+        }
+        if self.idx is not None:
+            data["idx"] = self.idx
+        return data
+
+    @property
+    def df(self):
+        return pd.DataFrame([self.__dict__()])
+
+    def _repr_html_(self):
+        df = self.df.rename(columns=LATEX).T
+        return df.to_html()
