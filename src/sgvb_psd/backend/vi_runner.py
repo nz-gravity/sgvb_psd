@@ -64,6 +64,7 @@ class ViRunner:
         lr_map=5e-4,
         ntrain_map=5e3,
         inference_size=500,
+        n_elbo_maximisation_steps=1000,
     ):
 
         logger.debug("Starting Model Inference Training..")
@@ -174,7 +175,7 @@ class ViRunner:
                 target_log_prob_fn=l,
                 surrogate_posterior=trainable_Mvnormal,
                 optimizer=optimizer_vi,
-                num_steps=600,
+                num_steps=n_elbo_maximisation_steps,
             )
         )(
             conditioned_log_prob

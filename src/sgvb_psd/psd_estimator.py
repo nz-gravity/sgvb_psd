@@ -76,6 +76,8 @@ class PSDEstimator:
     :vartype inference_runner: ViRunner
     :ivar optimal_lr: Optimized learning rate.
     :vartype optimal_lr: float
+    :ivar n_elbo_maximisation_steps: Number of steps for maximising the ELBO.
+    :vartype n_elbo_maximisation_steps: int
     """
 
     def __init__(
@@ -91,6 +93,7 @@ class PSDEstimator:
         degree_fluctuate=None,
         seed=None,
         lr_range=(0.002, 0.02),
+        n_elbo_maximisation_steps=500,
     ):
         """
         Initialize the PSDEstimator.
@@ -117,6 +120,8 @@ class PSDEstimator:
         :type seed: int, optional
         :param lr_range: Range of learning rates to consider during optimization, defaults to (0.002, 0.02).
         :type lr_range: tuple, optional
+        :param n_elbo_maximisation_steps: Number of steps for maximizing the ELBO, defaults to 1000.
+        :type n_elbo_maximisation_steps: int, optional
         """
 
         if seed is not None:
@@ -126,6 +131,7 @@ class PSDEstimator:
         self.N_samples = N_samples
         self.nchunks = nchunks
         self.ntrain_map = ntrain_map
+        self.n_elbo_maximisation_steps = n_elbo_maximisation_steps
 
         self.fs = fs
         self.lr_range = lr_range
@@ -193,6 +199,7 @@ class PSDEstimator:
             lr_map=lr["lr_map"],
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples,
+            n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
         return vi_losses[-1].numpy()
 
@@ -220,6 +227,7 @@ class PSDEstimator:
             lr_map=self.optimal_lr,
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples,
+            n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
         self.model = model
         self.samps = samples

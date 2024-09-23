@@ -1,6 +1,8 @@
+import itertools
+
 import matplotlib.pyplot as plt
 import numpy as np
-import itertools
+
 from ..logging import logger
 
 
@@ -12,7 +14,7 @@ def matrix_combinations(p):
 
 
 def compute_coherence(pxx, pyy, pxy):
-    coh = np.abs(np.abs(pxy) ** 2 / (pxx * pyy))
+    coh = np.real(np.abs(pxy) ** 2 / (pxx * pyy))
     if len(coh.shape) > 1:
         coh = np.quantile(coh, [0.025, 0.5, 0.975], axis=0)
     return coh

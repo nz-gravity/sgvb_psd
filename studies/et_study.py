@@ -7,7 +7,6 @@ from sgvb_psd.psd_estimator import PSDEstimator
 DATA_FILES = dict(
     caseA="ET-CaseA-noise.h5",
     caseB="ET-CaseB-noise.h5",
-    caseC="ET-CaseC-noise.h5",
 )
 CHANNELS = "XYZ"
 
@@ -50,6 +49,24 @@ def run_analysis(case):
     plt.savefig(f"ET-{case}-SGVB-PSD.png")
 
 
+def combine_results():
+    # load each PSD-quantile file
+    psd_quantiles = {}
+    for case in DATA_FILES:
+        with h5py.File(f"ET-{case}-SGVB-PSD.h5", "r") as f:
+            psd_quantiles[case] = f["psd_quantiles"][:]
+            freq = f["freq"][:]
+
+    fpath = "ET-Case-ABC-SGVB-PSD.h5"
+    print(f"Creating file: {fpath}")
+    with h5py.File(fpath, "w") as f:
+        for case in DATA_FILES:
+            f.create_dataset(f"{case}/psd_quantiles", data=psd_quantiles[case])
+        f["freq"] = freq
+    print(f"Data saved to: {fpath}")
+
+
 if __name__ == "__main__":
     for case in DATA_FILES:
         run_analysis(case)
+    # combine_results()
