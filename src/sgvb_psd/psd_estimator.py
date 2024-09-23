@@ -17,8 +17,10 @@ from .postproc import (
     plot_single_psd,
 )
 from .postproc.plot_psd import plot_psd
+from .postproc.plot_losses import plot_losses
 from .utils.periodogram import get_periodogram
 from .utils.tf_utils import set_seed
+from .utils.utils import get_freq
 
 
 class PSDEstimator:
@@ -84,19 +86,19 @@ class PSDEstimator:
     """
 
     def __init__(
-        self,
-        x,
-        N_theta=30,
-        nchunks=1,
-        ntrain_map=10000,
-        N_samples=500,
-        fs=1.0,
-        max_hyperparm_eval=100,
-        fmax_for_analysis=None,
-        degree_fluctuate=None,
-        seed=None,
-        lr_range=(0.002, 0.02),
-        n_elbo_maximisation_steps=500,
+            self,
+            x,
+            N_theta=30,
+            nchunks=1,
+            ntrain_map=10000,
+            N_samples=500,
+            fs=1.0,
+            max_hyperparm_eval=100,
+            fmax_for_analysis=None,
+            degree_fluctuate=None,
+            seed=None,
+            lr_range=(0.002, 0.02),
+            n_elbo_maximisation_steps=500,
     ):
         """
         Initialize the PSDEstimator.
@@ -150,7 +152,7 @@ class PSDEstimator:
         self.fmax_for_analysis = fmax_for_analysis
 
         self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
-        self.pdgrm = self.pdgrm * self.psd_scaling**2
+        self.pdgrm = self.pdgrm * self.psd_scaling ** 2
         self.max_hyperparm_eval = max_hyperparm_eval
         self.degree_fluctuate = degree_fluctuate
 
@@ -176,7 +178,6 @@ class PSDEstimator:
         # Internal variables
         self.model: BayesianModel = None
         self.samps = None
-        self.vi_losses = None
         self.psd_quantiles = None
         self.psd_all = None
         self.runtimes = {}
@@ -197,9 +198,9 @@ class PSDEstimator:
             lr (dict): Dictionary containing the learning rate to be optimized.
 
         Returns:
-            float: ELBO loss.
+            float: ELBO log_map_vals.
         """
-        vi_losses, _, _ = self.inference_runner.runModel(
+        vi_losses, _, _, _ = self.inference_runner.runModel(
             lr_map=lr["lr_map"],
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples,
@@ -227,15 +228,12 @@ class PSDEstimator:
 
         This method runs the variational inference to estimate the posterior PSD.
         """
-        vi_losses, model, samples = self.inference_runner.runModel(
+        _, _, self.model, self.samps = self.inference_runner.runModel(
             lr_map=self.optimal_lr,
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples,
             n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
-        self.model = model
-        self.samps = samples
-        self.vi_losses = vi_losses.numpy()
 
     def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -265,7 +263,7 @@ class PSDEstimator:
         t0 = time.time()
         self.__train_model()
         times["train"] = time.time() - t0
-        logger.info(f"Model trained in {times['train']}s")
+        logger.info(f"Model trained in {times['train']:.2f}s")
 
         logger.info("Computing posterior PSDs")
         self.psd_all, self.psd_quantiles = self.model.compute_psd(
@@ -282,23 +280,12 @@ class PSDEstimator:
         Returns:
             np.ndarray: Array of frequencies.
         """
-        if hasattr(self, "_freq"):
-            return self._freq
-
-        dt = 1 / self.fs
-        self._freq = np.fft.fftfreq(self.nt_per_chunk, d=dt)
-        n = self.nt_per_chunk
-        if np.mod(n, 2) == 0:
-            # the length per chunk is even
-            self._freq = self._freq[0 : int(n / 2)]
-        else:
-            # the length per chunk is odd
-            self._freq = self._freq[0 : int((n - 1) / 2)]
-
-        if self.fmax_for_analysis != None:
-            fmax_idx = np.searchsorted(self._freq, self.fmax_for_analysis)
-            self._freq = self._freq[0:fmax_idx]
-
+        if not hasattr(self, "_freq"):
+            self._freq = get_freq(
+                fs=self.fs,
+                n_time_samples=self.nt_per_chunk,
+                fmax=self.fmax_for_analysis
+            )
         return self._freq
 
     @property
@@ -312,18 +299,18 @@ class PSDEstimator:
         return len(self.freq)
 
     def plot(
-        self,
-        true_psd=None,
-        plot_periodogram=True,
-        tick_ln=5,
-        diag_spline_thickness=2,
-        xlims=None,
-        diag_ylims=None,
-        off_ylims=None,
-        diag_log=True,
-        off_symlog=True,
-        sylmog_thresh=1e-49,
-        **kwargs,
+            self,
+            true_psd=None,
+            plot_periodogram=True,
+            tick_ln=5,
+            diag_spline_thickness=2,
+            xlims=None,
+            diag_ylims=None,
+            off_ylims=None,
+            diag_log=True,
+            off_symlog=True,
+            sylmog_thresh=1e-49,
+            **kwargs,
     ) -> np.ndarray[plt.Axes]:
         """
         Plot the estimated PSD, periodogram, and true PSD (if provided).
@@ -395,9 +382,9 @@ class PSDEstimator:
         :return: Matplotlib Axes object
         :rtype: plt.Axes
         """
-        plt.plot(self.vi_losses)
-        plt.xlabel("Iteration")
-        plt.ylabel(r"$\log p(x|\theta)$")
-        # use exponential offset  y-axis
-        plt.gca().ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
-        return plt.gca()
+        return plot_losses(
+            map_losses=self.inference_runner.kdl_losses,
+            kdl_losses=self.inference_runner.lp,
+            map_timing=self.inference_runner.map_time,
+            kdl_timing=self.inference_runner.vi_time,
+        )

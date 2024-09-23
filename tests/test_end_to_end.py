@@ -83,12 +83,15 @@ def test_psd_analyser(plot_dir):
         N_theta=10,
         nchunks=1,
         ntrain_map=50,
+        n_elbo_maximisation_steps=50,
         x=var2_data.data,
         max_hyperparm_eval=1,
         fs=2 * np.pi,
         seed=0,
     )
-    psd_all, psd_quantiles = optim.run()
+    psd_all, psd_quantiles = optim.run(lr=0.003, )
+    optim.plot_vi_losses()
+    plt.savefig(f"{plot_dir}/var_vi_losses.png")
     csv = f"{plot_dir}/var_psd.csv"
     psd_analyzer = PSDAnalyzer(
         spec_true=var2_data.psd,
@@ -113,4 +116,4 @@ def test_one_train_step():
         N_theta=10,
     )
     opts = tf.keras.optimizers.Adam(0.01)
-    model.train_step(opts)
+    model.map_train_step(opts)

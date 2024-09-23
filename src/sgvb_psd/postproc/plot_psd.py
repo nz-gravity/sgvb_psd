@@ -77,7 +77,6 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
 
             ax = axs[row_i, col_j]
             if nquantiles > 1:
-
                 ax.fill_between(freqs, psd_ij[0], psd_ij[2], **fill_kwargs)
                 ax.plot(freqs, psd_ij[1], **plt_kwargs)
             else:

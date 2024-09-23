@@ -28,7 +28,7 @@ class BayesianModel(AnalysisData):
         # Zar:    arry of design matrix Z_k for every freq k
         self.hyper = hyper
         self.trainable_vars = []  # all trainable variables
-        self.loss = tf.Variable(0.0)
+        self.log_map_vals = tf.Variable(0.0)
         # comput fft
         self.sc_fft()
         # compute array of design matrix Z, 3d
@@ -216,14 +216,13 @@ class BayesianModel(AnalysisData):
     #
     # Model training one step
     #
-    def train_step(self, optimizer):  # one step training
+    def map_train_step(self, optimizer):  # one training step to get close to MAP
         with tf.GradientTape() as tape:
-            self.loss = -self.logpost_hs(
-                self.trainable_vars
-            )  # negative log posterior
-        grads = tape.gradient(self.loss, self.trainable_vars)
+            self.log_map_vals = -1* self.logpost_hs(self.trainable_vars)
+        grads = tape.gradient(self.log_map_vals, self.trainable_vars)
         optimizer.apply_gradients(zip(grads, self.trainable_vars))
-        return -self.loss  # return POSITIVE log posterior
+        self.log_map_vals *= -1 # return POSITIVE log posterior
+        return self.log_map_vals
 
     # For new prior strategy, need new createModelVariables() and logprior()
 
@@ -394,7 +393,20 @@ def compute_psd(
 
     spectral_density_inverse_all = T_all_conj_trans @ D_all_inv @ T_all
     psd_all = np.linalg.inv(spectral_density_inverse_all)
+    psd_q = get_pointwise_ci(psd_all, quantiles)
 
+
+    # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
+    if fs:
+        true_fmax = fs / 2
+        psd_q = psd_q / (true_fmax / 0.5)
+        psd_all = psd_all / (true_fmax / 0.5)
+
+    return psd_all * psd_scaling**2, psd_q * psd_scaling**2
+
+
+def get_pointwise_ci(psd_all, quantiles):
+    _, num_freq, p_dim, _ = psd_all.shape
     psd_q = np.zeros((3, num_freq, p_dim, p_dim), dtype=complex)
 
     diag_indices = np.diag_indices(p_dim)
@@ -404,24 +416,18 @@ def compute_psd(
         axis=0,
     )
 
-    triu_indices = np.triu_indices(p_dim, k=1)
-    real_part = np.real(psd_all[:, :, triu_indices[1], triu_indices[0]])
-    imag_part = np.imag(psd_all[:, :, triu_indices[1], triu_indices[0]])
+    # we dont do lower triangle because it is symmetric
+    upper_triangle_idx = np.triu_indices(p_dim, k=1)
+    real_part = np.real(psd_all[:, :, upper_triangle_idx[1], upper_triangle_idx[0]])
+    imag_part = np.imag(psd_all[:, :, upper_triangle_idx[1], upper_triangle_idx[0]])
 
     for i, q in enumerate(quantiles):
-        psd_q[i, :, triu_indices[1], triu_indices[0]] = (
-            np.quantile(real_part, q, axis=0)
-            + 1j * np.quantile(imag_part, q, axis=0)
+        psd_q[i, :, upper_triangle_idx[1], upper_triangle_idx[0]] = (
+                np.quantile(real_part, q, axis=0)
+                + 1j * np.quantile(imag_part, q, axis=0)
         ).T
 
-    psd_q[:, :, triu_indices[0], triu_indices[1]] = np.conj(
-        psd_q[:, :, triu_indices[1], triu_indices[0]]
+    psd_q[:, :, upper_triangle_idx[0], upper_triangle_idx[1]] = np.conj(
+        psd_q[:, :, upper_triangle_idx[1], upper_triangle_idx[0]]
     )
-
-    # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
-    if fs:
-        true_fmax = fs / 2
-        psd_q = psd_q / (true_fmax / 0.5)
-        psd_all = psd_all / (true_fmax / 0.5)
-
-    return psd_all * psd_scaling**2, psd_q * psd_scaling**2
+    return psd_q

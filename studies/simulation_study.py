@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sgvb_psd.logging import logger
 
-N_EXPERIMENTS = 10
+N_EXPERIMENTS = 100
 
 SIM_KWGS = dict(
     sigma=np.array([[1.0, 0.9], [0.9, 1.0]]),
@@ -24,7 +24,7 @@ SIM_KWGS = dict(
 VI_KWGS = dict(
     N_theta=40,
     nchunks=1,
-    ntrain_map=100,
+    ntrain_map=1000,
     max_hyperparm_eval=1,
     fs=2 * np.pi,
     seed=0,
