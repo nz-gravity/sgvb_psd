@@ -16,7 +16,8 @@ from .postproc import (
     plot_psdq,
     plot_single_psd,
 )
-from .utils.periodogram import get_periodogram, get_welch_periodogram
+from .postproc.plot_psd import plot_psd
+from .utils.periodogram import get_periodogram
 from .utils.tf_utils import set_seed
 
 
@@ -76,6 +77,8 @@ class PSDEstimator:
     :vartype inference_runner: ViRunner
     :ivar optimal_lr: Optimized learning rate.
     :vartype optimal_lr: float
+    :ivar runtimes: Runtime of the different steps in the estimation process.
+    :vartype runtimes: dict
     :ivar n_elbo_maximisation_steps: Number of steps for maximising the ELBO.
     :vartype n_elbo_maximisation_steps: int
     """
@@ -176,6 +179,7 @@ class PSDEstimator:
         self.vi_losses = None
         self.psd_quantiles = None
         self.psd_all = None
+        self.runtimes = {}
         self.inference_runner = ViRunner(
             self.x,
             N_theta=self.N_theta,
@@ -245,6 +249,8 @@ class PSDEstimator:
         :return: Tuple containing the posterior PSD and quantiles of the PSD.
         :rtype: tuple(numpy.ndarray, numpy.ndarray)
         """
+        times = {}
+
         if lr:
             logger.info(f"Using provided learning rate: {lr}")
             self.optimal_lr = lr
@@ -252,22 +258,20 @@ class PSDEstimator:
             logger.info("Running hyperopt to find optimal learning rate")
             t0 = time.time()
             self.__find_optimal_learing_rate()
-            t1 = time.time()
-            logger.info(f"Optimal learning rate found in {t1 - t0:.2f}s")
+            times["lr"] = time.time() - t0
+            logger.info(f"Optimal learning rate found in {times['lr']:.2f}s")
 
         logger.info("Training model")
         t0 = time.time()
         self.__train_model()
-        t1 = time.time()
-        logger.info(f"Model trained in {t1 - t0:.2f}s")
+        times["train"] = time.time() - t0
+        logger.info(f"Model trained in {times['train']}s")
 
         logger.info("Computing posterior PSDs")
-        t0 = time.time()
         self.psd_all, self.psd_quantiles = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
-        t1 = time.time()
-        logger.info(f"Optimal PSD estimation complete in {t1 - t0:.2f}s")
+        self.runtimes = times
         return self.psd_all, self.psd_quantiles
 
     @property
@@ -324,7 +328,7 @@ class PSDEstimator:
         """
         Plot the estimated PSD, periodogram, and true PSD (if provided).
 
-        :param true_psd: True PSD to plot for comparison
+        :param true_psd: True PSD and freq to plot for comparison (true_psd, true_freq)
         :type true_psd: tuple, optional
         :param plot_periodogram: Whether to plot the periodogram
         :type plot_periodogram: bool
@@ -358,19 +362,13 @@ class PSDEstimator:
             sylmog_thresh=sylmog_thresh,
             **kwargs,
         )
-
-        axes = plot_psdq(self.psd_quantiles, self.freq, **all_kwargs)
-        if plot_periodogram:
-            axes = plot_peridogram(
-                self.pdgrm, self.pdgrm_freq, axs=axes, **all_kwargs
-            )
-
-        if true_psd is not None:
-            plot_single_psd(*true_psd, axes, **all_kwargs)
-
-        format_axes(axes, **all_kwargs)
-
-        return axes
+        pdgrm = [self.pdgrm, self.pdgrm_freq] if plot_periodogram else None
+        return plot_psd(
+            psdq=[self.psd_quantiles, self.freq],
+            pdgrm=pdgrm,
+            true_psd=true_psd,
+            **all_kwargs,
+        )
 
     def plot_coherence(self, true_psd=None, **kwargs) -> np.ndarray[plt.Axes]:
         """

@@ -57,6 +57,5 @@ font.sans-serif: Times New Roman
 font.size: 20
 
 
-
 # Use LaTeX for math formatting
 text.usetex : False
