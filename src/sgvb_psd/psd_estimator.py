@@ -7,7 +7,7 @@ import tensorflow as tf
 from hyperopt import fmin, hp, tpe
 from hyperopt.exceptions import AllTrialsFailed
 
-from .backend import ViRunner
+from .backend import BayesianModel, ViRunner
 from .logging import logger
 from .postproc import (
     format_axes,
@@ -174,7 +174,7 @@ class PSDEstimator:
         )
 
         # Internal variables
-        self.model = None
+        self.model: BayesianModel = None
         self.samps = None
         self.vi_losses = None
         self.psd_quantiles = None
@@ -397,7 +397,7 @@ class PSDEstimator:
         """
         plt.plot(self.vi_losses)
         plt.xlabel("Iteration")
-        plt.ylabel("ELBO")
+        plt.ylabel(r"$\log p(x|\theta)$")
         # use exponential offset  y-axis
         plt.gca().ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
         return plt.gca()

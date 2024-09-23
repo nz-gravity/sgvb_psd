@@ -1,5 +1,6 @@
 import timeit
 
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
@@ -44,19 +45,9 @@ class ViRunner:
             nchunks=nchunks,
             fmax_for_analysis=fmax_for_analysis,
             fs=fs,
-        )  # save model object
-        # comput fft
-        self.model.sc_fft()
-        # compute array of design matrix Z, 3d
-        self.model.Zmtrix()
-        # compute X matrix related to basis function on ffreq
-        self.model.Xmtrix(self.N_delta, self.N_theta)
-        # convert all above to tensorflow object
-        self.model.toTensor()
-        # create tranable variables
-        self.model.createModelVariables_hs()
-        logger.debug(f"Model instantiated: {self.model}")
-
+            N_delta=self.N_delta,
+            N_theta=self.N_theta,
+        )
         self.variation_factor = variation_factor
 
     def runModel(
@@ -92,8 +83,8 @@ class ViRunner:
             lp = tf.TensorArray(tf.float32, size=0, dynamic_size=True)
 
             for i in tf.range(n_train):
-                lpost = model.train_one_step(
-                    optimizer, model.loglik, model.logprior_hs
+                lpost = model.train_step(
+                    optimizer,
                 )
 
                 if optimizer.iterations % 5000 == 0:
@@ -176,6 +167,7 @@ class ViRunner:
                 surrogate_posterior=trainable_Mvnormal,
                 optimizer=optimizer_vi,
                 num_steps=n_elbo_maximisation_steps,
+                jit_compile=True,
             )
         )(
             conditioned_log_prob

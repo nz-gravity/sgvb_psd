@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_psd.backend import BayesianModel
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
+from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
 from sgvb_psd.utils.tf_utils import set_seed
 
@@ -98,3 +99,18 @@ def test_psd_analyser(plot_dir):
     assert isinstance(psd_analyzer.coverage_point_CI, float)
     assert isinstance(psd_analyzer.l2_error, float)
     assert os.path.exists(csv)
+
+
+def test_one_train_step():
+    var2_data = get_var_data(2**7)
+    model = BayesianModel(
+        x=var2_data.data,
+        nchunks=1,
+        fmax_for_analysis=128,
+        fs=2 * np.pi,
+        hyper=[0.01, 4, 10, 5],
+        N_delta=10,
+        N_theta=10,
+    )
+    opts = tf.keras.optimizers.Adam(0.01)
+    model.train_step(opts)

@@ -1,12 +1,12 @@
 import timeit
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from typing import Tuple
-
+from ..logging import logger
 from .analysis_data import AnalysisData
 
 tfd = tfp.distributions
@@ -14,7 +14,9 @@ tfb = tfp.bijectors
 
 
 class BayesianModel(AnalysisData):
-    def __init__(self, x, hyper, nchunks, fmax_for_analysis, fs):
+    def __init__(
+        self, x, hyper, nchunks, fmax_for_analysis, fs, N_theta, N_delta
+    ):
         super().__init__(x, nchunks, fmax_for_analysis, fs)
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior
@@ -26,6 +28,18 @@ class BayesianModel(AnalysisData):
         # Zar:    arry of design matrix Z_k for every freq k
         self.hyper = hyper
         self.trainable_vars = []  # all trainable variables
+        self.loss = tf.Variable(0.0)
+        # comput fft
+        self.sc_fft()
+        # compute array of design matrix Z, 3d
+        self.Zmtrix()
+        # compute X matrix related to basis function on ffreq
+        self.Xmtrix(N_delta, N_theta)
+        # convert all above to tensorflow object
+        self.toTensor()
+        # create tranable variables
+        self.createModelVariables_hs()
+        logger.debug(f"Model instantiated: {self}")
 
     def toTensor(self):
         # convert to tensorflow object
@@ -196,17 +210,20 @@ class BayesianModel(AnalysisData):
         log_lik = tf.reduce_sum(sum_xγ + tmp2_)  # sum over all LnL
         return log_lik
 
+    def logpost_hs(self, params):
+        return self.loglik(params) + self.logprior_hs(params)
+
     #
     # Model training one step
     #
-    def train_one_step(self, optimizer, loglik, prior):  # one step training
+    def train_step(self, optimizer):  # one step training
         with tf.GradientTape() as tape:
-            loss = -loglik(self.trainable_vars) - prior(
+            self.loss = -self.logpost_hs(
                 self.trainable_vars
             )  # negative log posterior
-        grads = tape.gradient(loss, self.trainable_vars)
+        grads = tape.gradient(self.loss, self.trainable_vars)
         optimizer.apply_gradients(zip(grads, self.trainable_vars))
-        return -loss  # return log posterior
+        return -self.loss  # return POSITIVE log posterior
 
     # For new prior strategy, need new createModelVariables() and logprior()
 
