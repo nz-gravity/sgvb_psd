@@ -7,7 +7,7 @@ of correlated multivariate detector noise using variational inference (VI).
 ## Installation
 
 ```bash
-pip install git+https//github.com/nz-gravity/sgvb_psd
+pip install sgvb_psd
 ```
 
 ## Usage
