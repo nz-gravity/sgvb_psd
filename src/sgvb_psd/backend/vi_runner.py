@@ -83,9 +83,7 @@ class ViRunner:
             lp = tf.TensorArray(tf.float32, size=0, dynamic_size=True)
 
             for i in tf.range(n_train):
-                lpost = model.train_step(
-                    optimizer,
-                )
+                lpost = model.train_step(optimizer)
 
                 if optimizer.iterations % 5000 == 0:
                     tf.print(
@@ -161,7 +159,7 @@ class ViRunner:
         start = timeit.default_timer()
         # For more on TF's fit_surrogate_posterior, see
         # https://www.tensorflow.org/probability/api_docs/python/tfp/vi/fit_surrogate_posterior
-        losses = tf.function(
+        self.kdl_losses = tf.function(
             lambda l: tfp.vi.fit_surrogate_posterior(
                 target_log_prob_fn=l,
                 surrogate_posterior=trainable_Mvnormal,
@@ -175,7 +173,6 @@ class ViRunner:
         stop = timeit.default_timer()
         logger.debug(f"VI Time: {stop-start:.2f}s")
         stop_total = timeit.default_timer()
-        self.kld = losses
         logger.debug(
             f"Total Inference Training Time: {stop_total-start_total:.2f}s"
         )
@@ -192,4 +189,4 @@ class ViRunner:
         )
         self.model.toTensor()
 
-        return losses, self.model, samp
+        return self.kdl_losses, self.model, samp
