@@ -1,4 +1,5 @@
 [![Coverage Status](https://coveralls.io/repos/github/nz-gravity/sgvb_psd/badge.svg?branch=main)](https://coveralls.io/github/nz-gravity/sgvb_psd?branch=main)
+![PyPI version](https://img.shields.io/pypi/v/sgvb-psd.svg)
 
 # SGVB PSD Estimator
 
