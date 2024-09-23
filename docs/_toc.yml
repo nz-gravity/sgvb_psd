@@ -5,3 +5,5 @@ chapters:
 - file: examples/simulation_example.ipynb
 - file: examples/ET_example.ipynb
 - file: examples/paper_plots
+- url: https://arxiv.org/abs/2409.13224
+  title: Paper
