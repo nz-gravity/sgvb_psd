@@ -85,6 +85,10 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
     return axs
 
 
+def plot_psdq(psd_uniform, freqs, axs=None, **kwargs):
+    return plot_psdq(psd_uniform, freqs, axs, **kwargs)
+
+
 def plot_single_psd(psd, freqs, axs=None, **kwargs):
     psd = np.array([psd])
     kwargs["color"] = kwargs.get("color", "k")

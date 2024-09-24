@@ -271,6 +271,13 @@ class PSDEstimator:
         )
         self.runtimes = times
         return self.psd_all, self.psd_quantiles
+    
+    def uniform_ci(self) -> np.ndarray:
+        self.psd_uniform = self.model.get_uniform_ci(
+            self.psd_all, self.psd_quantiles
+        )
+        
+        return self.psd_uniform
 
     @property
     def freq(self) -> np.ndarray:
