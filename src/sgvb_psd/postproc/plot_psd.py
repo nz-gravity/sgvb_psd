@@ -85,7 +85,7 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
     return axs
 
 
-def plot_psdq(psd_uniform, freqs, axs=None, **kwargs):
+def plot_psd_uniform(psd_uniform, freqs, axs=None, **kwargs):
     return plot_psdq(psd_uniform, freqs, axs, **kwargs)
 
 
