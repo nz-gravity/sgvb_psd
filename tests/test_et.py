@@ -3,6 +3,7 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 from sgvb_psd.psd_estimator import PSDEstimator
 
@@ -20,6 +21,7 @@ def load_et_data(npts):
 
 
 def test_et(plot_dir):
+    t0 = time.time()
     optim = PSDEstimator(
         x=load_et_data(2**14),
         N_theta=100,
@@ -31,14 +33,18 @@ def test_et(plot_dir):
     )
     optim.run(lr=0.001)
 
+    # run done, lets make some plots
     kwargs = dict(
         channel_labels="XYZ",
         sylmog_thresh=1e-49,
         xlims=[5, 128],
     )
-
     optim.plot(**kwargs, plot_periodogram=True)
     plt.savefig(f"{plot_dir}/ET_psd.png")
-
     optim.plot_coherence(labels="XYZ")
     plt.savefig(f"{plot_dir}/ET_coherence.png")
+
+    end_time = time.time()
+    estimation_time = end_time - t0
+    assert estimation_time < 17, f"Estimation time {estimation_time} is too long"
+    print(f"Test passed in {estimation_time} seconds")

@@ -15,12 +15,12 @@ class ViRunner:
     def __init__(
             self,
             x,
-            N_theta=30,
-            nchunks=400,
-            variation_factor=0,
-            fmax_for_analysis=None,
-            fs=2048,
-            degree_fluctuate=None,
+            N_theta:int=30,
+            nchunks:int=400,
+            variation_factor:float=0,
+            fmax_for_analysis:float=None,
+            fs:float=2048,
+            degree_fluctuate:float=None,
     ):
         self.data = x
         logger.debug(f"Inputted data shape: {self.data.shape}")
@@ -53,10 +53,10 @@ class ViRunner:
 
     def runModel(
             self,
-            lr_map=5e-4,
-            ntrain_map=5e3,
-            inference_size=500,
-            n_elbo_maximisation_steps=1000,
+            lr_map:float=5e-4,
+            ntrain_map:int=5000,
+            inference_size:int=500,
+            n_elbo_maximisation_steps:int=1000,
     ):
 
         logger.debug("Starting Model Inference Training..")
@@ -87,7 +87,7 @@ class ViRunner:
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
             return model.trainable_vars, lp.stack()
 
-        logger.debug("Start MAP search... ")
+        logger.debug(f"Start MAP search ({n_train} steps)... ")
         opt_vars_hs, self.lp = tune_model_to_map(self.model, optimizer_hs, n_train)
         self.map_time = timeit.default_timer() - start_map
         logger.debug(f"MAP Training Time: {self.map_time:.2f}s")
@@ -101,7 +101,7 @@ class ViRunner:
         def conditioned_log_prob(*z):
             return self.model.loglik(z) + self.model.logprior_hs(z)
 
-        logger.debug("Start ELBO maximisation... ")
+        logger.debug(f"Start ELBO maximisation ({n_elbo_maximisation_steps} steps)... ")
         start_vi = timeit.default_timer()
         # For more on TF's fit_surrogate_posterior, see
         # https://www.tensorflow.org/probability/api_docs/python/tfp/vi/fit_surrogate_posterior
