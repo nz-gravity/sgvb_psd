@@ -32,7 +32,7 @@ VI_KWGS = dict(
     seed=0,
 )
 
-logger.setLevel('ERROR')
+logger.setLevel('INFO')
 OUTDIR = 'out_simulation_results'
 os.makedirs(OUTDIR, exist_ok=True)
 
