@@ -55,6 +55,7 @@ def plot_psdq(psd_q, freqs, axs=None, **kwargs):
     plt_kwargs = dict(
         color=kwargs.get("color", "C0"),
         zorder=kwargs.get("zorder", 10),
+        ls=kwargs.get('ls', '-')
     )
 
     if nfreqs != len(freqs):
