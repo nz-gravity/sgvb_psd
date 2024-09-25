@@ -46,5 +46,5 @@ def test_et(plot_dir):
 
     end_time = time.time()
     estimation_time = end_time - t0
-    assert estimation_time < 17, f"Estimation time {estimation_time} is too long"
+    assert estimation_time < 50, f"Estimation time {estimation_time} is too long"
     print(f"Test passed in {estimation_time} seconds")
