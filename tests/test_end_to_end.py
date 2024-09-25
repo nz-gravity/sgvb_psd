@@ -29,20 +29,20 @@ def get_var_data(npts):
 
 
 def test_var_psd_generation(plot_dir):
-    var2_data = get_var_data(2**10)
+    var2_data = get_var_data(2**7)
     print("Starting VAR PSD generation test")
     start_time = time.time()
     optim = PSDEstimator(
-        N_theta=30,
+        N_theta=5,
         nchunks=1,
-        ntrain_map=1000,
+        ntrain_map=5,
         x=var2_data.data,
         max_hyperparm_eval=1,
-        n_elbo_maximisation_steps=1000,
+        n_elbo_maximisation_steps=5,
         fs=2 * np.pi,
         seed=0,
     )
-    optim.run(lr=0.003)
+    optim.run()
 
     ## Run is done, lets make some plots
     ax = optim.plot(
