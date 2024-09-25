@@ -1,11 +1,14 @@
 import timeit
 
 import numpy as np
+from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
 import tensorflow_probability as tfp
+from typing import List, Tuple
 
 from ..logging import logger
 from .bayesian_model import BayesianModel
+from .analysis_data import AnalysisData
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -14,50 +17,40 @@ tfb = tfp.bijectors
 class ViRunner:
     def __init__(
             self,
-            x,
+            x:np.ndarray,
             N_theta:int=30,
             nchunks:int=400,
-            variation_factor:float=0,
+            variation_factor:float=0.,
             fmax_for_analysis:float=None,
             fs:float=2048,
             degree_fluctuate:float=None,
     ):
-        self.data = x
-        logger.debug(f"Inputted data shape: {self.data.shape}")
-
-        ## Hyperparameter
-        ## N_delta + N_theta are always set the same
-        self.N_delta = self.N_theta = N_theta
-        if degree_fluctuate is None:
-            degree_fluctuate = self.N_delta / 2
-        self.degree_fluctuate = degree_fluctuate
-
-        hyper_hs = []
-        tau0 = 0.01
-        c2 = 4
-        sig2_alp = 10
-        self.hyper_hs = [tau0, c2, sig2_alp, degree_fluctuate]
-
-        ## Define Model
-        self.model = BayesianModel(
-            x,
-            self.hyper_hs,
+        self.data = AnalysisData(
+            x=x,
             nchunks=nchunks,
             fmax_for_analysis=fmax_for_analysis,
             fs=fs,
-            N_delta=self.N_delta,
-            N_theta=self.N_theta,
+            N_theta=N_theta,
+            N_delta=N_theta, # N_theta == N_delta in all cases
+        )
+
+        ## Define Model
+        self.model = BayesianModel(
+            self.data,
+            degree_fluctuate=degree_fluctuate,
         )
         self.variation_factor = variation_factor
         self.surrogate_posterior:tfd.JointDistributionSequential = None
 
-    def runModel(
+    def run(
             self,
             lr_map:float=5e-4,
             ntrain_map:int=5000,
             inference_size:int=500,
             n_elbo_maximisation_steps:int=1000,
-    ):
+    )->Tuple[
+            np.ndarray, np.ndarray, BayesianModel, List[tf.Tensor]
+        ]:
 
         logger.debug("Starting Model Inference Training..")
 
@@ -67,13 +60,13 @@ class ViRunner:
         """
         # Phase1 obtain MAP
         """
-        optimizer_hs = tf.keras.optimizers.Adam(lr, )
+        optimizer_hs = Adam(lr)
 
         start_map = timeit.default_timer()
 
         # train
         @tf.function
-        def tune_model_to_map(model:BayesianModel, optimizer:tf.keras.optimizers.Adam, n_train:int):
+        def tune_model_to_map(model:BayesianModel, optimizer:Adam, n_train:int)->Tuple[List[tf.Variable], tf.Tensor]:
             n_samp = model.trainable_vars[0].shape[0]
             lpost = tf.constant(0.0, tf.float32, [n_samp])
             lp = tf.TensorArray(tf.float32, size=0, dynamic_size=True)
@@ -95,11 +88,11 @@ class ViRunner:
         """
         Phase 2 UQ
         """
-        optimizer_vi = tf.optimizers.Adam(5e-2)
+        optimizer_vi = Adam(5e-2)
         self.init_surrogate_posterior(params=opt_vars_hs)
 
         def conditioned_log_prob(*z):
-            return self.model.loglik(z) + self.model.logprior_hs(z)
+            return self.model.loglik(z) + self.model.logprior(z)
 
         logger.debug(f"Start ELBO maximisation ({n_elbo_maximisation_steps} steps)... ")
         start_vi = timeit.default_timer()
@@ -129,17 +122,9 @@ class ViRunner:
 
         # once model is trained -- we should be able to sample from it
         samp = self.surrogate_posterior.sample(inference_size)
-        self.model.freq = self.model.sc_fft()["fq_y"]
-        Xmat_delta, Xmat_theta = self.model.Xmtrix(
-            N_delta=self.N_delta, N_theta=self.N_theta
-        )
-        self.model.toTensor()
-
         return self.kdl_losses, self.lp, self.model, samp
 
-
-
-    def init_surrogate_posterior(self, params)->None:
+    def init_surrogate_posterior(self, params:List[tf.Variable])->None:
         if self.variation_factor <= 0:
             self.surrogate_posterior = tfd.JointDistributionSequential(
                 [

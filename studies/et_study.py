@@ -41,7 +41,8 @@ def run_analysis(case):
     # save the PSD quantiles
     with h5py.File(f"ET-{case}-SGVB-PSD.h5", "w") as f:
         f["freq"] = psd_estimator.freq
-        f["psd_quantiles"] = psd_estimator.psd_quantiles
+        f["psd_pointwise_ci"] = psd_estimator.pointwise_ci
+        f["psd_uniform_ci"] = psd_estimator.uniform_ci
     psd_estimator.plot(
         true_psd=[data.true_psd, data.true_freq],
         xlims=[5, 128],
@@ -51,17 +52,20 @@ def run_analysis(case):
 
 def combine_results():
     # load each PSD-quantile file
-    psd_quantiles = {}
+    psd_pointwise = {}
+    psd_uniform = {}
     for case in DATA_FILES:
         with h5py.File(f"ET-{case}-SGVB-PSD.h5", "r") as f:
-            psd_quantiles[case] = f["psd_quantiles"][:]
+            psd_pointwise[case] = f["psd_pointwise_ci"][:]
+            psd_uniform[case] = f["psd_uniform_ci"][:]
             freq = f["freq"][:]
 
     fpath = "ET-Case-ABC-SGVB-PSD.h5"
     print(f"Creating file: {fpath}")
     with h5py.File(fpath, "w") as f:
         for case in DATA_FILES:
-            f.create_dataset(f"{case}/psd_quantiles", data=psd_quantiles[case])
+            f.create_dataset(f"{case}/psd_pointwise_ci", data=psd_pointwise[case])
+            f.create_dataset(f"{case}/psd_uniform_ci", data=psd_uniform[case])
         f["freq"] = freq
     print(f"Data saved to: {fpath}")
 

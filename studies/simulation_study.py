@@ -5,6 +5,7 @@ Run a simulation study to compare the performance of the PSD estimator
 """
 
 from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_psd.postproc import plot_psdq
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 from sgvb_psd.utils.sim_varma import SimVARMA
 import numpy as np
@@ -12,17 +13,18 @@ from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 import pandas as pd
 from sgvb_psd.logging import logger
+import os
 
-N_EXPERIMENTS = 100
+N_EXPERIMENTS = 10
 
 SIM_KWGS = dict(
     sigma=np.array([[1.0, 0.9], [0.9, 1.0]]),
     var_coeffs=np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]]),
     vma_coeffs=np.array([[[1.0, 0.0], [0.0, 1.0]]]),
-    n_samples=512,
+    n_samples=1024,
 )
 VI_KWGS = dict(
-    N_theta=40,
+    N_theta=35,
     nchunks=1,
     ntrain_map=1000,
     max_hyperparm_eval=1,
@@ -30,20 +32,43 @@ VI_KWGS = dict(
     seed=0,
 )
 
-logger.setLevel('ERROR')
-
+logger.setLevel('INFO')
+OUTDIR = 'out_simulation_results'
+os.makedirs(OUTDIR, exist_ok=True)
 
 def run_simulation(idx):
     sim = SimVARMA(**SIM_KWGS, seed=idx)
     optim = PSDEstimator(**VI_KWGS, x=sim.data)
     optim.run(lr=0.003)
+    plot_simulation_psd(
+        f'{OUTDIR}/simulation_{idx}.png',
+        optim,
+        sim,
+    )
     summary = PSDAnalyzer(
         sim.psd,
-        optim.psd_quantiles,
+        optim.pointwise_ci,
         idx=idx,
     ).__dict__()
     summary['time'] = optim.runtimes['train']
     return {k: summary[k] for k in ['idx', 'L2_errors_VI', 'time']}
+
+def plot_simulation_psd(fname, optim:PSDEstimator, sim:SimVARMA):
+    fig = optim.plot(
+        true_psd=[sim.psd, sim.freq],
+        off_symlog=False,
+        xlims=[0, np.pi],
+        quantiles='pointwise',
+    )
+    plot_psdq(
+        optim.uniform_ci,
+        freqs=optim.freq,
+        axs=fig,
+        color='red',
+        ls='--',
+    )
+    plt.savefig(fname)
+
 
 
 def run_all_simulations(n_experiments=N_EXPERIMENTS):

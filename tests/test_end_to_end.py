@@ -3,15 +3,15 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 import tensorflow as tf
 
-from sgvb_psd.backend import BayesianModel
+from sgvb_psd.backend import BayesianModel, AnalysisData
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
 from sgvb_psd.utils.tf_utils import set_seed
 from sgvb_psd.logging import logger
+from sgvb_psd.postproc.plot_psd import plot_psdq
 
 
 def get_var_data(npts):
@@ -29,7 +29,7 @@ def get_var_data(npts):
 
 
 def test_var_psd_generation(plot_dir):
-    var2_data = get_var_data(2**6)
+    var2_data = get_var_data(2**7)
     print("Starting VAR PSD generation test")
     start_time = time.time()
     optim = PSDEstimator(
@@ -45,11 +45,20 @@ def test_var_psd_generation(plot_dir):
     optim.run()
 
     ## Run is done, lets make some plots
-    optim.plot(
+    ax = optim.plot(
         true_psd=[var2_data.psd, var2_data.freq],
         off_symlog=False,
         xlims=[0, np.pi],
+        quantiles='pointwise',
     )
+    plot_psdq(
+        optim.uniform_ci,
+        freqs=optim.freq,
+        axs=ax,
+        color='red',
+        ls='--',
+    )
+
     plt.savefig(f"{plot_dir}/var_psd.png")
     optim.plot_coherence(
         true_psd=[var2_data.psd, var2_data.freq],
@@ -60,7 +69,7 @@ def test_var_psd_generation(plot_dir):
     csv = f"{plot_dir}/var_psd.csv"
     psd_analyzer = PSDAnalyzer(
         spec_true=var2_data.psd,
-        spectral_density_q=optim.psd_quantiles,
+        spectral_density_q=optim.pointwise_ci,
         idx=1,
         csv_file=csv,
     )
@@ -78,15 +87,15 @@ def test_var_psd_generation(plot_dir):
 def test_one_train_step_with_chunks():
     t0 = time.time()
     var2_data = get_var_data(2**7)
-    model = BayesianModel(
+    analysis_data = AnalysisData(
         x=var2_data.data,
         nchunks=2,
         fmax_for_analysis=128,
         fs=2 * np.pi,
-        hyper=[0.01, 4, 10, 5],
-        N_delta=10,
         N_theta=10,
+        N_delta=10,
     )
+    model = BayesianModel(analysis_data)
     opts = tf.keras.optimizers.Adam(0.01)
     model.map_train_step(opts)
     estimation_time = time.time() - t0

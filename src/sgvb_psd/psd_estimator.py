@@ -72,7 +72,7 @@ class PSDEstimator:
     :ivar vi_losses: Variational Inference losses during training.
     :vartype vi_losses: numpy.ndarray
     :ivar psd_quantiles: Quantiles of the estimated PSD.
-    :vartype psd_quantiles: numpy.ndarray
+    :vartype pointwise_ci: numpy.ndarray
     :ivar psd_all: All estimated PSDs.
     :vartype psd_all: numpy.ndarray
     :ivar inference_runner: Object for running the variational inference.
@@ -178,7 +178,8 @@ class PSDEstimator:
         # Internal variables
         self.model: BayesianModel = None
         self.samps = None
-        self.psd_quantiles = None
+        self.pointwise_ci = None
+        self.uniform_ci = None
         self.psd_all = None
         self.runtimes = {}
         self.inference_runner = ViRunner(
@@ -200,7 +201,7 @@ class PSDEstimator:
         Returns:
             float: ELBO log_map_vals.
         """
-        vi_losses, _, _, _ = self.inference_runner.runModel(
+        vi_losses, _, _, _ = self.inference_runner.run(
             lr_map=lr["lr_map"],
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples,
@@ -228,14 +229,14 @@ class PSDEstimator:
 
         This method runs the variational inference to estimate the posterior PSD.
         """
-        _, _, self.model, self.samps = self.inference_runner.runModel(
+        _, _, self.model, self.samps = self.inference_runner.run(
             lr_map=self.optimal_lr,
             ntrain_map=self.ntrain_map,
             inference_size=self.N_samples,
             n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
 
-    def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray]:
+    def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Run the SGVB algorithm to estimate the posterior PSD.
 
@@ -244,7 +245,7 @@ class PSDEstimator:
 
         :param lr: Learning rate for MAP. If None, optimal rate is found, defaults to None.
         :type lr: float, optional
-        :return: Tuple containing the posterior PSD and quantiles of the PSD.
+        :return: Tuple containing the posterior PSD and pointwise, and uniform quantiles of the PSD.
         :rtype: tuple(numpy.ndarray, numpy.ndarray)
         """
         times = {}
@@ -266,18 +267,12 @@ class PSDEstimator:
         logger.info(f"Model trained in {times['train']:.2f}s")
 
         logger.info("Computing posterior PSDs")
-        self.psd_all, self.psd_quantiles = self.model.compute_psd(
+        self.psd_all, self.pointwise_ci, self.uniform_ci = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
         self.runtimes = times
-        return self.psd_all, self.psd_quantiles
-    
-    def uniform_ci(self) -> np.ndarray:
-        self.psd_uniform = self.model.get_uniform_ci(
-            self.psd_all, self.psd_quantiles
-        )
-        
-        return self.psd_uniform
+        return self.psd_all, self.pointwise_ci, self.uniform_ci
+
 
     @property
     def freq(self) -> np.ndarray:
@@ -308,6 +303,7 @@ class PSDEstimator:
     def plot(
             self,
             true_psd=None,
+            quantiles='pointwise',
             plot_periodogram=True,
             tick_ln=5,
             diag_spline_thickness=2,
@@ -324,6 +320,8 @@ class PSDEstimator:
 
         :param true_psd: True PSD and freq to plot for comparison (true_psd, true_freq)
         :type true_psd: tuple, optional
+        :param quantiles: Type of quantiles ('pointwise', 'uniform') to plot, defaults to 'pointwise'
+        :type quantiles: str, optional
         :param plot_periodogram: Whether to plot the periodogram
         :type plot_periodogram: bool
         :param tick_ln: Length of the ticks, defaults to 5
@@ -357,8 +355,13 @@ class PSDEstimator:
             **kwargs,
         )
         pdgrm = [self.pdgrm, self.pdgrm_freq] if plot_periodogram else None
+
+        ci = self.pointwise_ci
+        if quantiles == 'uniform':
+            ci = self.uniform_ci
+
         return plot_psd(
-            psdq=[self.psd_quantiles, self.freq],
+            psdq=[ci, self.freq],
             pdgrm=pdgrm,
             true_psd=true_psd,
             **all_kwargs,
