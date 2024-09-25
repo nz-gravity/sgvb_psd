@@ -428,7 +428,7 @@ document.write(`
 <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">var2</span> <span class="o">=</span> <span class="n">SimVARMA</span><span class="p">(</span>
-    <span class="n">n_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">n_samples</span><span class="o">=</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">13</span><span class="p">,</span>
     <span class="n">var_coeffs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
         <span class="p">[[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]]]</span>
     <span class="p">),</span>
@@ -439,11 +439,6 @@ document.write(`
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output text_html">
-        <div style="font-family: Arial, sans-serif;">
-            <h3>VARMA(2, 1) Process</h3>
-            <p>X<sub>t</sub> = Φ<sub>1</sub>X<sub>t-1</sub> + Φ<sub>2</sub>X<sub>t-2</sub> + ε<sub>t</sub> + Θ<sub>1</sub>ε<sub>t-1</sub></p><p>ε<sub>t</sub> ~ N(0, Σ)</p><h4>VAR coefficients:</h4><p>Φ<sub>1</sub> = <table style='border-collapse: collapse;'><tr><td style='border: 1px solid black; padding: 4px;'>0.50</td><td style='border: 1px solid black; padding: 4px;'>0.00</td></tr><tr><td style='border: 1px solid black; padding: 4px;'>0.00</td><td style='border: 1px solid black; padding: 4px;'>-0.30</td></tr></table></p><p>Φ<sub>2</sub> = <table style='border-collapse: collapse;'><tr><td style='border: 1px solid black; padding: 4px;'>0.00</td><td style='border: 1px solid black; padding: 4px;'>0.00</td></tr><tr><td style='border: 1px solid black; padding: 4px;'>0.00</td><td style='border: 1px solid black; padding: 4px;'>-0.50</td></tr></table></p><h4>VMA coefficients:</h4><p>Θ<sub>1</sub> = <table style='border-collapse: collapse;'><tr><td style='border: 1px solid black; padding: 4px;'>1.00</td><td style='border: 1px solid black; padding: 4px;'>0.00</td></tr><tr><td style='border: 1px solid black; padding: 4px;'>0.00</td><td style='border: 1px solid black; padding: 4px;'>1.00</td></tr></table></p><h4>Covariance matrix:</h4><p>Σ = <table style='border-collapse: collapse;'><tr><td style='border: 1px solid black; padding: 4px;'>1.00</td><td style='border: 1px solid black; padding: 4px;'>0.90</td></tr><tr><td style='border: 1px solid black; padding: 4px;'>0.90</td><td style='border: 1px solid black; padding: 4px;'>1.00</td></tr></table></p></div></div></div>
 </div>
 <p><img alt="VAR(2) Data" src="../_images/var2_data.png" /></p>
 <div class="cell docutils container">
@@ -452,31 +447,13 @@ document.write(`
 
 <span class="n">optim</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="n">var2</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-    <span class="n">N_theta</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-    <span class="n">nchunks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">N_theta</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">nchunks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-    <span class="n">max_hyperparm_eval</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_hyperparm_eval</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">fs</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">_</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.003</span><span class="p">);</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>13:40:41|SGVB-PSD|INFO| Final PSD will be of shape: 512 x 2 x 2
-13:40:41|SGVB-PSD|DEBUG| Inputted data shape: (1024, 2)
-13:40:41|SGVB-PSD|DEBUG| Model instantiated: SpecPrep(x(t)=(1024, 2), y(f)=(1, 512, 2), Xmat_delta=(512, 32), Xmat_theta=(512, 32))
-13:40:41|SGVB-PSD|INFO| Using provided learning rate: 0.003
-13:40:41|SGVB-PSD|INFO| Training model
-13:40:41|SGVB-PSD|DEBUG| Starting Model Inference Training..
-13:40:41|SGVB-PSD|DEBUG| Start Point Estimating... 
-13:40:46|SGVB-PSD|DEBUG| MAP Training Time: 4.66s
-13:40:46|SGVB-PSD|DEBUG| Start ELBO maximisation... 
-13:40:57|SGVB-PSD|DEBUG| VI Time: 10.80s
-13:40:57|SGVB-PSD|DEBUG| Total Inference Training Time: 15.57s
-13:40:57|SGVB-PSD|INFO| Model trained in 15.84s
-13:40:57|SGVB-PSD|INFO| Computing posterior PSDs
-13:40:58|SGVB-PSD|INFO| Optimal PSD estimation complete in 1.48s
 </pre></div>
 </div>
 </div>
@@ -516,58 +493,6 @@ document.write(`
 </tr>
 </tbody>
 </table>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sgvb_psd.postproc.psd_analyzer</span> <span class="kn">import</span> <span class="n">PSDAnalyzer</span>
-
-<span class="n">analyzer</span> <span class="o">=</span> <span class="n">PSDAnalyzer</span><span class="p">(</span>
-    <span class="n">spec_true</span><span class="o">=</span><span class="n">var2</span><span class="o">.</span><span class="n">psd</span><span class="p">,</span>
-    <span class="n">spectral_density_q</span><span class="o">=</span><span class="n">optim</span><span class="o">.</span><span class="n">psd_quantiles</span>
-<span class="p">)</span>
-<span class="n">analyzer</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/avaj0001/Documents/projects/sgvb_psd/src/sgvb_psd/postproc/psd_analyzer.py:81: ComplexWarning: Casting complex values to real discards the imaginary part
-  N2_VI[i] = np.sum(
-</pre></div>
-</div>
-<div class="output text_html"><table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>0</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>L$_2$ Error</th>
-      <td>0.072419</td>
-    </tr>
-    <tr>
-      <th>$\bold{S}_{11}$ CI Length</th>
-      <td>0.026599</td>
-    </tr>
-    <tr>
-      <th>Re($\bold{S}_{12}$) CI Length</th>
-      <td>0.033488</td>
-    </tr>
-    <tr>
-      <th>Im($\bold{S}_{12}$) CI Length</th>
-      <td>0.023256</td>
-    </tr>
-    <tr>
-      <th>$\bold{S}_{22}$ CI Length</th>
-      <td>0.039866</td>
-    </tr>
-    <tr>
-      <th>Coverage</th>
-      <td>0.748535</td>
-    </tr>
-  </tbody>
-</table></div></div>
 </div>
 </section>
 
