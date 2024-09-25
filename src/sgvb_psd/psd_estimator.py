@@ -220,7 +220,7 @@ class PSDEstimator:
             algo=tpe.suggest,
             max_evals=self.max_hyperparm_eval,
         )["lr_map"]
-        logger.info(f"Optimal learning rate: {self.optimal_lr}")
+        logger.info(f"Optimal learning rate: {self.optimal_lr:.4e}")
 
     def __train_model(self):
         """
