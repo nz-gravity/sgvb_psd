@@ -1,14 +1,14 @@
 """Module to compute the spectral density given the best surrogate posterior parameters and samples"""
 import numpy as np
 import tensorflow as tf
-from typing import Tuple
+from typing import Tuple, List
 from scipy.stats import median_abs_deviation
 
 def compute_psd(
-        Xmat_delta:np.ndarray,
-        Xmat_theta:np.ndarray,
+        Xmat_delta:tf.Tensor,
+        Xmat_theta:tf.Tensor,
         p_dim:int,
-        vi_samples: np.ndarray,
+        vi_samples: List[tf.Tensor],
         quantiles=[0.05, 0.5, 0.95],
         psd_scaling=1.0,
         fs=None,
@@ -23,7 +23,6 @@ def compute_psd(
         3. uniform_ci: the uniform confidence interval of the spectral density [n-quantiles, n-freq, dim, dim]
 
     """
-
     delta2_all_s = tf.exp(
         tf.matmul(Xmat_delta, tf.transpose(vi_samples[0], [0, 2, 1]))
     )  # (500, #freq, p)

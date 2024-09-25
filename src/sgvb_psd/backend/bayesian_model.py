@@ -12,63 +12,43 @@ tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class BayesianModel(AnalysisData):
+class BayesianModel:
     def __init__(
-        self, x:np.ndarray, hyper, nchunks:int, fmax_for_analysis:float, fs:float, N_theta:int, N_delta:int
+            self,
+            data: AnalysisData,
+            degree_fluctuate: float = None
     ):
-        super().__init__(x, nchunks, fmax_for_analysis, fs, N_theta, N_delta)
-        # x:      N-by-p, multivariate timeseries with N samples and p dimensions
-        # hyper:  list of hyperparameters for prior
-        # ts:     time series == x
-        # y_ft:   fourier transformed time series
-        # freq:   frequencies w/ y_ft
-        # p_dim:  dimension of ts
-        # Xmat:   basis matrix
-        # Zar:    arry of design matrix Z_k for every freq k
-        self.hyper = hyper
+
+        self.data = data
+
+        if degree_fluctuate is None:
+            degree_fluctuate = data.N_delta / 2
+
+        # Setup hyperparams
+        self.degree_fluctuate = tf.convert_to_tensor(degree_fluctuate, dtype=tf.float32)
+        self.tau0 = tf.convert_to_tensor(0.01, dtype=tf.float32)
+        self.c2 = tf.convert_to_tensor(4, dtype=tf.float32)
+        self.sig2_alp = tf.convert_to_tensor(10, dtype=tf.float32)
+        self.hyper = [self.tau0, self.c2, self.sig2_alp, self.degree_fluctuate]
+
         self.log_map_vals = tf.Variable(0.0)
 
         # convert required objects to tensors
-        self.toTensor()
         self.trainable_vars = self._get_trainable_vars()  # all trainable variables
-        logger.debug(f"Model instantiated: {self}")
 
-    def toTensor(self):
-        # convert to tensorflow object
-        y_ft = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
-        self.y_re = tf.math.real(y_ft)
-        self.y_im = tf.math.imag(y_ft)
-        self.Xmat_delta = tf.convert_to_tensor(
-            self.Xmat_delta, dtype=tf.float32
-        )
-        self.Xmat_theta = tf.convert_to_tensor(
-            self.Xmat_theta, dtype=tf.float32
-        )
 
-        Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)
-        self.Z_re = tf.math.real(Zar)
-        self.Z_im = tf.math.imag(Zar)
 
-        self.hyper = [
-            tf.convert_to_tensor(self.hyper[i], dtype=tf.float32)
-            for i in range(len(self.hyper))
-        ]
-        if self.p_dim > 1:
-            self.n_theta = tf.cast(
-                self.p_dim * (self.p_dim - 1) / 2, tf.int32
-            )  # number of theta in the model
-
-    def _get_trainable_vars(self, batch_size:int=1)->List[tf.Variable]:
+    def _get_trainable_vars(self, batch_size: int = 1) -> List[tf.Variable]:
         #
         #
-        # rule:  self.trainable_vars[0, 2, 4] must be corresponding spline regression parameters for p_dim>1
+        # rule:  self.trainable_vars[0, 2, 4] must be corresponding spline regression parameters for p>1
         # in 1-d case, self.trainable_vars[0] must be ga_delta parameters, no ga_theta included.
 
         # initial values are quite important for training
 
-        p = int(self.y_ft.shape[2])
-        size_delta = int(self.Xmat_delta.shape[1])
-        size_theta = int(self.Xmat_theta.shape[1])
+        p = int(self.data.y_ft.shape[2])
+        size_delta = int(self.data.Xmat_delta.shape[1])
+        size_theta = int(self.data.Xmat_theta.shape[1])
 
         # initializer = tf.initializers.GlorotUniform() # xavier initializer
         # initializer = tf.initializers.RandomUniform(minval=-0.5, maxval=0.5)
@@ -109,8 +89,7 @@ class BayesianModel(AnalysisData):
             name="ltau",
         )
 
-
-        nn = int(self.n_theta)  # number of thetas in the model
+        nn = int(p * (p - 1) / 2)  # number of thetas in the model
         ga_theta_re = tf.Variable(
             ga_initializer_para2(
                 shape=(batch_size, nn, size_theta), dtype=tf.float32
@@ -144,8 +123,6 @@ class BayesianModel(AnalysisData):
             name="ltau_theta",
         )
 
-
-
         # params:          self.trainable_vars (ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
         #                                       ga_theta_im, lla_theta_im,
@@ -161,7 +138,7 @@ class BayesianModel(AnalysisData):
             ltau_theta,
         ]
 
-    def loglik(self, params:List[tf.Variable])->tf.float32:
+    def loglik(self, params: List[tf.Variable]) -> tf.float32:
         # y_re:            self.y_re
         # y_im:            self.y_im
         # Z_:              self.Zar
@@ -172,49 +149,49 @@ class BayesianModel(AnalysisData):
         # each of params is a 3-d tensor with sample_size as the fist dim.
         # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
 
-        xγ = tf.matmul(self.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
+        xγ = tf.matmul(self.data.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
         sum_xγ = -tf.reduce_sum(xγ, [1, 2])
         exp_xγ_inv = tf.exp(-xγ)
 
         xα = tf.matmul(
-            self.Xmat_theta, tf.transpose(params[2], [0, 2, 1])
+            self.data.Xmat_theta, tf.transpose(params[2], [0, 2, 1])
         )  # no need \ here
-        xβ = tf.matmul(self.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
+        xβ = tf.matmul(self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
 
         # Z = Sum [(xα + i xβ) * y]
         Z_theta_re = tf.linalg.matvec(
-            tf.expand_dims(self.Z_re, 0), xα
-        ) - tf.linalg.matvec(tf.expand_dims(self.Z_im, 0), xβ)
+            tf.expand_dims(self.data.Z_re, 0), xα
+        ) - tf.linalg.matvec(tf.expand_dims(self.data.Z_im, 0), xβ)
         Z_theta_im = tf.linalg.matvec(
-            tf.expand_dims(self.Z_re, 0), xβ
-        ) + tf.linalg.matvec(tf.expand_dims(self.Z_im, 0), xα)
+            tf.expand_dims(self.data.Z_re, 0), xβ
+        ) + tf.linalg.matvec(tf.expand_dims(self.data.Z_im, 0), xα)
 
-        u_re = self.y_re - Z_theta_re
-        u_im = self.y_im - Z_theta_im
+        u_re = self.data.y_re - Z_theta_re
+        u_im = self.data.y_im - Z_theta_im
 
         numerator = tf.square(u_re) + tf.square(u_im)
         internal = tf.multiply(numerator, exp_xγ_inv)
-        tmp2_ = -tf.reduce_sum(internal, [-2, -1])  # sum over p_dim and freq
+        tmp2_ = -tf.reduce_sum(internal, [-2, -1])  # sum over p and freq
         log_lik = tf.reduce_sum(sum_xγ + tmp2_)  # sum over all LnL
         return log_lik
 
-    def logpost_hs(self, params:List[tf.Variable])->tf.float32:
-        return self.loglik(params) + self.logprior_hs(params)
+    def logpost(self, params: List[tf.Variable]) -> tf.float32:
+        return self.loglik(params) + self.logprior(params)
 
     #
     # Model training one step
     #
-    def map_train_step(self, optimizer:Adam)->tf.float32:  # one training step to get close to MAP
+    def map_train_step(self, optimizer: Adam) -> tf.float32:  # one training step to get close to MAP
         with tf.GradientTape() as tape:
-            self.log_map_vals = -1* self.logpost_hs(self.trainable_vars)
+            self.log_map_vals = -1 * self.logpost(self.trainable_vars)
         grads = tape.gradient(self.log_map_vals, self.trainable_vars)
         optimizer.apply_gradients(zip(grads, self.trainable_vars))
-        self.log_map_vals *= -1 # return POSITIVE log posterior
+        self.log_map_vals *= -1  # return POSITIVE log posterior
         return self.log_map_vals
 
     # For new prior strategy, need new createModelVariables() and logprior()
 
-    def logprior_hs(self, params):
+    def logprior(self, params):
         # hyper:           list of hyperparameters (tau0, c2, sig2_alp, degree_fluctuate)
         # params:          self.trainable_vars (ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
@@ -301,33 +278,31 @@ class BayesianModel(AnalysisData):
             tf.constant(0, tf.float32), self.hyper[0]
         )
         logPrior = (
-            lpriorDel
-            + lpriorThe_re
-            + lpriorThe_im
-            + tf.reduce_sum(
-                priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
-            )
-            + tf.reduce_sum(
-                priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
-            )
+                lpriorDel
+                + lpriorThe_re
+                + lpriorThe_im
+                + tf.reduce_sum(
+            priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
+        )
+                + tf.reduce_sum(
+            priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
+        )
         )
         return logPrior
 
     def compute_psd(
-        self,
-        vi_samples: np.ndarray,
-        quantiles=[0.05, 0.5, 0.95],
-        psd_scaling=1.0,
-        fs=None,
+            self,
+            vi_samples: List[tf.Tensor],
+            quantiles=[0.05, 0.5, 0.95],
+            psd_scaling=1.0,
+            fs=None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         return compute_psd(
-            self.Xmat_delta,
-            self.Xmat_theta,
-            self.p_dim,
+            self.data.Xmat_delta,
+            self.data.Xmat_theta,
+            self.data.p,
             vi_samples,
             quantiles,
             psd_scaling,
             fs,
         )
-
-

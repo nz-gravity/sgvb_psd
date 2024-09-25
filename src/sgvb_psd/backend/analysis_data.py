@@ -1,5 +1,7 @@
 import numpy as np
 from typing import Tuple
+import tensorflow as tf
+from ..logging import logger
 
 
 class AnalysisData:  # Parent used to create BayesianModel object
@@ -13,17 +15,15 @@ class AnalysisData:  # Parent used to create BayesianModel object
             N_delta: int = 15
     ):
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
-        # ts:     time series
         # y_ft:   fourier transformed time series
         # freq:   frequencies w/ y_ft
-        # p_dim:  dimension of ts
+        # p:  dimension of x
         # Xmat:   basis matrix
         # Zar:    arry of design matrix Z_k for every freq k
-        self.ts = x
+        self.x = x
         if x.shape[1] < 2:
             raise Exception("Time series should be at least 2 dimensional.")
-
-        self.p_dim = x.shape[1]
+        self.p = x.shape[1]
         self.nchunks = nchunks
         self.N_theta = N_theta
         self.N_delta = N_delta
@@ -32,17 +32,34 @@ class AnalysisData:  # Parent used to create BayesianModel object
         self.fmax_for_analysis = fmax_for_analysis
 
         # Compute the required datasets
-        self.y_ft, self.freq = compute_chunked_fft(self.ts, self.nchunks, self.fmax_for_analysis, self.fs)
+        self.y_ft, self.freq = compute_chunked_fft(self.x, self.nchunks, self.fmax_for_analysis, self.fs)
         self.Zar = _compute_chunked_Zmatrix(self.y_ft)
-        self.Xmat_delta, self.Xmat_theta = _compute_Xmatrices(self.freq, N_delta, N_theta)
+        Xmat_delta, Xmat_theta = _compute_Xmatrices(self.freq, N_delta, N_theta)
+
+        # Setup tensors
+        y_ft = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
+        self.y_re = tf.math.real(y_ft)
+        self.y_im = tf.math.imag(y_ft)
+        self.Xmat_delta = tf.convert_to_tensor(
+            Xmat_delta, dtype=tf.float32
+        )
+        self.Xmat_theta = tf.convert_to_tensor(
+            Xmat_theta, dtype=tf.float32
+        )
+
+        Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)
+        self.Z_re = tf.math.real(Zar)
+        self.Z_im = tf.math.imag(Zar)
+
+        logger.info(f"Loaded {self}")
 
     def __repr__(self):
-        x = self.ts.shape
+        x = self.x.shape
         y = self.y_ft.shape
         Xd = self.Xmat_delta.shape
         Xt = self.Xmat_theta.shape
         Z = self.Zar.shape
-        return f"AnalysisDataset(x(t)={x}, y(f)={y}, Xmat_delta={Xd}, Xmat_theta={Xt}, Z={Z})"
+        return f"AnalysisData(x(t)={x}, y(f)={y}, Xmat_delta={Xd}, Xmat_theta={Xt}, Z={Z})"
 
 
 def _compute_Xmatrices(freq, N_delta: int = 15, N_theta: int = 15) -> Tuple[np.ndarray, np.ndarray]:
@@ -60,31 +77,41 @@ def _compute_Xmatrices(freq, N_delta: int = 15, N_theta: int = 15) -> Tuple[np.n
     return Xd, Xt
 
 
-def _compute_Zmatrix(y_k: np.ndarray):
+def _compute_Zmatrix(y_k: np.ndarray) -> np.ndarray:
     """
-    #TODO: jianan please document this..
+    Compute the design matrix Z_k for each frequency k.
+
+    Parameters:
+    y_k (np.ndarray): Fourier transformed time series data of shape (n, p).
+
+    Returns:
+    np.ndarray: Design matrix Z_k of shape (n, p, p*(p-1)/2).
     """
     n, p = y_k.shape
-    Z_k = np.zeros(
-        [n, p, int(p * (p - 1) / 2)], dtype=complex
-    )
+    Z_k = np.zeros((n, p, int(p * (p - 1) / 2)), dtype=np.complex64)
 
     for j in range(n):
         count = 0
-        for i in np.arange(1, p):
-            Z_k[j, i, count: count + i] = y_k[j, :i]  # .flatten()
+        for i in range(1, p):
+            Z_k[j, i, count: count + i] = y_k[j, :i]
             count += i
+
     return Z_k
 
 
-def _compute_chunked_Zmatrix(y_ft: np.ndarray) -> np.ndarray[np.complex128]:
+def _compute_chunked_Zmatrix(y_ft: np.ndarray) -> np.ndarray:
     """
-    Compute the design matrix Z, 3d array (The design matrix Z_k for every freq k)
-    #TODO: jianan please document this..
+    Compute the design matrix Z, a 3D array (The design matrix Z_k for every frequency k).
+
+    Parameters:
+    y_ft (np.ndarray): Fourier transformed time series data of shape (chunks, n_per_chunk, p).
+
+    Returns:
+    np.ndarray: 3D array of design matrices Z_k for each frequency k.
     """
     chunks, n_per_chunk, p = y_ft.shape
     if p == 1:
-        return 0
+        return np.zeros((chunks, n_per_chunk, 0), dtype=np.complex64)
 
     if chunks == 1:
         y_ls = np.squeeze(y_ft, axis=0)

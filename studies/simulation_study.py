@@ -39,7 +39,7 @@ def run_simulation(idx):
     optim.run(lr=0.003)
     summary = PSDAnalyzer(
         sim.psd,
-        optim.psd_quantiles,
+        optim.pointwise_ci,
         idx=idx,
     ).__dict__()
     summary['time'] = optim.runtimes['train']
