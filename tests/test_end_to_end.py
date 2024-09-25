@@ -60,7 +60,7 @@ def test_var_psd_generation(plot_dir):
     csv = f"{plot_dir}/var_psd.csv"
     psd_analyzer = PSDAnalyzer(
         spec_true=var2_data.psd,
-        spectral_density_q=optim.psd_quantiles,
+        spectral_density_q=optim.pointwise_ci,
         idx=1,
         csv_file=csv,
     )

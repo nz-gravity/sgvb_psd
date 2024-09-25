@@ -172,7 +172,7 @@ class PSDEstimator:
             )
 
         logger.info(
-            f"Final PSD will be of shape: {self.nfreq_per_chunk} chunked_x {self.p} chunked_x {self.p}"
+            f"Final PSD will be of shape: {self.nfreq_per_chunk} x {self.p} x {self.p}"
         )
 
         # Internal variables
@@ -325,7 +325,7 @@ class PSDEstimator:
         :type tick_ln: int, optional
         :param diag_spline_thickness: Thickness of the diagonal spline, defaults to 2
         :type diag_spline_thickness: int, optional
-        :param xlims: Limits for the chunked_x-axis
+        :param xlims: Limits for the x-axis
         :type xlims: tuple, optional
         :param diag_ylims: Limits for the diagonal
         :type diag_ylims: tuple, optional

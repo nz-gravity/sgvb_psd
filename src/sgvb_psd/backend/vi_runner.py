@@ -1,6 +1,7 @@
 import timeit
 
 import numpy as np
+from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
 import tensorflow_probability as tfp
 
@@ -14,7 +15,7 @@ tfb = tfp.bijectors
 class ViRunner:
     def __init__(
             self,
-            x,
+            x:np.ndarray,
             N_theta:int=30,
             nchunks:int=400,
             variation_factor:float=0,
@@ -67,13 +68,13 @@ class ViRunner:
         """
         # Phase1 obtain MAP
         """
-        optimizer_hs = tf.keras.optimizers.Adam(lr, )
+        optimizer_hs = Adam(lr)
 
         start_map = timeit.default_timer()
 
         # train
         @tf.function
-        def tune_model_to_map(model:BayesianModel, optimizer:tf.keras.optimizers.Adam, n_train:int):
+        def tune_model_to_map(model:BayesianModel, optimizer:Adam, n_train:int):
             n_samp = model.trainable_vars[0].shape[0]
             lpost = tf.constant(0.0, tf.float32, [n_samp])
             lp = tf.TensorArray(tf.float32, size=0, dynamic_size=True)
@@ -95,7 +96,7 @@ class ViRunner:
         """
         Phase 2 UQ
         """
-        optimizer_vi = tf.optimizers.Adam(5e-2)
+        optimizer_vi = Adam(5e-2)
         self.init_surrogate_posterior(params=opt_vars_hs)
 
         def conditioned_log_prob(*z):

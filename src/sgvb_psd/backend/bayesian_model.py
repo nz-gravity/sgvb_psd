@@ -1,8 +1,9 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from tensorflow.keras.optimizers import Adam
 from ..logging import logger
 from .analysis_data import AnalysisData
 from .compute_psd import compute_psd
@@ -13,38 +14,30 @@ tfb = tfp.bijectors
 
 class BayesianModel(AnalysisData):
     def __init__(
-        self, x, hyper, nchunks, fmax_for_analysis, fs, N_theta, N_delta
+        self, x:np.ndarray, hyper, nchunks:int, fmax_for_analysis:float, fs:float, N_theta:int, N_delta:int
     ):
         super().__init__(x, nchunks, fmax_for_analysis, fs, N_theta, N_delta)
-        # chunked_x:      N-by-p, multivariate timeseries with N samples and p dimensions
+        # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # hyper:  list of hyperparameters for prior
-        # ts:     time series == chunked_x
+        # ts:     time series == x
         # y_ft:   fourier transformed time series
         # freq:   frequencies w/ y_ft
         # p_dim:  dimension of ts
         # Xmat:   basis matrix
         # Zar:    arry of design matrix Z_k for every freq k
         self.hyper = hyper
-        self.trainable_vars = []  # all trainable variables
         self.log_map_vals = tf.Variable(0.0)
 
         # convert required objects to tensors
         self.toTensor()
-        # create tranable variables
-        self.createModelVariables_hs()
+        self.trainable_vars = self._get_trainable_vars()  # all trainable variables
         logger.debug(f"Model instantiated: {self}")
 
     def toTensor(self):
         # convert to tensorflow object
-        self.ts = tf.convert_to_tensor(self.ts, dtype=tf.float32)
-        self.y_ft = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
-        self.y_work = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
-        self.y_re = tf.math.real(self.y_work)  # not y_ft
-        self.y_im = tf.math.imag(self.y_work)
-        self.freq = tf.convert_to_tensor(self.freq, dtype=tf.float32)
-        self.p_dim = tf.convert_to_tensor(self.p_dim, dtype=tf.int32)
-        self.N_delta = tf.convert_to_tensor(self.N_delta, dtype=tf.int32)
-        self.N_theta = tf.convert_to_tensor(self.N_theta, dtype=tf.int32)
+        y_ft = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
+        self.y_re = tf.math.real(y_ft)
+        self.y_im = tf.math.imag(y_ft)
         self.Xmat_delta = tf.convert_to_tensor(
             self.Xmat_delta, dtype=tf.float32
         )
@@ -52,13 +45,9 @@ class BayesianModel(AnalysisData):
             self.Xmat_theta, dtype=tf.float32
         )
 
-        self.Zar = tf.convert_to_tensor(
-            self.Zar, dtype=tf.complex64
-        )  # complex array
-        self.Z_re = tf.math.real(self.Zar)
-        self.Z_im = tf.math.imag(self.Zar)
-        # self.Z_re = tf.convert_to_tensor(self.Zar_re, dtype=tf.float32)
-        # self.Z_im = tf.convert_to_tensor(self.Zar_im, dtype=tf.float32)
+        Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)
+        self.Z_re = tf.math.real(Zar)
+        self.Z_im = tf.math.imag(Zar)
 
         self.hyper = [
             tf.convert_to_tensor(self.hyper[i], dtype=tf.float32)
@@ -69,13 +58,14 @@ class BayesianModel(AnalysisData):
                 self.p_dim * (self.p_dim - 1) / 2, tf.int32
             )  # number of theta in the model
 
-    def createModelVariables_hs(self, batch_size=1):
+    def _get_trainable_vars(self, batch_size:int=1)->List[tf.Variable]:
         #
         #
         # rule:  self.trainable_vars[0, 2, 4] must be corresponding spline regression parameters for p_dim>1
         # in 1-d case, self.trainable_vars[0] must be ga_delta parameters, no ga_theta included.
 
         # initial values are quite important for training
+
         p = int(self.y_ft.shape[2])
         size_delta = int(self.Xmat_delta.shape[1])
         size_theta = int(self.Xmat_theta.shape[1])
@@ -118,8 +108,7 @@ class BayesianModel(AnalysisData):
             ga_initializer(shape=(batch_size, p, 1), dtype=tf.float32) - 1,
             name="ltau",
         )
-        self.trainable_vars.append(ga_delta)
-        self.trainable_vars.append(lla_delta)
+
 
         nn = int(self.n_theta)  # number of thetas in the model
         ga_theta_re = tf.Variable(
@@ -155,20 +144,24 @@ class BayesianModel(AnalysisData):
             name="ltau_theta",
         )
 
-        self.trainable_vars.append(ga_theta_re)
-        self.trainable_vars.append(lla_theta_re)
-        self.trainable_vars.append(ga_theta_im)
-        self.trainable_vars.append(lla_theta_im)
 
-        self.trainable_vars.append(ltau)
-        self.trainable_vars.append(ltau_theta)
 
         # params:          self.trainable_vars (ga_delta, lla_delta,
         #                                       ga_theta_re, lla_theta_re,
         #                                       ga_theta_im, lla_theta_im,
         #                                       ltau, ltau_theta)
+        return [
+            ga_delta,
+            lla_delta,
+            ga_theta_re,
+            lla_theta_re,
+            ga_theta_im,
+            lla_theta_im,
+            ltau,
+            ltau_theta,
+        ]
 
-    def loglik(self, params)->tf.float32:  # log-likelihood for mvts p_dim > 1
+    def loglik(self, params:List[tf.Variable])->tf.float32:
         # y_re:            self.y_re
         # y_im:            self.y_im
         # Z_:              self.Zar
@@ -205,13 +198,13 @@ class BayesianModel(AnalysisData):
         log_lik = tf.reduce_sum(sum_xγ + tmp2_)  # sum over all LnL
         return log_lik
 
-    def logpost_hs(self, params):
+    def logpost_hs(self, params:List[tf.Variable])->tf.float32:
         return self.loglik(params) + self.logprior_hs(params)
 
     #
     # Model training one step
     #
-    def map_train_step(self, optimizer):  # one training step to get close to MAP
+    def map_train_step(self, optimizer:Adam)->tf.float32:  # one training step to get close to MAP
         with tf.GradientTape() as tape:
             self.log_map_vals = -1* self.logpost_hs(self.trainable_vars)
         grads = tape.gradient(self.log_map_vals, self.trainable_vars)

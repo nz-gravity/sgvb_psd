@@ -12,8 +12,8 @@ class AnalysisData:  # Parent used to create BayesianModel object
             N_theta: int = 15,
             N_delta: int = 15
     ):
-        # chunked_x:      N-by-p, multivariate timeseries with N samples and p dimensions
-        # ts:     time series chunked_x
+        # x:      N-by-p, multivariate timeseries with N samples and p dimensions
+        # ts:     time series
         # y_ft:   fourier transformed time series
         # freq:   frequencies w/ y_ft
         # p_dim:  dimension of ts
