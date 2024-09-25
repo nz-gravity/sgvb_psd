@@ -72,7 +72,7 @@ class PSDEstimator:
     :ivar vi_losses: Variational Inference losses during training.
     :vartype vi_losses: numpy.ndarray
     :ivar psd_quantiles: Quantiles of the estimated PSD.
-    :vartype psd_quantiles: numpy.ndarray
+    :vartype pointwise_ci: numpy.ndarray
     :ivar psd_all: All estimated PSDs.
     :vartype psd_all: numpy.ndarray
     :ivar inference_runner: Object for running the variational inference.
@@ -172,13 +172,14 @@ class PSDEstimator:
             )
 
         logger.info(
-            f"Final PSD will be of shape: {self.nfreq_per_chunk} x {self.p} x {self.p}"
+            f"Final PSD will be of shape: {self.nfreq_per_chunk} chunked_x {self.p} chunked_x {self.p}"
         )
 
         # Internal variables
         self.model: BayesianModel = None
         self.samps = None
-        self.psd_quantiles = None
+        self.pointwise_ci = None
+        self.uniform_ci = None
         self.psd_all = None
         self.runtimes = {}
         self.inference_runner = ViRunner(
@@ -235,7 +236,7 @@ class PSDEstimator:
             n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
 
-    def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray]:
+    def run(self, lr=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Run the SGVB algorithm to estimate the posterior PSD.
 
@@ -244,7 +245,7 @@ class PSDEstimator:
 
         :param lr: Learning rate for MAP. If None, optimal rate is found, defaults to None.
         :type lr: float, optional
-        :return: Tuple containing the posterior PSD and quantiles of the PSD.
+        :return: Tuple containing the posterior PSD and pointwise, and uniform quantiles of the PSD.
         :rtype: tuple(numpy.ndarray, numpy.ndarray)
         """
         times = {}
@@ -266,18 +267,12 @@ class PSDEstimator:
         logger.info(f"Model trained in {times['train']:.2f}s")
 
         logger.info("Computing posterior PSDs")
-        self.psd_all, self.psd_quantiles = self.model.compute_psd(
+        self.psd_all, self.pointwise_ci, self.uniform_ci = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
         self.runtimes = times
-        return self.psd_all, self.psd_quantiles
-    
-    def uniform_ci(self) -> np.ndarray:
-        self.psd_uniform = self.model.get_uniform_ci(
-            self.psd_all, self.psd_quantiles
-        )
-        
-        return self.psd_uniform
+        return self.psd_all, self.pointwise_ci, self.uniform_ci
+
 
     @property
     def freq(self) -> np.ndarray:
@@ -330,7 +325,7 @@ class PSDEstimator:
         :type tick_ln: int, optional
         :param diag_spline_thickness: Thickness of the diagonal spline, defaults to 2
         :type diag_spline_thickness: int, optional
-        :param xlims: Limits for the x-axis
+        :param xlims: Limits for the chunked_x-axis
         :type xlims: tuple, optional
         :param diag_ylims: Limits for the diagonal
         :type diag_ylims: tuple, optional
@@ -358,7 +353,7 @@ class PSDEstimator:
         )
         pdgrm = [self.pdgrm, self.pdgrm_freq] if plot_periodogram else None
         return plot_psd(
-            psdq=[self.psd_quantiles, self.freq],
+            psdq=[self.pointwise_ci, self.freq],
             pdgrm=pdgrm,
             true_psd=true_psd,
             **all_kwargs,

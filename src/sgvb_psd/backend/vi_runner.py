@@ -129,12 +129,7 @@ class ViRunner:
 
         # once model is trained -- we should be able to sample from it
         samp = self.surrogate_posterior.sample(inference_size)
-        self.model.freq = self.model.sc_fft()["fq_y"]
-        Xmat_delta, Xmat_theta = self.model.Xmtrix(
-            N_delta=self.N_delta, N_theta=self.N_theta
-        )
         self.model.toTensor()
-
         return self.kdl_losses, self.lp, self.model, samp
 
 
