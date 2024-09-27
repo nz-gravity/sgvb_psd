@@ -1,3 +1,5 @@
+import argparse
+
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +25,7 @@ class Data:
             self.true_freq = None  # load this jianan -- idk how 'true_freq' is stored in the file
 
 
-def run_analysis(case):
+def run_analysis(case, label=""):
     data = Data(case)
     psd_estimator = PSDEstimator(
         x=data.channels,
@@ -39,7 +41,7 @@ def run_analysis(case):
     # we previously optimized the learning rate, now hardcoding it
     psd_estimator.run(lr=0.0189)
     # save the PSD quantiles
-    with h5py.File(f"ET-{case}-SGVB-PSD.h5", "w") as f:
+    with h5py.File(f"ET-{case}{label}-SGVB-PSD.h5", "w") as f:
         f["freq"] = psd_estimator.freq
         f["psd_pointwise_ci"] = psd_estimator.pointwise_ci
         f["psd_uniform_ci"] = psd_estimator.uniform_ci
@@ -47,7 +49,7 @@ def run_analysis(case):
         true_psd=[data.true_psd, data.true_freq],
         xlims=[5, 128],
     )
-    plt.savefig(f"ET-{case}-SGVB-PSD.png")
+    plt.savefig(f"ET-{case}{label}-SGVB-PSD.png")
 
 
 def combine_results():
@@ -64,13 +66,33 @@ def combine_results():
     print(f"Creating file: {fpath}")
     with h5py.File(fpath, "w") as f:
         for case in DATA_FILES:
-            f.create_dataset(f"{case}/psd_pointwise_ci", data=psd_pointwise[case])
+            f.create_dataset(
+                f"{case}/psd_pointwise_ci", data=psd_pointwise[case]
+            )
             f.create_dataset(f"{case}/psd_uniform_ci", data=psd_uniform[case])
         f["freq"] = freq
     print(f"Data saved to: {fpath}")
 
 
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run PSD analysis for a specified case."
+    )
+    parser.add_argument(
+        "--case",
+        choices=DATA_FILES.keys(),
+        required=True,
+        help="Specify the case to analyze (caseA or caseB).",
+    )
+    parser.add_argument(
+        "--label", type=str, required=True, help="Extra label for result."
+    )
+
+    args = parser.parse_args()
+
+    run_analysis(args.case, args.output)
+    # combine_results()  # Uncomment this if you want to combine results after analysis
+
+
 if __name__ == "__main__":
-    for case in DATA_FILES:
-        run_analysis(case)
-    # combine_results()
+    main()
