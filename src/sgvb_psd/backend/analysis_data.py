@@ -146,6 +146,10 @@ def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, f
     Scaled fft and get the elements of freq = 1:[Nquist] (or 1:[fmax_for_analysis] if specified)
     discarding the rest of freqs
     """
+
+    if np.mean(x,axis=0) != 0 or np.std(x,axis=0)!=1:
+        logger.warning("Input data not standardised!")
+    
     orig_n, p = x.shape
     if orig_n < p:
         raise ValueError(f"Number of samples {orig_n} is less than number of dimensions {p}.")
