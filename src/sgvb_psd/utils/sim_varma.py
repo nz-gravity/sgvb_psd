@@ -37,7 +37,7 @@ class SimVARMA:
 
         self.fs = 2 * np.pi
         self.freq = (
-            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
+            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False)[1:] * self.fs
         )
 
         self.data = None  # set in "resimulate"
@@ -210,7 +210,7 @@ def _calculate_true_varma_psd(
     Returns:
         np.ndarray: VARMA spectral matrix (PSD) for freq from 0 to 0.5.
     """
-    freq = np.linspace(0, 0.5, n_samples, endpoint=False)
+    freq = np.linspace(0, 0.5, n_samples, endpoint=False)[1:]
     spec_matrix = np.apply_along_axis(
         lambda f: _calculate_spec_matrix_helper(
             f, dim, var_coeffs, vma_coeffs, sigma
