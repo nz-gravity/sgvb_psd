@@ -39,7 +39,7 @@ class SimVARMA:
         self.freq = (
             np.linspace(0, 0.5, self.n_freq_samples, endpoint=False)[1:] * self.fs
         )
-
+        print('shape of freq is: ', self.freq.shape)
         self.data = None  # set in "resimulate"
         self.periodogram = None  # set in "resimulate"
         self.welch_psd = None  # set in "resimulate"
@@ -104,9 +104,9 @@ class SimVARMA:
             )
 
         self.data = x[101:]
-        self.periodogram = get_periodogram(
+        self.periodogram, self.pdgrm_freq = get_periodogram(
             self.data, fs=self.fs, psd_scaling=self.psd_scaling
-        )[0]
+        )
         self.compute_welch_periodogram(n_chunks=1)
 
     def compute_welch_periodogram(self, n_chunks=1):
@@ -116,7 +116,8 @@ class SimVARMA:
 
     def plot(self, axs=None, welch_nchunks=None, **kwargs):
         kwargs["off_symlog"] = kwargs.get("off_symlog", False)
-        axs = plot_peridogram(self.periodogram, self.freq, axs=axs, **kwargs)
+        print('shape of periodogram is: ', self.periodogram.shape)
+        axs = plot_peridogram(self.periodogram, self.pdgrm_freq, axs=axs, **kwargs)
         if welch_nchunks is not None:
             self.compute_welch_periodogram(n_chunks=welch_nchunks)
             axs = plot_peridogram(
