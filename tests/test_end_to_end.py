@@ -101,3 +101,4 @@ def test_one_train_step_with_chunks():
     estimation_time = time.time() - t0
     assert estimation_time < 2, f"Estimation time {estimation_time} is too long"
     logger.info(f"Test passed in {estimation_time} seconds")
+# estimaton psd
