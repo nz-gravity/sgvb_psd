@@ -147,7 +147,7 @@ def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, f
     discarding the rest of freqs
     """
 
-    if np.mean(x,axis=0) != 0 or np.std(x,axis=0)!=1:
+    if np.any(np.mean(x, axis=0) != 0) or np.any(np.std(x, axis=0) != 1):
         logger.warning("Input data not standardised!")
     
     orig_n, p = x.shape

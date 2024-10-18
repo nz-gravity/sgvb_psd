@@ -35,10 +35,10 @@ def test_var_psd_generation(plot_dir):
     optim = PSDEstimator(
         N_theta=30,
         nchunks=1,
-        ntrain_map=1000,
+        ntrain_map=100,
         x=var2_data.data,
         max_hyperparm_eval=1,
-        n_elbo_maximisation_steps=500,
+        n_elbo_maximisation_steps=50,
         fs=2 * np.pi,
         seed=0,
     )
@@ -59,7 +59,7 @@ def test_var_psd_generation(plot_dir):
         ls='--',
     )
 
-    plt.savefig(f"{plot_dir}/var_psd.png")
+    plt.savefig(f"{plot_dir}/var_psd250.png")
     optim.plot_coherence(
         true_psd=[var2_data.psd, var2_data.freq],
     )
