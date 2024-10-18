@@ -64,12 +64,19 @@ class AnalysisData:  # Parent used to create BayesianModel object
 
 def _compute_Xmatrices(freq, N_delta: int = 15, N_theta: int = 15) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Return the Xmatrices for delta and theta
+    Returns the X matrices for delta and theta based on the provided frequencies.
 
-    DR_basis(y_ft$fq_y, N=10)
-    cbinded X matrix
+    Parameters:
+    freq (np.ndarray): vector of frequencies
+    N_delta (int): The number of basis functions to use for delta (default is 15).
+    N_theta (int): The number of basis functions to use for theta (default is 15).
 
-    #TODO: jianan please document this..
+    Returns:
+    Xd (np.ndarray): The design matrix for Demmler-Reinsch basis functions of delta,
+                     the shape is (n, 2 + N_delta).
+    Xt (np.ndarray): The design matrix for Demmler-Reinsch basis functions of theta,
+                     the shape is (n, 2 + N_theta).
+
     """
     fstack = np.column_stack([np.repeat(1, freq.shape[0]), freq])
     Xd = np.concatenate([fstack, DR_basis(freq, N=N_delta)], axis=1)
@@ -128,7 +135,7 @@ def DR_basis(freq: np.ndarray, N=10):
     Return the basis matrix for the Demmler-Reinsch basis
     for linear smoothing splines (Eubank,1999)
 
-            # freq: vector of frequences
+            # freq: vector of frequencies
     # N:  amount of basis used
     # return a len(freq)-by-N matrix
     """
@@ -160,6 +167,8 @@ def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, f
     )
     assert chunked_x.shape == (nchunks, n_per_chunk, p)
 
+    chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
+
     # compute fft for each chunk
     y_ft = np.apply_along_axis(np.fft.fft, 1, chunked_x)
     #
@@ -181,9 +190,9 @@ def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, f
     else:  # n is odd
         idx = int((n_per_chunk - 1) / 2)
 
-    y_ft = y_ft[:, 0:idx, :]
-    fq_y = fq_y[0:idx]
-    ftrue_y = ftrue_y[0:idx]
+    y_ft = y_ft[:, 1:idx, :]
+    fq_y = fq_y[1:idx]
+    ftrue_y = ftrue_y[1:idx]
 
     if fmax_for_analysis is None:
         fmax_for_analysis = ftrue_y[-1]

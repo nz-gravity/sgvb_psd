@@ -12,10 +12,8 @@ def get_periodogram(x, fs, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     for row_i in range(p):
         for col_j in range(p):
             if row_i == col_j:
-                # TODO: the default is 'density' -- does that make sense
-                # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.periodogram.html
                 f, Pxx_den0 = signal.periodogram(
-                    x[:, row_i], fs=fs, scaling="density", detrend=False
+                    x[:, row_i], fs=fs, scaling="density"
                 )
                 f = f[1:]
                 Pxx_den0 = Pxx_den0[1:]
