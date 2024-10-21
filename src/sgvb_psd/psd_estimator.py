@@ -103,7 +103,7 @@ class PSDEstimator:
         """
         Initialize the PSDEstimator.
 
-        :param x: Input multivariate time series.
+        :param x: Input multivariate time series of shape: (nsamp, p).
         :type x: numpy.ndarray
         :param N_theta: Number of basis functions for the theta component, defaults to 30.
         :type N_theta: int, optional
@@ -142,8 +142,8 @@ class PSDEstimator:
         self.lr_range = lr_range
 
         # normalize the data
-        self.psd_scaling = np.std(x, axis=0)
-        self.psd_offset = np.mean(x, axis=0)
+        self.psd_scaling = np.std(x)
+        self.psd_offset = np.mean(x)
         self.x = (x - self.psd_offset) / self.psd_scaling
         self.n, self.p = x.shape
         if fmax_for_analysis is None:
@@ -190,6 +190,7 @@ class PSDEstimator:
             degree_fluctuate=self.degree_fluctuate,
             fs=self.fs,
         )
+
 
     def __learning_rate_optimisation_objective(self, lr):
         """
