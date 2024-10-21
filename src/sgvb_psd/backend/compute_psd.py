@@ -60,11 +60,12 @@ def compute_psd(
 
     # changing freq from [0, 1/2] to [0, samp_freq/2] (and applying scaling)
     if fs:
-        # Cant we set this to 1/fs instead of fs/2/0.5?
+        original_fmax = 0.5
         true_fmax = fs / 2
-        psd_all = psd_all / (true_fmax / 0.5)
-        pointwise_ci = pointwise_ci / (true_fmax / 0.5)
-        uniform_ci = uniform_ci / (true_fmax / 0.5)
+        new_scale = true_fmax / original_fmax
+        psd_all = psd_all / new_scale
+        pointwise_ci = pointwise_ci / new_scale
+        uniform_ci = uniform_ci / new_scale
 
     return (
         psd_all * psd_scaling ** 2,
