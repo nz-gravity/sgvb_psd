@@ -37,9 +37,8 @@ class SimVARMA:
 
         self.fs = 2 * np.pi
         self.freq = (
-            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False) * self.fs
+            np.linspace(0, 0.5, self.n_freq_samples, endpoint=False)[1:] * self.fs
         )
-
         self.data = None  # set in "resimulate"
         self.periodogram = None  # set in "resimulate"
         self.welch_psd = None  # set in "resimulate"
@@ -104,9 +103,9 @@ class SimVARMA:
             )
 
         self.data = x[101:]
-        self.periodogram = get_periodogram(
+        self.periodogram, self.pdgrm_freq = get_periodogram(
             self.data, fs=self.fs, psd_scaling=self.psd_scaling
-        )[0]
+        )
         self.compute_welch_periodogram(n_chunks=1)
 
     def compute_welch_periodogram(self, n_chunks=1):
@@ -116,7 +115,7 @@ class SimVARMA:
 
     def plot(self, axs=None, welch_nchunks=None, **kwargs):
         kwargs["off_symlog"] = kwargs.get("off_symlog", False)
-        axs = plot_peridogram(self.periodogram, self.freq, axs=axs, **kwargs)
+        axs = plot_peridogram(self.periodogram, self.pdgrm_freq, axs=axs, **kwargs)
         if welch_nchunks is not None:
             self.compute_welch_periodogram(n_chunks=welch_nchunks)
             axs = plot_peridogram(
@@ -210,7 +209,7 @@ def _calculate_true_varma_psd(
     Returns:
         np.ndarray: VARMA spectral matrix (PSD) for freq from 0 to 0.5.
     """
-    freq = np.linspace(0, 0.5, n_samples, endpoint=False)
+    freq = np.linspace(0, 0.5, n_samples, endpoint=False)[1:]
     spec_matrix = np.apply_along_axis(
         lambda f: _calculate_spec_matrix_helper(
             f, dim, var_coeffs, vma_coeffs, sigma

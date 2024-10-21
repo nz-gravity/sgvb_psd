@@ -99,6 +99,8 @@ class PSDEstimator:
             seed=None,
             lr_range=(0.002, 0.02),
             n_elbo_maximisation_steps=500,
+            #TODO
+            mean_vector = None
     ):
         """
         Initialize the PSDEstimator.

@@ -136,8 +136,8 @@ def __real_to_complex(matrix):
 
     complex_matrix[np.diag_indices(n)] = matrix[np.diag_indices(n)]
 
-    complex_matrix[np.triu_indices(n, 1)] = matrix[np.triu_indices(n, 1)] + 1j * matrix[np.tril_indices(n, -1)]
-    complex_matrix[np.tril_indices(n, -1)] = matrix[np.triu_indices(n, 1)] - 1j * matrix[np.tril_indices(n, -1)]
+    complex_matrix[np.triu_indices(n, 1)] = matrix[np.triu_indices(n, 1)] - 1j * matrix[np.tril_indices(n, -1)]
+    complex_matrix[np.tril_indices(n, -1)] = matrix[np.triu_indices(n, 1)] + 1j * matrix[np.tril_indices(n, -1)]
 
     return complex_matrix
 

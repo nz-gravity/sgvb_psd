@@ -158,6 +158,9 @@ class BayesianModel:
         )  # no need \ here
         xβ = tf.matmul(self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
 
+        #TODO
+        # (d-mean_vector) PSD^-1 (d-mean_vector)*
+
         # Z = Sum [(xα + i xβ) * y]
         Z_theta_re = tf.linalg.matvec(
             tf.expand_dims(self.data.Z_re, 0), xα
