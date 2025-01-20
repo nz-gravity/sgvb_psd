@@ -68,7 +68,7 @@ def compute_psd(
         uniform_ci = uniform_ci / new_scale
 
     return (
-        psd_all * psd_scaling ** 2,
+        psd_all,
         pointwise_ci * psd_scaling ** 2,
         uniform_ci * psd_scaling ** 2,
     )

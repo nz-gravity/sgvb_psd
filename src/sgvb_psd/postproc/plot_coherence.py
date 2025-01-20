@@ -85,7 +85,7 @@ def _plot_one_coherence(coh, coh_uniform, freq, label, ax, color, ls="-"):
     nqt = len(coh.shape)
     if nqt > 1:
         ax.fill_between(freq, coh[0], coh[2], alpha=0.3, lw=0, color=color)
-        ax.fill_between(freq, coh_uniform[0], coh_uniform[2], alpha=0.3, lw=0, color='red')
+        ax.fill_between(freq, coh_uniform[0], coh_uniform[2], alpha=0.5, lw=0, color=color)
         coh_median = coh[1]
     else:
         coh_median = coh
