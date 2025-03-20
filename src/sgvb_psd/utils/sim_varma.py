@@ -76,7 +76,7 @@ class SimVARMA:
 
         x_init = np.zeros((lag_ar + 1, self.dim))
         x = np.empty((self.n_samples + 101, self.dim))
-        x[:] = np.NaN
+        x[:] = np.nan
         x[: lag_ar + 1] = x_init
         epsilon = np.random.multivariate_normal(
             np.zeros(self.dim), cov_matrix, size=[lag_ma]
