@@ -376,9 +376,9 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator"><code class="docutils literal notranslate"><span class="pre">PSDEstimator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.__find_optimal_learing_rate"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.__find_optimal_learing_rate()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.__learning_rate_optimisation_objective"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.__learning_rate_optimisation_objective()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.__train_model"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.__train_model()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator._find_optimal_learing_rate"><code class="docutils literal notranslate"><span class="pre">PSDEstimator._find_optimal_learing_rate()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator._learning_rate_optimisation_objective"><code class="docutils literal notranslate"><span class="pre">PSDEstimator._learning_rate_optimisation_objective()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator._train_model"><code class="docutils literal notranslate"><span class="pre">PSDEstimator._train_model()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.freq"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.freq</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.nfreq_per_chunk"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.nfreq_per_chunk</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.nt_per_chunk"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.nt_per_chunk</span></code></a></li>
@@ -386,6 +386,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.plot_coherence"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.plot_coherence()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.plot_vi_losses"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.plot_vi_losses()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.run"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.run()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.sample_posterior"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.sample_posterior()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -404,7 +405,7 @@ document.write(`
 <p>Here we document the <cite>PSDEstimator</cite>, the main class to be used from this package.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sgvb_psd.psd_estimator.</span></span><span class="sig-name descname"><span class="pre">PSDEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nchunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntrain_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_hyperparm_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmax_for_analysis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree_fluctuate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.002,</span> <span class="pre">0.02)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_elbo_maximisation_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sgvb_psd.psd_estimator.</span></span><span class="sig-name descname"><span class="pre">PSDEstimator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nchunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntrain_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_hyperparm_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmax_for_analysis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree_fluctuate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.002,</span> <span class="pre">0.02)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_elbo_maximisation_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator" title="Link to this definition">#</a></dt>
 <dd><p>A class for estimating the posterior Power Spectral Density (PSD) using Stochastic Gradient Variational Bayes (SGVB).</p>
 <p>This class implements a two-step process:
 1. Optimize the learning rate to maximize the posterior and Evidence Lower Bound (ELBO).
@@ -442,15 +443,15 @@ document.write(`
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator.__find_optimal_learing_rate">
-<span class="sig-name descname"><span class="pre">__find_optimal_learing_rate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator.__find_optimal_learing_rate" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator._find_optimal_learing_rate">
+<span class="sig-name descname"><span class="pre">_find_optimal_learing_rate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator._find_optimal_learing_rate" title="Link to this definition">#</a></dt>
 <dd><p>Find the optimal learning rate using hyperopt.</p>
 <p>This method uses the TPE algorithm to optimize the learning rate.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator.__learning_rate_optimisation_objective">
-<span class="sig-name descname"><span class="pre">__learning_rate_optimisation_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator.__learning_rate_optimisation_objective" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator._learning_rate_optimisation_objective">
+<span class="sig-name descname"><span class="pre">_learning_rate_optimisation_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator._learning_rate_optimisation_objective" title="Link to this definition">#</a></dt>
 <dd><p>Objective function for hyperparameter optimization of the learning rate for MAP.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>lr (dict): Dictionary containing the learning rate to be optimized.</p>
@@ -461,8 +462,8 @@ document.write(`
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator.__train_model">
-<span class="sig-name descname"><span class="pre">__train_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator.__train_model" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator._train_model">
+<span class="sig-name descname"><span class="pre">_train_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator._train_model" title="Link to this definition">#</a></dt>
 <dd><p>Train the model using the optimal learning rate.</p>
 <p>This method runs the variational inference to estimate the posterior PSD.</p>
 </dd></dl>
@@ -571,6 +572,23 @@ then trains the model and computes the posterior PSD.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="sgvb_psd.psd_estimator.PSDEstimator.sample_posterior">
+<span class="sig-name descname"><span class="pre">sample_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sgvb_psd.psd_estimator.PSDEstimator.sample_posterior" title="Link to this definition">#</a></dt>
+<dd><p>Sample the posterior distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to draw, defaults to 1000</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples from the posterior distribution</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -640,9 +658,9 @@ then trains the model and computes the posterior PSD.</p>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator"><code class="docutils literal notranslate"><span class="pre">PSDEstimator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.__find_optimal_learing_rate"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.__find_optimal_learing_rate()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.__learning_rate_optimisation_objective"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.__learning_rate_optimisation_objective()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.__train_model"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.__train_model()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator._find_optimal_learing_rate"><code class="docutils literal notranslate"><span class="pre">PSDEstimator._find_optimal_learing_rate()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator._learning_rate_optimisation_objective"><code class="docutils literal notranslate"><span class="pre">PSDEstimator._learning_rate_optimisation_objective()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator._train_model"><code class="docutils literal notranslate"><span class="pre">PSDEstimator._train_model()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.freq"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.freq</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.nfreq_per_chunk"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.nfreq_per_chunk</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.nt_per_chunk"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.nt_per_chunk</span></code></a></li>
@@ -650,6 +668,7 @@ then trains the model and computes the posterior PSD.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.plot_coherence"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.plot_coherence()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.plot_vi_losses"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.plot_vi_losses()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.run"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.run()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sgvb_psd.psd_estimator.PSDEstimator.sample_posterior"><code class="docutils literal notranslate"><span class="pre">PSDEstimator.sample_posterior()</span></code></a></li>
 </ul>
 </li>
 </ul>
