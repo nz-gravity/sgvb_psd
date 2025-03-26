@@ -3,21 +3,15 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
 from hyperopt import fmin, hp, tpe
-from hyperopt.exceptions import AllTrialsFailed
 
 from .backend import BayesianModel, ViRunner
 from .logging import logger
 from .postproc import (
-    format_axes,
     plot_coherence,
-    plot_peridogram,
-    plot_psdq,
-    plot_single_psd,
 )
-from .postproc.plot_psd import plot_psd
 from .postproc.plot_losses import plot_losses
+from .postproc.plot_psd import plot_psd
 from .utils.periodogram import get_periodogram
 from .utils.tf_utils import set_seed
 from .utils.utils import get_freq
@@ -99,6 +93,7 @@ class PSDEstimator:
             seed=None,
             lr_range=(0.002, 0.02),
             n_elbo_maximisation_steps=500,
+            init_params=None,
     ):
         """
         Initialize the PSDEstimator.
@@ -189,10 +184,10 @@ class PSDEstimator:
             fmax_for_analysis=self.fmax_for_analysis,
             degree_fluctuate=self.degree_fluctuate,
             fs=self.fs,
+            init_params=init_params,
         )
 
-
-    def __learning_rate_optimisation_objective(self, lr):
+    def _learning_rate_optimisation_objective(self, lr):
         """
         Objective function for hyperparameter optimization of the learning rate for MAP.
 
@@ -210,21 +205,21 @@ class PSDEstimator:
         )
         return vi_losses[-1].numpy()
 
-    def __find_optimal_learing_rate(self):
+    def _find_optimal_learing_rate(self):
         """
         Find the optimal learning rate using hyperopt.
 
         This method uses the TPE algorithm to optimize the learning rate.
         """
         self.optimal_lr = fmin(
-            self.__learning_rate_optimisation_objective,
+            self._learning_rate_optimisation_objective,
             space={"lr_map": hp.uniform("lr_map", *self.lr_range)},
             algo=tpe.suggest,
             max_evals=self.max_hyperparm_eval,
         )["lr_map"]
         logger.info(f"Optimal learning rate: {self.optimal_lr:.4e}")
 
-    def __train_model(self):
+    def _train_model(self):
         """
         Train the model using the optimal learning rate.
 
@@ -257,13 +252,13 @@ class PSDEstimator:
         else:
             logger.info("Running hyperopt to find optimal learning rate")
             t0 = time.time()
-            self.__find_optimal_learing_rate()
+            self._find_optimal_learing_rate()
             times["lr"] = time.time() - t0
             logger.info(f"Optimal learning rate found in {times['lr']:.2f}s")
 
         logger.info("Training model")
         t0 = time.time()
-        self.__train_model()
+        self._train_model()
         times["train"] = time.time() - t0
         logger.info(f"Model trained in {times['train']:.2f}s")
 
@@ -273,7 +268,6 @@ class PSDEstimator:
         )
         self.runtimes = times
         return self.psd_all, self.pointwise_ci, self.uniform_ci
-
 
     @property
     def freq(self) -> np.ndarray:
@@ -399,3 +393,16 @@ class PSDEstimator:
             map_timing=self.inference_runner.map_time,
             kdl_timing=self.inference_runner.vi_time,
         )
+
+    def sample_posterior(self, n_samples: int = 1000) -> np.ndarray:
+        """
+        Sample the posterior distribution.
+
+        :param n_samples: Number of samples to draw, defaults to 1000
+        :type n_samples: int, optional
+        :return: Samples from the posterior distribution
+        :rtype: np.ndarray
+        """
+        spline_params = self.inference_runner.surrogate_posterior.sample(n_samples)
+        psd =  self.model.compute_psd(spline_params, psd_scaling=self.psd_scaling, fs=self.fs)
+        return spline_params, psd

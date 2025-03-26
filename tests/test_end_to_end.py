@@ -4,14 +4,13 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-
 from sgvb_psd.backend import BayesianModel, AnalysisData
+from sgvb_psd.logging import logger
+from sgvb_psd.postproc.plot_psd import plot_psdq
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
 from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
 from sgvb_psd.utils.tf_utils import set_seed
-from sgvb_psd.logging import logger
-from sgvb_psd.postproc.plot_psd import plot_psdq
 
 
 def get_var_data(npts):
@@ -29,10 +28,10 @@ def get_var_data(npts):
 
 
 def test_var_psd_generation(plot_dir):
-    var2_data = get_var_data(2**9)
+    var2_data = get_var_data(2 ** 9)
     print("Starting VAR PSD generation test")
     start_time = time.time()
-    optim = PSDEstimator(
+    kwags = dict(
         N_theta=30,
         nchunks=1,
         ntrain_map=100,
@@ -40,8 +39,9 @@ def test_var_psd_generation(plot_dir):
         max_hyperparm_eval=1,
         n_elbo_maximisation_steps=50,
         fs=2 * np.pi,
-        seed=0,
-    )
+        seed=0,)
+    optim = PSDEstimator(**kwags)
+
     optim.run()
 
     ## Run is done, lets make some plots
@@ -77,16 +77,20 @@ def test_var_psd_generation(plot_dir):
     assert isinstance(psd_analyzer.l2_error, float)
     assert os.path.exists(csv)
 
-
     end_time = time.time()
     estimation_time = end_time - start_time
     assert estimation_time < 50, f"Estimation time {estimation_time} is too long"
     logger.info(f"Test passed in {estimation_time} seconds")
 
+    # see if we can load old params
+    spline_params, psd = optim.sample_posterior(1)
+    optim2 = PSDEstimator(**kwags, init_params=spline_params)
+
+
 
 def test_one_train_step_with_chunks():
     t0 = time.time()
-    var2_data = get_var_data(2**7)
+    var2_data = get_var_data(2 ** 7)
     analysis_data = AnalysisData(
         x=var2_data.data,
         nchunks=2,
@@ -101,3 +105,21 @@ def test_one_train_step_with_chunks():
     estimation_time = time.time() - t0
     assert estimation_time < 2, f"Estimation time {estimation_time} is too long"
     logger.info(f"Test passed in {estimation_time} seconds")
+
+#
+# def test_var_psd_save_and_resume(plot_dir, output_dir):
+#     var2_data = get_var_data(2 ** 8)
+#     optim = PSDEstimator(
+#         N_theta=30,
+#         nchunks=1,
+#         ntrain_map=100,
+#         max_hyperparm_eval=1,
+#         n_elbo_maximisation_steps=50,
+#         fs=2 * np.pi,
+#         seed=0,
+#     )
+#     optim.run(x=var2_data.data)
+#     optim.save(output_dir)
+#
+#     optim = PSDEstimator.load(output_dir)
+#     optim.run(x=var2_data.data)

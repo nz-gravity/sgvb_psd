@@ -24,6 +24,8 @@ class ViRunner:
             fmax_for_analysis:float=None,
             fs:float=2048,
             degree_fluctuate:float=None,
+            init_params:List[tf.Tensor]=None,
+            surrogate_posterior:tfd.JointDistributionSequential=None,
     ):
         self.data = AnalysisData(
             x=x,
@@ -38,9 +40,15 @@ class ViRunner:
         self.model = BayesianModel(
             self.data,
             degree_fluctuate=degree_fluctuate,
+            init_params=init_params,
         )
         self.variation_factor = variation_factor
-        self.surrogate_posterior:tfd.JointDistributionSequential = None
+        if surrogate_posterior is not None:
+            self.surrogate_posterior = surrogate_posterior
+        else:
+            self.surrogate_posterior:tfd.JointDistributionSequential = None
+
+
 
     def run(
             self,
@@ -51,22 +59,36 @@ class ViRunner:
     )->Tuple[
             np.ndarray, np.ndarray, BayesianModel, List[tf.Tensor]
         ]:
-
         logger.debug("Starting Model Inference Training..")
+        self.run_phase1(lr_map, ntrain_map)
+        self.run_phase2(n_elbo_maximisation_steps)
+        # now that the model is trained, we can sample from it
+        samp = self.surrogate_posterior.sample(inference_size)
 
-        lr = lr_map
-        n_train = ntrain_map
 
+        return self.kdl_losses, self.lp, self.model, samp
+
+
+
+    def run_phase1(
+            self,
+            lr_map: float = 5e-4,
+            ntrain_map: int = 5000,
+    ):
+        """set model.trainable_vars to MAP values
+
+        # Note: at this point, the model.trainable_vars are set to
+        # param values that maximise the log posterior
+        # THESE ARE NO LONGER CHANGED AFTER PHASE 1
         """
-        # Phase1 obtain MAP
-        """
-        optimizer_hs = Adam(lr)
-
+        optimizer_hs = Adam(lr_map)
         start_map = timeit.default_timer()
+        logger.debug(f"Start MAP search ({ntrain_map} steps)... ")
+        ntrain_map = tf.constant(ntrain_map, dtype=tf.int32)
 
-        # train
-        @tf.function
-        def tune_model_to_map(model:BayesianModel, optimizer:Adam, n_train:int)->Tuple[List[tf.Variable], tf.Tensor]:
+        @tf.function(reduce_retracing=True)
+        def tune_model_to_map(model: BayesianModel, optimizer: Adam, n_train: int) -> Tuple[
+            List[tf.Variable], tf.Tensor]:
             n_samp = model.trainable_vars[0].shape[0]
             lpost = tf.constant(0.0, tf.float32, [n_samp])
             lp = tf.TensorArray(tf.float32, size=0, dynamic_size=True)
@@ -78,18 +100,25 @@ class ViRunner:
                         "Step", optimizer.iterations, ": log posterior", lpost
                     )
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
+
             return model.trainable_vars, lp.stack()
 
-        logger.debug(f"Start MAP search ({n_train} steps)... ")
-        opt_vars_hs, self.lp = tune_model_to_map(self.model, optimizer_hs, n_train)
+
+        opt_vars_hs, self.lp = tune_model_to_map(self.model, optimizer_hs, ntrain_map)
         self.map_time = timeit.default_timer() - start_map
         logger.debug(f"MAP Training Time: {self.map_time:.2f}s")
 
+
+    def run_phase2(
+            self,
+            n_elbo_maximisation_steps: int = 1000,
+    ):
         """
         Phase 2 UQ
         """
         optimizer_vi = Adam(5e-2)
-        self.init_surrogate_posterior(params=opt_vars_hs)
+
+        self.init_surrogate_posterior(params=self.model.trainable_vars)
 
         def conditioned_log_prob(*z):
             return self.model.loglik(z) + self.model.logprior(z)
@@ -120,9 +149,8 @@ class ViRunner:
         self.posteriorPointEstStd = self.surrogate_posterior.stddev()
         self.variationalDistribution = self.surrogate_posterior
 
-        # once model is trained -- we should be able to sample from it
-        samp = self.surrogate_posterior.sample(inference_size)
-        return self.kdl_losses, self.lp, self.model, samp
+
+
 
     def init_surrogate_posterior(self, params:List[tf.Variable])->None:
         if self.variation_factor <= 0:

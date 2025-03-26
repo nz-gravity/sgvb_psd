@@ -173,3 +173,4 @@ cython_debug/
 #.idea/
 /src/sgvb_psd/_version.py
 /studies/out_simulation_results/
+/studies/out_gibbs/

@@ -16,7 +16,8 @@ class BayesianModel:
     def __init__(
             self,
             data: AnalysisData,
-            degree_fluctuate: float = None
+            degree_fluctuate: float = None,
+            init_params: List[tf.Variable] = None,
     ):
 
         self.data = data
@@ -34,9 +35,13 @@ class BayesianModel:
         self.log_map_vals = tf.Variable(0.0)
 
         # convert required objects to tensors
-        self.trainable_vars = self._get_trainable_vars()  # all trainable variables
+        self.trainable_vars = self._get_trainable_vars()
+        if init_params is not None:
+            for i, p in enumerate(init_params):
+                self.trainable_vars[i].assign(p)
 
-
+        # Initialize model with MAP
+        logger.debug(f"Initialized model with {self.trainable_vars}")
 
     def _get_trainable_vars(self, batch_size: int = 1) -> List[tf.Variable]:
         #
@@ -76,6 +81,7 @@ class BayesianModel:
                 shape=(batch_size, p, size_delta), dtype=tf.float32
             ),
             name="ga_delta",
+            trainable=True, dtype=tf.float32
         )
         lla_delta = tf.Variable(
             ga_initializer(
@@ -83,10 +89,12 @@ class BayesianModel:
             )
             - cvec_d,
             name="lla_delta",
+            trainable=True, dtype=tf.float32
         )
         ltau = tf.Variable(
             ga_initializer(shape=(batch_size, p, 1), dtype=tf.float32) - 1,
             name="ltau",
+            trainable=True, dtype=tf.float32
         )
 
         nn = int(p * (p - 1) / 2)  # number of thetas in the model
@@ -95,12 +103,14 @@ class BayesianModel:
                 shape=(batch_size, nn, size_theta), dtype=tf.float32
             ),
             name="ga_theta_re",
+            trainable=True, dtype=tf.float32
         )
         ga_theta_im = tf.Variable(
             ga_initializer_para2(
                 shape=(batch_size, nn, size_theta), dtype=tf.float32
             ),
             name="ga_theta_im",
+            trainable=True, dtype=tf.float32
         )
 
         lla_theta_re = tf.Variable(
@@ -109,6 +119,7 @@ class BayesianModel:
             )
             - cvec_o,
             name="lla_theta_re",
+            trainable=True, dtype=tf.float32
         )
         lla_theta_im = tf.Variable(
             ga_initializer(
@@ -116,11 +127,13 @@ class BayesianModel:
             )
             - cvec_o,
             name="lla_theta_im",
+            trainable=True, dtype=tf.float32
         )
 
         ltau_theta = tf.Variable(
             ga_initializer(shape=(batch_size, nn, 1), dtype=tf.float32) - 1.5,
             name="ltau_theta",
+            trainable=True, dtype=tf.float32
         )
 
         # params:          self.trainable_vars (ga_delta, lla_delta,
@@ -185,8 +198,12 @@ class BayesianModel:
     def map_train_step(self, optimizer: Adam) -> tf.float32:  # one training step to get close to MAP
         with tf.GradientTape() as tape:
             self.log_map_vals = -1 * self.logpost(self.trainable_vars)
+
         grads = tape.gradient(self.log_map_vals, self.trainable_vars)
-        optimizer.apply_gradients(zip(grads, self.trainable_vars))
+        grads_and_vars = [(g, v) for g, v in zip(grads, self.trainable_vars) if g is not None]
+        if grads_and_vars:
+            optimizer.apply_gradients(grads_and_vars)
+
         self.log_map_vals *= -1  # return POSITIVE log posterior
         return self.log_map_vals
 

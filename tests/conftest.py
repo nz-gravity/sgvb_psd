@@ -9,6 +9,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 @pytest.fixture
+def output_dir():
+    d = os.path.join(HERE, "out")
+    os.makedirs(plot_dir, exist_ok=True)
+    return d
+
+
+
+@pytest.fixture
 def plot_dir():
     plot_dir = os.path.join(HERE, "out_plots")
     os.makedirs(plot_dir, exist_ok=True)
