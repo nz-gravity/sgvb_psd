@@ -44,7 +44,8 @@ dependencies = [
     "numpy",
     "matplotlib",
     "hyperopt",
-    "colorama"
+    "colorama",
+    'click'
 ]
 
 [project.optional-dependencies]
@@ -55,7 +56,8 @@ dev = [
     "flake8",
     "black",
     "jupyter-book",
-    "sphinx-inline-tabs"
+    "sphinx-inline-tabs",
+    "pytest_click"
 ]
 
 [project.urls]
@@ -91,3 +93,7 @@ multi_line_output = 3
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+
+[project.scripts]
+sgvb_benchmark = "sgvb_psd.utils.benchmark.cli:cli_benchmark"
