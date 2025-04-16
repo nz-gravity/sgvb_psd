@@ -3,25 +3,25 @@ import click
 
 @click.command("sgvb_benchmark")
 @click.option(
-    '-s'
+    '-s',
     '--minlog2n',
-    default=10,
+    default=3,
     help='Minimum log2(n) for the benchmark.',
 )
 @click.option(
-    '-e'
+    '-e',
     '--maxlog2n',
-    default=20,
+    default=4,
     help='Maximum log2(n) for the benchmark.',
 )
 @click.option(
-    '-f'
+    '-f',
     '--fname',
     default='timings.txt',
     help='Filename for the benchmark results.',
 )
 @click.option(
-    '-n'
+    '-n',
     '--nrep',
     default=5,
     help='Number of repetitions for the benchmark.',

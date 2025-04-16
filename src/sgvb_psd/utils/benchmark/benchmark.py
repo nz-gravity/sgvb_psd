@@ -29,7 +29,7 @@ PSD_KWGS = dict(
 OPTIM_LR = 0.003
 
 
-def run_simulation(log2n: int = 10, nrep:int = 5) -> Tuple[float, float]:
+def run_simulation(log2n: int = 5, nrep:int = 5) -> Tuple[float, float]:
     sim_data = SimVARMA(
         n_samples=2 ** log2n,
         **DATA_KWGS,
@@ -39,10 +39,10 @@ def run_simulation(log2n: int = 10, nrep:int = 5) -> Tuple[float, float]:
         **PSD_KWGS
     ).run(lr=OPTIM_LR)
     times = np.array([timeit.repeat(func, repeat=nrep, number=1)])
-    return times.median(), times.std()
+    return np.median(times), np.std(times)
 
 
-def run_simulations(minLog2n: int = 10, maxLog2n: int = 20, fname='timings.txt', nrep:int=5) -> None:
+def run_simulations(minLog2n: int = 3, maxLog2n: int = 4, fname='timings.txt', nrep:int=5) -> None:
     log2ns = np.arange(minLog2n, maxLog2n + 1)
     times = np.zeros((len(log2ns), 2))
     # run in reverse order to start with the largest n
@@ -79,6 +79,6 @@ def plot_timings(fname: str = 'timings.txt') -> None:
     plt.savefig(plt_fname, bbox_inches="tight")
 
 
-def benchmark(minLog2n: int = 10, maxLog2n: int = 20, fname='timings.txt', nrep:int=5) -> None:
+def benchmark(minLog2n: int = 3, maxLog2n: int = 4, fname='timings.txt', nrep:int=5) -> None:
     run_simulations(minLog2n, maxLog2n, fname, nrep=nrep)
     plot_timings(fname)
