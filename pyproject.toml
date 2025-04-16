@@ -18,7 +18,7 @@ namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
 [project]
 name = "sgvb_psd"
-version = "0.0.5"
+dynamic = ["version"] # scm versioning (using tags)
 requires-python = ">=3.8"
 description = "A python package for estimating the power spectral density (PSD) of correlated multivariate detector noise using variational inference (VI)."
 readme = "README.md"
@@ -69,6 +69,19 @@ dev = [
 [tool.setuptools_scm]
 version_file = "src/sgvb_psd/_version.py"
 
+[tool.semantic_release]
+version_variable = "src/sgvb_psd/_version.py:__version__"
+version_source = "commit"
+commit_version_number = true
+commit_subject = "chore(release): {version}"
+commit_message = "chore(release): {version}"
+tag_format = "v{version}"
+no_local_version = true
+
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.rst"
+
 [tool.black]
 line-length = 79
 exclude = '''
@@ -96,4 +109,4 @@ testpaths = ["tests"]
 
 
 [project.scripts]
-sgvb_benchmark = "sgvb_psd.utils.benchmark.cli:cli_benchmark"
+sgvb_benchmark = "sgvb_psd.utils.benchmark.cli:cli"
