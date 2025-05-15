@@ -1,3 +1,5 @@
+from Cython.Includes.libc.signal import signal
+
 from sgvb_psd.utils.sim_varma import SimVARMA
 from sgvb_psd.utils.tf_utils import set_seed
 import numpy as np
@@ -5,11 +7,13 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from sgvb_psd.utils.periodogram import get_welch_periodogram
 
+sigma = np.array([[1.0, 0.9], [0.9, 1.0]])
+varCoef = np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]])
+vmaCoef = np.array([[[1.0, 0.0], [0.0, 1.0]]])
+n = 4096
+
 
 def test_data_generation(plot_dir):
-    sigma = np.array([[1.0, 0.9], [0.9, 1.0]])
-    varCoef = np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]])
-    vmaCoef = np.array([[[1.0, 0.0], [0.0, 1.0]]])
     n = 4096
     set_seed(0)
     var = SimVARMA(
@@ -77,3 +81,24 @@ def test_data_generation(plot_dir):
     plt.savefig(f"{plot_dir}/pdgrm.png")
 
     assert var._repr_html_() is not None
+
+
+def test_injection(plot_dir):
+    n = 4096
+    var = SimVARMA(
+        n_samples=n, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma, seed=0
+    )
+
+    t = np.arange(n)
+    # Generate a signal (sine wave)
+    true_a, true_f0 = 2.0, 0.43
+    signal = true_a * np.sin(2 * np.pi * true_f0 * t)
+    signal = np.array([signal, signal]).T
+
+    # Add the signal to the data
+    var.inject_signal(signal)
+    # make a plot
+    var.plot()
+    plt.savefig(f"{plot_dir}/injection.png")
+
+

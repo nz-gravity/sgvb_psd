@@ -108,6 +108,17 @@ class SimVARMA:
         )
         self.compute_welch_periodogram(n_chunks=1)
 
+    def inject_signal(self, signal:np.ndarray):
+        if signal.shape != self.data.shape:
+            raise ValueError(f"Signal shape {signal.shape} does not match data shape {self.data.shape}")
+
+        self.data += signal
+        self.periodogram, self.pdgrm_freq = get_periodogram(
+            self.data, fs=self.fs, psd_scaling=self.psd_scaling
+        )
+        self.compute_welch_periodogram(n_chunks=1)
+
+
     def compute_welch_periodogram(self, n_chunks=1):
         (self.welch_psd, self.welch_f) = get_welch_periodogram(
             self.data, fs=self.fs, n_chunks=n_chunks
