@@ -4,24 +4,27 @@ import os
 import emcee
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm.auto import trange
+
 from sgvb_psd.postproc import plot_psdq
 from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
-from tqdm.auto import trange
 
 # Set logging level
-logging.getLogger("SGVB-PSD").setLevel('ERROR')
+logging.getLogger("SGVB-PSD").setLevel("ERROR")
 
 # Constants
 N_EXPERIMENTS = 10
 FS = 100
-OUTDIR = 'out_gibbs'
+OUTDIR = "out_gibbs"
 os.makedirs(OUTDIR, exist_ok=True)
 
 # Simulation and VI configurations
 SIM_KWGS = dict(
     sigma=np.array([[1.0, 0.9], [0.9, 1.0]]),
-    var_coeffs=np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]]),
+    var_coeffs=np.array(
+        [[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]]
+    ),
     vma_coeffs=np.array([[[1.0, 0.0], [0.0, 1.0]]]),
     n_samples=1024,
 )
@@ -49,18 +52,16 @@ def plot_simulation_psd(optim: PSDEstimator, sim: SimVARMA):
         true_psd=[sim.psd, sim.freq],
         off_symlog=False,
         xlims=[0, FS / 2.0],
-        quantiles='pointwise',
+        quantiles="pointwise",
     )
     plot_psdq(
         optim.uniform_ci,
         freqs=optim.freq,
         axs=axs,
-        color='red',
-        ls='--',
+        color="red",
+        ls="--",
     )
     return axs
-
-
 
 
 # Utility functions
@@ -77,15 +78,16 @@ def log_prob(theta, xf, psd):
     signal_fft = np.fft.rfft(signal, axis=0)
     residual = xf - signal_fft
     residual = residual[1:-1]
-    return -0.5 * np.sum(residual ** 2 / psd)
-
+    return -0.5 * np.sum(residual**2 / psd)
 
 
 # Run MCMC
 def run_mcmc(data, psd, x0=None):
     fft_data = np.fft.rfft(data, axis=0)
     univar_psd = get_univar_psd(psd)
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=(fft_data, univar_psd))
+    sampler = emcee.EnsembleSampler(
+        nwalkers, ndim, log_prob, args=(fft_data, univar_psd)
+    )
     if x0 is None:
         x0 = np.random.normal(true_f0, 1, size=(nwalkers, ndim))
 
@@ -109,7 +111,7 @@ def run_sgvb(data, x0, psd_x0=None):
 
 # Plot 1D PSD
 def plot_1d(psd, x0, data, idx=None):
-    plt.close('all')
+    plt.close("all")
     psd = get_univar_psd(psd).T[0]
     x0_mean = np.mean(x0)
     signal = signal_model(t, x0_mean)
@@ -118,23 +120,23 @@ def plot_1d(psd, x0, data, idx=None):
     fft_data = np.fft.rfft(data.T[0], axis=0)[1:-1]
     freq = np.fft.rfftfreq(n, d=1 / FS)[1:-1]
 
-    plt.plot(freq, np.abs(fft_data), color='gray', label='data')
-    plt.loglog(freq, psd, color='red', label='psd')
-    plt.plot(freq, np.abs(fft_signal), color='blue', ls='--', label='signal')
+    plt.plot(freq, np.abs(fft_data), color="gray", label="data")
+    plt.loglog(freq, psd, color="red", label="psd")
+    plt.plot(freq, np.abs(fft_signal), color="blue", ls="--", label="signal")
     plt.legend()
-    plt.xlabel('Frequency (Hz)')
+    plt.xlabel("Frequency (Hz)")
     if idx is not None:
-        plt.title(f'Iteration {idx}')
+        plt.title(f"Iteration {idx}")
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f"{OUTDIR}/psd.png")
 
 
 def plot_gibbs_results(fname):
     dataset = np.load(fname)
 
-    x0s = dataset['x0s']
-    psds = dataset['psds']
-    data = dataset['data']
+    x0s = dataset["x0s"]
+    psds = dataset["psds"]
+    data = dataset["data"]
 
     n_psds = psds.shape[0]
 
@@ -154,21 +156,30 @@ def plot_gibbs_results(fname):
 
     fig, axes = plt.subplots(1, 2, figsize=(8, 6))
     ax = axes[0]
-    all_x0s = dataset['x0s']
+    all_x0s = dataset["x0s"]
     # keep only last 10% of samples
-    all_x0s = all_x0s[int(all_x0s.shape[0] * 0.9):]
-    ax.hist(all_x0s, color='gray', alpha=0.5)
-    ax.axvline(true_f0, color='red', ls='--')
-    ax.set_xlabel('f0 samples')
+    all_x0s = all_x0s[int(all_x0s.shape[0] * 0.9) :]
+    ax.hist(all_x0s, color="gray", alpha=0.5)
+    ax.axvline(true_f0, color="red", ls="--")
+    ax.set_xlabel("f0 samples")
 
     ax = axes[1]
-    ax.loglog(freq, data_fft, color='gray', label='data')
-    ax.fill_between(freq, psd_ci[0], psd_ci[1], color='red', alpha=0.3, label='psd')
-    ax.fill_between(freq, signal_fft_ci[0], signal_fft_ci[1], color='blue', alpha=0.3, label='signal')
+    ax.loglog(freq, data_fft, color="gray", label="data")
+    ax.fill_between(
+        freq, psd_ci[0], psd_ci[1], color="red", alpha=0.3, label="psd"
+    )
+    ax.fill_between(
+        freq,
+        signal_fft_ci[0],
+        signal_fft_ci[1],
+        color="blue",
+        alpha=0.3,
+        label="signal",
+    )
     ax.legend()
-    ax.set_xlabel('Frequency (Hz)')
+    ax.set_xlabel("Frequency (Hz)")
     plt.tight_layout()
-    plt.savefig(fname.replace('.npz', '.png'))
+    plt.savefig(fname.replace(".npz", ".png"))
 
 
 # Initialize simulation
@@ -185,8 +196,6 @@ ndim = 1
 nsteps = 1000
 
 
-
-
 def main():
     # Gibbs sampling
     gibbs = 500
@@ -195,20 +204,20 @@ def main():
     psds = []
     psd_x0 = None
 
-    for i in trange(gibbs, desc='Gibbs sampling'):
+    for i in trange(gibbs, desc="Gibbs sampling"):
         x0, samples = run_mcmc(sim.data, sim.psd, x0)
         psd_x0, psd = run_sgvb(sim.data, x0, psd_x0)
-        x0s.append(samples)
+        x0s.append(x0)
         psds.append(psd[:, 0, 0])
-        if i % 10 == 0 and i > 0:
+        if i % 50 == 0 and i > 0:
             plot_1d(psd, x0, sim.data, i)
 
     x0s = np.array(x0s).ravel()
     psds = np.array(psds)
-    np.savez(f'{OUTDIR}/gibbs.npz', x0s=x0s, psds=psds, data=sim.data.T[0])
+    np.savez(f"{OUTDIR}/gibbs.npz", x0s=x0s, psds=psds, data=sim.data.T[0])
 
-    plot_gibbs_results(f'{OUTDIR}/gibbs.npz')
+    plot_gibbs_results(f"{OUTDIR}/gibbs.npz")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -7,9 +7,7 @@ from hyperopt import fmin, hp, tpe
 
 from .backend import BayesianModel, ViRunner
 from .logging import logger
-from .postproc import (
-    plot_coherence,
-)
+from .postproc import plot_coherence
 from .postproc.plot_losses import plot_losses
 from .postproc.plot_psd import plot_psd
 from .utils.periodogram import get_periodogram
@@ -80,20 +78,21 @@ class PSDEstimator:
     """
 
     def __init__(
-            self,
-            x,
-            N_theta=30,
-            nchunks=1,
-            ntrain_map=10000,
-            N_samples=500,
-            fs=1.0,
-            max_hyperparm_eval=100,
-            fmax_for_analysis=None,
-            degree_fluctuate=None,
-            seed=None,
-            lr_range=(0.002, 0.02),
-            n_elbo_maximisation_steps=500,
-            init_params=None,
+        self,
+        x,
+        N_theta=30,
+        nchunks=1,
+        ntrain_map=10000,
+        N_samples=500,
+        fs=1.0,
+        max_hyperparm_eval=100,
+        fmax_for_analysis=None,
+        degree_fluctuate=None,
+        seed=None,
+        lr_range=(0.002, 0.02),
+        n_elbo_maximisation_steps=500,
+        init_params=None,
+        fmin_for_analysis=None,
     ):
         """
         Initialize the PSDEstimator.
@@ -143,11 +142,11 @@ class PSDEstimator:
         self.n, self.p = x.shape
         if fmax_for_analysis is None:
             fmax_for_analysis = self.n // 2
-
         self.fmax_for_analysis = fmax_for_analysis
+        self.fmin_for_analysis = fmin_for_analysis
 
         self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
-        self.pdgrm = self.pdgrm * self.psd_scaling ** 2
+        self.pdgrm = self.pdgrm * self.psd_scaling**2
         self.max_hyperparm_eval = max_hyperparm_eval
         self.degree_fluctuate = degree_fluctuate
 
@@ -182,6 +181,7 @@ class PSDEstimator:
             N_theta=self.N_theta,
             nchunks=self.nchunks,
             fmax_for_analysis=self.fmax_for_analysis,
+            fmin_for_analysis=self.fmin_for_analysis,
             degree_fluctuate=self.degree_fluctuate,
             fs=self.fs,
             init_params=init_params,
@@ -263,7 +263,11 @@ class PSDEstimator:
         logger.info(f"Model trained in {times['train']:.2f}s")
 
         logger.info("Computing posterior PSDs")
-        self.psd_all, self.pointwise_ci, self.uniform_ci = self.model.compute_psd(
+        (
+            self.psd_all,
+            self.pointwise_ci,
+            self.uniform_ci,
+        ) = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
         self.runtimes = times
@@ -281,7 +285,8 @@ class PSDEstimator:
             self._freq = get_freq(
                 fs=self.fs,
                 n_time_samples=self.nt_per_chunk,
-                fmax=self.fmax_for_analysis
+                fmax=self.fmax_for_analysis,
+                fmin=self.fmin_for_analysis,
             )
         return self._freq
 
@@ -296,19 +301,19 @@ class PSDEstimator:
         return len(self.freq)
 
     def plot(
-            self,
-            true_psd=None,
-            quantiles='pointwise',
-            plot_periodogram=True,
-            tick_ln=5,
-            diag_spline_thickness=2,
-            xlims=None,
-            diag_ylims=None,
-            off_ylims=None,
-            diag_log=True,
-            off_symlog=True,
-            sylmog_thresh=1e-49,
-            **kwargs,
+        self,
+        true_psd=None,
+        quantiles="pointwise",
+        plot_periodogram=True,
+        tick_ln=5,
+        diag_spline_thickness=2,
+        xlims=None,
+        diag_ylims=None,
+        off_ylims=None,
+        diag_log=True,
+        off_symlog=True,
+        sylmog_thresh=1e-49,
+        **kwargs,
     ) -> np.ndarray[plt.Axes]:
         """
         Plot the estimated PSD, periodogram, and true PSD (if provided).
@@ -352,7 +357,7 @@ class PSDEstimator:
         pdgrm = [self.pdgrm, self.pdgrm_freq] if plot_periodogram else None
 
         ci = self.pointwise_ci
-        if quantiles == 'uniform':
+        if quantiles == "uniform":
             ci = self.uniform_ci
 
         return plot_psd(
@@ -403,6 +408,10 @@ class PSDEstimator:
         :return: Samples from the posterior distribution
         :rtype: np.ndarray
         """
-        spline_params = self.inference_runner.surrogate_posterior.sample(n_samples)
-        psd =  self.model.compute_psd(spline_params, psd_scaling=self.psd_scaling, fs=self.fs)
+        spline_params = self.inference_runner.surrogate_posterior.sample(
+            n_samples
+        )
+        psd = self.model.compute_psd(
+            spline_params, psd_scaling=self.psd_scaling, fs=self.fs
+        )
         return spline_params, psd

@@ -1,18 +1,21 @@
-import numpy as np
 from typing import Tuple
+
+import numpy as np
 import tensorflow as tf
+
 from ..logging import logger
 
 
 class AnalysisData:  # Parent used to create BayesianModel object
     def __init__(
-            self,
-            x: np.ndarray,
-            nchunks: int = 128,
-            fmax_for_analysis: float = 128,
-            fs: float = 2048.,
-            N_theta: int = 15,
-            N_delta: int = 15
+        self,
+        x: np.ndarray,
+        nchunks: int = 128,
+        fmax_for_analysis: float = 128,
+        fs: float = 2048.0,
+        N_theta: int = 15,
+        N_delta: int = 15,
+        fmin_for_analysis: float = None,
     ):
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # y_ft:   fourier transformed time series
@@ -30,22 +33,27 @@ class AnalysisData:  # Parent used to create BayesianModel object
 
         self.fs = fs
         self.fmax_for_analysis = fmax_for_analysis
+        self.fmin_for_analysis = fmin_for_analysis
 
         # Compute the required datasets
-        self.y_ft, self.freq = compute_chunked_fft(self.x, self.nchunks, self.fmax_for_analysis, self.fs)
+        self.y_ft, self.freq = compute_chunked_fft(
+            self.x,
+            self.nchunks,
+            self.fmax_for_analysis,
+            self.fs,
+            self.fmin_for_analysis,
+        )
         self.Zar = _compute_chunked_Zmatrix(self.y_ft)
-        Xmat_delta, Xmat_theta = _compute_Xmatrices(self.freq, N_delta, N_theta)
+        Xmat_delta, Xmat_theta = _compute_Xmatrices(
+            self.freq, N_delta, N_theta
+        )
 
         # Setup tensors
         y_ft = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
         self.y_re = tf.math.real(y_ft)
         self.y_im = tf.math.imag(y_ft)
-        self.Xmat_delta = tf.convert_to_tensor(
-            Xmat_delta, dtype=tf.float32
-        )
-        self.Xmat_theta = tf.convert_to_tensor(
-            Xmat_theta, dtype=tf.float32
-        )
+        self.Xmat_delta = tf.convert_to_tensor(Xmat_delta, dtype=tf.float32)
+        self.Xmat_theta = tf.convert_to_tensor(Xmat_theta, dtype=tf.float32)
 
         Zar = tf.convert_to_tensor(self.Zar, dtype=tf.complex64)
         self.Z_re = tf.math.real(Zar)
@@ -62,7 +70,9 @@ class AnalysisData:  # Parent used to create BayesianModel object
         return f"AnalysisData(x(t)={x}, y(f)={y}, Xmat_delta={Xd}, Xmat_theta={Xt}, Z={Z})"
 
 
-def _compute_Xmatrices(freq, N_delta: int = 15, N_theta: int = 15) -> Tuple[np.ndarray, np.ndarray]:
+def _compute_Xmatrices(
+    freq, N_delta: int = 15, N_theta: int = 15
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Returns the X matrices for delta and theta based on the provided frequencies.
 
@@ -100,7 +110,7 @@ def _compute_Zmatrix(y_k: np.ndarray) -> np.ndarray:
     for j in range(n):
         count = 0
         for i in range(1, p):
-            Z_k[j, i, count: count + i] = y_k[j, :i]
+            Z_k[j, i, count : count + i] = y_k[j, :i]
             count += i
 
     return Z_k
@@ -147,8 +157,13 @@ def DR_basis(freq: np.ndarray, N=10):
     ).T
 
 
-def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, fs: float) -> Tuple[
-    np.ndarray, np.ndarray]:
+def compute_chunked_fft(
+    x: np.ndarray,
+    nchunks: int,
+    fmax_for_analysis: float,
+    fs: float,
+    fmin_for_analysis: float = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Scaled fft and get the elements of freq = 1:[Nquist] (or 1:[fmax_for_analysis] if specified)
     discarding the rest of freqs
@@ -156,15 +171,15 @@ def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, f
 
     if np.any(np.mean(x, axis=0) != 0) or np.any(np.std(x, axis=0) != 1):
         logger.warning("Input data not standardised!")
-    
+
     orig_n, p = x.shape
     if orig_n < p:
-        raise ValueError(f"Number of samples {orig_n} is less than number of dimensions {p}.")
+        raise ValueError(
+            f"Number of samples {orig_n} is less than number of dimensions {p}."
+        )
     # split x into chunks
     n_per_chunk = x.shape[0] // nchunks
-    chunked_x = np.array(
-        np.split(x[0: n_per_chunk * nchunks, :], nchunks)
-    )
+    chunked_x = np.array(np.split(x[0 : n_per_chunk * nchunks, :], nchunks))
     assert chunked_x.shape == (nchunks, n_per_chunk, p)
 
     chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
@@ -197,6 +212,9 @@ def compute_chunked_fft(x: np.ndarray, nchunks: int, fmax_for_analysis: float, f
     if fmax_for_analysis is None:
         fmax_for_analysis = ftrue_y[-1]
     fmax_idx = np.searchsorted(ftrue_y, fmax_for_analysis)
-    y_ft = y_ft[:, 0:fmax_idx, :]
-    fq_y = fq_y[0:fmax_idx]
+    fmin_idx = 0
+    if fmin_for_analysis is not None:
+        fmin_idx = np.searchsorted(ftrue_y, fmin_for_analysis)
+    y_ft = y_ft[:, fmin_idx:fmax_idx, :]
+    fq_y = fq_y[fmin_idx:fmax_idx]
     return y_ft, fq_y
