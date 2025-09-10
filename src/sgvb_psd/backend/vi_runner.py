@@ -1,3 +1,4 @@
+import time
 import timeit
 from typing import List, Tuple
 
@@ -78,8 +79,9 @@ class ViRunner:
         """
         optimizer_hs = Adam(lr_map)
         start_map = timeit.default_timer()
-        logger.debug(f"Start MAP search ({ntrain_map} steps)... ")
+        logger.debug(f"Start Phase 1: MAP search ({ntrain_map} steps)... ")
         ntrain_map = tf.constant(ntrain_map, dtype=tf.int32)
+        t0 = time.time()
 
         @tf.function(reduce_retracing=True)
         def tune_model_to_map(
@@ -93,7 +95,7 @@ class ViRunner:
 
                 if optimizer.iterations % 5000 == 0:
                     tf.print(
-                        "Step", optimizer.iterations, ": log posterior", lpost
+                        f"[{time.time() - t0}:s] Step {optimizer.iterations}/{n_train}: log posterior {lpost:.2f}"
                     )
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
 
@@ -120,7 +122,7 @@ class ViRunner:
             return self.model.loglik(z) + self.model.logprior(z)
 
         logger.debug(
-            f"Start ELBO maximisation ({n_elbo_maximisation_steps} steps)... "
+            f"Start Phase 2: ELBO maximisation ({n_elbo_maximisation_steps} steps)... "
         )
         start_vi = timeit.default_timer()
         # For more on TF's fit_surrogate_posterior, see

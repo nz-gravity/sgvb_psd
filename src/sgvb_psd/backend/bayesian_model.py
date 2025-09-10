@@ -1,9 +1,10 @@
-from typing import Tuple, List
+from typing import List, Tuple
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
+
 from ..logging import logger
 from .analysis_data import AnalysisData
 from .compute_psd import compute_psd
@@ -14,10 +15,10 @@ tfb = tfp.bijectors
 
 class BayesianModel:
     def __init__(
-            self,
-            data: AnalysisData,
-            degree_fluctuate: float = None,
-            init_params: List[tf.Variable] = None,
+        self,
+        data: AnalysisData,
+        degree_fluctuate: float = None,
+        init_params: List[tf.Variable] = None,
     ):
 
         self.data = data
@@ -26,7 +27,9 @@ class BayesianModel:
             degree_fluctuate = data.N_delta / 2
 
         # Setup hyperparams
-        self.degree_fluctuate = tf.convert_to_tensor(degree_fluctuate, dtype=tf.float32)
+        self.degree_fluctuate = tf.convert_to_tensor(
+            degree_fluctuate, dtype=tf.float32
+        )
         self.tau0 = tf.convert_to_tensor(0.01, dtype=tf.float32)
         self.c2 = tf.convert_to_tensor(4, dtype=tf.float32)
         self.sig2_alp = tf.convert_to_tensor(10, dtype=tf.float32)
@@ -41,7 +44,7 @@ class BayesianModel:
                 self.trainable_vars[i].assign(p)
 
         # Initialize model with MAP
-        logger.debug(f"Initialized model with {self.trainable_vars}")
+        logger.debug(f"Initialized model.")
 
     def _get_trainable_vars(self, batch_size: int = 1) -> List[tf.Variable]:
         #
@@ -81,7 +84,8 @@ class BayesianModel:
                 shape=(batch_size, p, size_delta), dtype=tf.float32
             ),
             name="ga_delta",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
         lla_delta = tf.Variable(
             ga_initializer(
@@ -89,12 +93,14 @@ class BayesianModel:
             )
             - cvec_d,
             name="lla_delta",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
         ltau = tf.Variable(
             ga_initializer(shape=(batch_size, p, 1), dtype=tf.float32) - 1,
             name="ltau",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
 
         nn = int(p * (p - 1) / 2)  # number of thetas in the model
@@ -103,14 +109,16 @@ class BayesianModel:
                 shape=(batch_size, nn, size_theta), dtype=tf.float32
             ),
             name="ga_theta_re",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
         ga_theta_im = tf.Variable(
             ga_initializer_para2(
                 shape=(batch_size, nn, size_theta), dtype=tf.float32
             ),
             name="ga_theta_im",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
 
         lla_theta_re = tf.Variable(
@@ -119,7 +127,8 @@ class BayesianModel:
             )
             - cvec_o,
             name="lla_theta_re",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
         lla_theta_im = tf.Variable(
             ga_initializer(
@@ -127,13 +136,15 @@ class BayesianModel:
             )
             - cvec_o,
             name="lla_theta_im",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
 
         ltau_theta = tf.Variable(
             ga_initializer(shape=(batch_size, nn, 1), dtype=tf.float32) - 1.5,
             name="ltau_theta",
-            trainable=True, dtype=tf.float32
+            trainable=True,
+            dtype=tf.float32,
         )
 
         # params:          self.trainable_vars (ga_delta, lla_delta,
@@ -162,15 +173,18 @@ class BayesianModel:
         # each of params is a 3-d tensor with sample_size as the fist dim.
         # self.trainable_vars[:,[0, 2, 4]] must be corresponding spline regression parameters
 
-        xγ = tf.matmul(self.data.Xmat_delta, tf.transpose(params[0], [0, 2, 1]))
+        xγ = tf.matmul(
+            self.data.Xmat_delta, tf.transpose(params[0], [0, 2, 1])
+        )
         sum_xγ = -tf.reduce_sum(xγ, [1, 2])
         exp_xγ_inv = tf.exp(-xγ)
 
         xα = tf.matmul(
             self.data.Xmat_theta, tf.transpose(params[2], [0, 2, 1])
         )  # no need \ here
-        xβ = tf.matmul(self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1]))
-
+        xβ = tf.matmul(
+            self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1])
+        )
 
         # Z = Sum [(xα + i xβ) * y]
         Z_theta_re = tf.linalg.matvec(
@@ -195,12 +209,16 @@ class BayesianModel:
     #
     # Model training one step
     #
-    def map_train_step(self, optimizer: Adam) -> tf.float32:  # one training step to get close to MAP
+    def map_train_step(
+        self, optimizer: Adam
+    ) -> tf.float32:  # one training step to get close to MAP
         with tf.GradientTape() as tape:
             self.log_map_vals = -1 * self.logpost(self.trainable_vars)
 
         grads = tape.gradient(self.log_map_vals, self.trainable_vars)
-        grads_and_vars = [(g, v) for g, v in zip(grads, self.trainable_vars) if g is not None]
+        grads_and_vars = [
+            (g, v) for g, v in zip(grads, self.trainable_vars) if g is not None
+        ]
         if grads_and_vars:
             optimizer.apply_gradients(grads_and_vars)
 
@@ -296,24 +314,24 @@ class BayesianModel:
             tf.constant(0, tf.float32), self.hyper[0]
         )
         logPrior = (
-                lpriorDel
-                + lpriorThe_re
-                + lpriorThe_im
-                + tf.reduce_sum(
-            priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
-        )
-                + tf.reduce_sum(
-            priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
-        )
+            lpriorDel
+            + lpriorThe_re
+            + lpriorThe_im
+            + tf.reduce_sum(
+                priorDist_tau.log_prob(tf.exp(params[6])) + params[6], [1, 2]
+            )
+            + tf.reduce_sum(
+                priorDist_tau.log_prob(tf.exp(params[7])) + params[7], [1, 2]
+            )
         )
         return logPrior
 
     def compute_psd(
-            self,
-            vi_samples: List[tf.Tensor],
-            quantiles=[0.05, 0.5, 0.95],
-            psd_scaling=1.0,
-            fs=None,
+        self,
+        vi_samples: List[tf.Tensor],
+        quantiles=[0.05, 0.5, 0.95],
+        psd_scaling=1.0,
+        fs=None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         return compute_psd(
             self.data.Xmat_delta,

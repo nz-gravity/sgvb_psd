@@ -42,10 +42,10 @@ class RelativeSecondsColoredFormatter(logging.Formatter):
         return f"{log_color}{message}{Style.RESET_ALL}"
 
 
-def setup_logger(name):
+def setup_logger(name, level=logging.INFO):
     # Create a custom logger
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)  # Set the default logging level
+    logger.setLevel(level)  # Set the default logging level
 
     # Create a console handler
     console_handler = logging.StreamHandler(sys.stdout)
