@@ -160,6 +160,7 @@ class PSDEstimator:
                 logger.warning("nchunks must be a power of 2 for faster FFTs")
 
         if self.fmax_for_analysis < self.nt_per_chunk // 2:
+
             logger.info(
                 f"Reducing the number of frequencies to be analyzed from "
                 f"{self.nt_per_chunk // 2} to {self.fmax_for_analysis}..."
