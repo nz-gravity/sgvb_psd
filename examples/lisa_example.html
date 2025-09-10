@@ -418,24 +418,13 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>sgvb_psd<span class="w"> </span>-q<span class="w"> </span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell tag_hide-input docutils container">
-<details class="admonition hide above-input">
-<summary aria-label="Toggle hidden content">
-<p class="collapsed admonition-title">Show code cell source</p>
-<p class="expanded admonition-title">Hide code cell source</p>
-</summary>
-<div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># %load_ext autoreload</span>
+
+<span class="c1"># %load_ext autoreload</span>
 <span class="c1"># %autoreload 2</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 </pre></div>
 </div>
 </div>
-</details>
 </div>
 <div class="cell tag_hide-input docutils container">
 <details class="admonition hide above-input">
@@ -444,7 +433,12 @@ document.write(`
 <p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_folder</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -470,30 +464,6 @@ document.write(`
             <span class="s2">&quot;Download failed: status code </span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="p">)</span>
 
-
-<span class="n">ONE_YEAR</span> <span class="o">=</span> <span class="s2">&quot;https://zenodo.org/record/15698080/files/tdi.h5?download=1&quot;</span>
-<span class="n">TEN_DAYS</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/nz-gravity/test_data/main/lisa_noise/noise_4a_truncated/data/tdi.h5&quot;</span>
-
-<span class="n">download</span><span class="p">(</span><span class="n">TEN_DAYS</span><span class="p">,</span> <span class="n">dest_folder</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</details>
-</div>
-<div class="cell tag_hide-input docutils container">
-<details class="admonition hide above-input">
-<summary aria-label="Toggle hidden content">
-<p class="collapsed admonition-title">Show code cell source</p>
-<p class="expanded admonition-title">Hide code cell source</p>
-</summary>
-<div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">testmass_noise_asd</span><span class="p">(</span>
@@ -874,6 +844,10 @@ document.write(`
             <span class="p">)</span>
 
 
+<span class="n">ONE_YEAR</span> <span class="o">=</span> <span class="s2">&quot;https://zenodo.org/record/15698080/files/tdi.h5?download=1&quot;</span>
+<span class="n">TEN_DAYS</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/nz-gravity/test_data/main/lisa_noise/noise_4a_truncated/data/tdi.h5&quot;</span>
+
+<span class="n">download</span><span class="p">(</span><span class="n">TEN_DAYS</span><span class="p">,</span> <span class="n">dest_folder</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
 <span class="n">lisa_data</span> <span class="o">=</span> <span class="n">LISAData</span><span class="o">.</span><span class="n">from_hdf5</span><span class="p">(</span><span class="s2">&quot;data/tdi.h5&quot;</span><span class="p">)</span>
 <span class="n">axes</span> <span class="o">=</span> <span class="n">lisa_data</span><span class="o">.</span><span class="n">plot_periodograms</span><span class="p">()</span>
 <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">lisa_data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">);</span>
@@ -894,7 +868,7 @@ document.write(`
 <span class="n">N_theta</span> <span class="o">=</span> <span class="mi">300</span>
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">optim</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span>
-    <span class="n">x</span><span class="o">=</span><span class="n">lisa_data</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">lisa_data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
     <span class="n">N_theta</span><span class="o">=</span><span class="n">N_theta</span><span class="p">,</span>
     <span class="n">nchunks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">fs</span><span class="o">=</span><span class="n">lisa_data</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
