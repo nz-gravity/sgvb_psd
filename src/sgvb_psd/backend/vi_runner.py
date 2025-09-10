@@ -81,7 +81,6 @@ class ViRunner:
         start_map = timeit.default_timer()
         logger.debug(f"Start Phase 1: MAP search ({ntrain_map} steps)... ")
         ntrain_map = tf.constant(ntrain_map, dtype=tf.int32)
-        t0 = time.time()
 
         @tf.function(reduce_retracing=True)
         def tune_model_to_map(
@@ -95,7 +94,12 @@ class ViRunner:
 
                 if optimizer.iterations % 5000 == 0:
                     tf.print(
-                        f"[{time.time() - t0}:s] Step {optimizer.iterations}/{n_train}: log posterior {lpost:.2f}"
+                        "Step",
+                        optimizer.iterations,
+                        "/",
+                        n_train,
+                        " : log posterior",
+                        lpost,
                     )
                 lp = lp.write(tf.cast(i, tf.int32), lpost)
 
