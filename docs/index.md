@@ -1,6 +1,6 @@
 # SGVB PSD
 
-A python package for estimating the power spectral density (PSD) 
+A python package for estimating the power spectral density (PSD)
 of correlated multivariate detector noise using variational inference (VI).
 
 
@@ -15,6 +15,7 @@ pip install sgvb_psd
 - [API Documentation](api.rst)
 - [Simulated data Example](examples/simulation_example.ipynb)
 - [ET Example](examples/ET_example.ipynb)
+- [LISA Example](examples/lisa_example.ipynb)
 
 ## Paper
 
@@ -28,7 +29,7 @@ Code to generate the plots for the paper are available [here](https://github.com
 If you use this SGVB PSD code in your research, please cite the following papers:
 ```bibtex
 @article{Liu2024,
-      title={Variational Inference for Correlated Gravitational Wave Detector Network Noise}, 
+      title={Variational Inference for Correlated Gravitational Wave Detector Network Noise},
       author={Jianan Liu and Avi Vajpeyi and Renate Meyer and Kamiel Janssens and Jeung Eun Lee and Patricio Maturana-Russel and Nelson Christensen and Yixuan Liu},
       year={2024},
       journal={arXiv preprint},
