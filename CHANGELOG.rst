@@ -5,6 +5,25 @@ CHANGELOG
 =========
 
 
+.. _changelog-v0.0.9:
+
+v0.0.9 (2025-09-10)
+===================
+
+Bug Fixes
+---------
+
+* fix: change logs (`1dcf99d`_)
+
+Unknown
+-------
+
+* Merge branch 'main' of github.com:nz-gravity/sgvb_psd into main (`fbf06ac`_)
+
+.. _1dcf99d: https://github.com/nz-gravity/sgvb_psd/commit/1dcf99dd2a1e278e7c981cf703664304a0e019a1
+.. _fbf06ac: https://github.com/nz-gravity/sgvb_psd/commit/fbf06acb7f4dacc7babe939c9095fc4aad95f0bc
+
+
 .. _changelog-v0.0.8:
 
 v0.0.8 (2025-09-10)
@@ -15,12 +34,21 @@ Bug Fixes
 
 * fix: tf.print error fix (`8de6192`_)
 
+Chores
+------
+
+* chore(release): 0.0.8 (`59563fd`_)
+
 Documentation
 -------------
+
+* docs: update path to notebook (`a61fa08`_)
 
 * docs: add lisa example (`9d83372`_)
 
 .. _8de6192: https://github.com/nz-gravity/sgvb_psd/commit/8de6192d5291887e8432bd760d9120995e924836
+.. _59563fd: https://github.com/nz-gravity/sgvb_psd/commit/59563fd70819b1889368bc02afcbdb2f76c9661f
+.. _a61fa08: https://github.com/nz-gravity/sgvb_psd/commit/a61fa08a587cc30b969277e19990ad0ecdd7d058
 .. _9d83372: https://github.com/nz-gravity/sgvb_psd/commit/9d83372e7a606480a0c9fdb2a5edb388d28eefc1
 
 
