@@ -5,6 +5,50 @@ CHANGELOG
 =========
 
 
+.. _changelog-v0.0.8:
+
+v0.0.8 (2025-09-10)
+===================
+
+Bug Fixes
+---------
+
+* fix: tf.print error fix (`8de6192`_)
+
+Documentation
+-------------
+
+* docs: add lisa example (`9d83372`_)
+
+.. _8de6192: https://github.com/nz-gravity/sgvb_psd/commit/8de6192d5291887e8432bd760d9120995e924836
+.. _9d83372: https://github.com/nz-gravity/sgvb_psd/commit/9d83372e7a606480a0c9fdb2a5edb388d28eefc1
+
+
+.. _changelog-v0.0.7:
+
+v0.0.7 (2025-09-10)
+===================
+
+Documentation
+-------------
+
+* docs: add colab button (`371efd2`_)
+
+* docs: add lisa exxample (`f423ced`_)
+
+Unknown
+-------
+
+* add demo for LISA (`e30ef7f`_)
+
+* add fmin for SGVB analysis (`80b858d`_)
+
+.. _371efd2: https://github.com/nz-gravity/sgvb_psd/commit/371efd2917c0fe964c2af738f7d57f6301afa05c
+.. _f423ced: https://github.com/nz-gravity/sgvb_psd/commit/f423ced5ca585fb59be4c45c2a227dad78ab8ce8
+.. _e30ef7f: https://github.com/nz-gravity/sgvb_psd/commit/e30ef7f21229352f1fdd0053a7e87a9c62e515df
+.. _80b858d: https://github.com/nz-gravity/sgvb_psd/commit/80b858d64f39e6689f14192fa8a468c3bf73825d
+
+
 .. _changelog-v0.0.6:
 
 v0.0.6 (2025-04-16)
@@ -16,6 +60,11 @@ Bug Fixes
 * fix: fix pypi yml (`e425d80`_)
 
 * fix: update defaults for timing (`0e8eaee`_)
+
+Chores
+------
+
+* chore(release): 0.0.6 (`f78d8b8`_)
 
 Unknown
 -------
@@ -72,6 +121,7 @@ x is a multi-dimensional array, so np.mean(x, axis=0) and np.std(x, axis=0) retu
 
 .. _e425d80: https://github.com/nz-gravity/sgvb_psd/commit/e425d8089cde0dff22e8d69919e5b43c0c110c20
 .. _0e8eaee: https://github.com/nz-gravity/sgvb_psd/commit/0e8eaee3ad30bbef00aaca22d7fc85d360c52dca
+.. _f78d8b8: https://github.com/nz-gravity/sgvb_psd/commit/f78d8b86bec87fef290e025aeb212abd64b5a4c7
 .. _d087344: https://github.com/nz-gravity/sgvb_psd/commit/d087344c22566a8b5606722ef7284f0c63c8004e
 .. _d3badda: https://github.com/nz-gravity/sgvb_psd/commit/d3badda922a438ae667a9207973d61ed21d9d93b
 .. _f874d58: https://github.com/nz-gravity/sgvb_psd/commit/f874d586651aa4a83ab40191ea08faaa84697808
