@@ -867,7 +867,7 @@ document.write(`
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sgvb_psd.psd_estimator</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSDEstimator</span>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.sgvb_psd.psd_estimator</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSDEstimator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal.windows</span><span class="w"> </span><span class="kn">import</span> <span class="n">tukey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">src.sgvb_psd.postproc.plot_triangle_psd_coherence</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_triangle_psd_coherence</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
@@ -930,31 +930,26 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>04:57:24|SGVB-PSD|INFO| No GPU detected. Running on CPU.
-04:57:24|SGVB-PSD|INFO| No GPU detected. Running on CPU.
-</pre></div>
-</div>
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">line</span> <span class="mi">31</span>
-<span class="g g-Whitespace">     </span><span class="mi">29</span> <span class="n">N_theta</span> <span class="o">=</span> <span class="mi">250</span>
-<span class="g g-Whitespace">     </span><span class="mi">30</span> <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<span class="ne">---&gt; </span><span class="mi">31</span> <span class="n">optim</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span>
-<span class="g g-Whitespace">     </span><span class="mi">32</span>     <span class="n">x</span><span class="o">=</span><span class="n">lisa_data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">33</span>     <span class="n">N_theta</span><span class="o">=</span><span class="n">N_theta</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">34</span>     <span class="n">nchunks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">35</span>     <span class="n">fs</span><span class="o">=</span><span class="n">lisa_data</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">36</span>     <span class="n">ntrain_map</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">37</span>     <span class="n">n_elbo_maximisation_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">38</span>     <span class="n">fmin_for_analysis</span><span class="o">=</span><span class="n">FMIN</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">39</span>     <span class="n">fmax_for_analysis</span><span class="o">=</span><span class="n">FMAX</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">40</span>     <span class="n">degree_fluctuate</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">41</span>     <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="g g-Whitespace">     </span><span class="mi">42</span> <span class="p">)</span>
-<span class="g g-Whitespace">     </span><span class="mi">44</span> <span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>  <span class="c1"># remove lr to run-hyperoptimisation (takes a long time)</span>
-<span class="g g-Whitespace">     </span><span class="mi">45</span> <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-<span class="ne">TypeError</span>: PSDEstimator.__init__() got an unexpected keyword argument &#39;fmin_for_analysis&#39;
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>06:58:15|SGVB-PSD|INFO| Dividing data (432000, 3) into (4, 108000, 3) chunks
+06:58:15|SGVB-PSD|INFO| Dividing data (432000, 3) into (4, 108000, 3) chunks
+06:58:15|SGVB-PSD|INFO| Reducing the number of frequencies to be analyzed from 54000 to 0.01...
+06:58:15|SGVB-PSD|INFO| Reducing the number of frequencies to be analyzed from 54000 to 0.01...
+06:58:15|SGVB-PSD|INFO| Final PSD will be of shape: 2138 x 3 x 3
+06:58:15|SGVB-PSD|INFO| Final PSD will be of shape: 2138 x 3 x 3
+06:58:15|SGVB-PSD|WARNING| Input data not standardised!
+06:58:15|SGVB-PSD|WARNING| Input data not standardised!
+06:58:15|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(432000, 3), y(f)=(4, 2138, 3), Xmat_delta=(2138, 252), Xmat_theta=(2138, 252), Z=(4, 2138, 3, 3))
+06:58:15|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(432000, 3), y(f)=(4, 2138, 3), Xmat_delta=(2138, 252), Xmat_theta=(2138, 252), Z=(4, 2138, 3, 3))
+06:58:15|SGVB-PSD|INFO| Using provided learning rate: 0.005
+06:58:15|SGVB-PSD|INFO| Using provided learning rate: 0.005
+06:58:15|SGVB-PSD|INFO| Training model
+06:58:15|SGVB-PSD|INFO| Training model
+Step 5000 / 8000  : log posterior [177811.844]
+07:01:28|SGVB-PSD|INFO| Model trained in 192.90s
+07:01:28|SGVB-PSD|INFO| Model trained in 192.90s
+07:01:28|SGVB-PSD|INFO| Computing posterior PSDs
+07:01:28|SGVB-PSD|INFO| Computing posterior PSDs
+The estimation time is 281.54s
 </pre></div>
 </div>
 </div>
@@ -981,7 +976,7 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/e355604be198b86ea5a854516913690a8d62825d8cd59e94204abab85ebb5c74.png" src="../_images/e355604be198b86ea5a854516913690a8d62825d8cd59e94204abab85ebb5c74.png" />
+<img alt="../_images/0ed5b16c49d9c77bab56756ea77654dad76331f1088e79b5185e210e65332e9f.png" src="../_images/0ed5b16c49d9c77bab56756ea77654dad76331f1088e79b5185e210e65332e9f.png" />
 </div>
 </div>
 </section>
