@@ -871,10 +871,30 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">sgvb_psd.postproc.plot_triangle_psd_coherence</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_triangle_psd_coherence</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-<span class="n">FMIN</span><span class="p">,</span> <span class="n">FMAX</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">**</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span>
+<span class="n">nchunks</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">window_equal_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">nchunks</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+    <span class="n">N</span><span class="p">,</span> <span class="n">P</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">chunk_len</span> <span class="o">=</span> <span class="n">N</span> <span class="o">//</span> <span class="n">nchunks</span>
+
+    <span class="n">N_used</span> <span class="o">=</span> <span class="n">chunk_len</span> <span class="o">*</span> <span class="n">nchunks</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">N_used</span><span class="p">,</span> <span class="p">:]</span>             <span class="c1"># (N_used, P)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nchunks</span><span class="p">,</span> <span class="n">chunk_len</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="n">tukey</span><span class="p">(</span><span class="n">chunk_len</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">Ew</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">w</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">N_used</span><span class="p">,</span> <span class="n">P</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">Ew</span>
+
+<span class="n">lisa_data_win</span><span class="p">,</span> <span class="n">Ew</span> <span class="o">=</span> <span class="n">window_equal_chunks</span><span class="p">(</span><span class="n">lisa_data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">nchunks</span> <span class="o">=</span> <span class="n">nchunks</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+
+<span class="n">FMIN</span><span class="p">,</span> <span class="n">FMAX</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span>
 
 <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.005</span>
-<span class="n">N_theta</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">N_theta</span> <span class="o">=</span> <span class="mi">250</span>
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">optim</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span>
     <span class="n">x</span><span class="o">=</span><span class="n">lisa_data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
@@ -889,7 +909,7 @@ document.write(`
     <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.005</span><span class="p">)</span>  <span class="c1"># remove lr to run-hyperoptimisation (takes a long time)</span>
+<span class="n">optim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>  <span class="c1"># remove lr to run-hyperoptimisation (takes a long time)</span>
 <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 <span class="n">estimation_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;The estimation time is </span><span class="si">{</span><span class="n">estimation_time</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">s&#39;</span><span class="p">)</span>
@@ -912,7 +932,7 @@ document.write(`
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">axs</span> <span class="o">=</span> <span class="n">plot_triangle_psd_coherence</span><span class="p">(</span>
-    <span class="n">optim</span><span class="o">.</span><span class="n">uniform_ci</span><span class="p">,</span>
+    <span class="p">(</span><span class="n">optim</span><span class="o">.</span><span class="n">uniform_ci</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="o">/</span><span class="n">Ew</span><span class="p">,</span>
     <span class="n">optim</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span>
     <span class="n">channel_labels</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">],</span>
 <span class="p">)</span>
