@@ -182,7 +182,7 @@ def compute_chunked_fft(
     chunked_x = np.array(np.split(x[0 : n_per_chunk * nchunks, :], nchunks))
     assert chunked_x.shape == (nchunks, n_per_chunk, p)
 
-    chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
+    #chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
 
     # compute fft for each chunk
     y_ft = np.apply_along_axis(np.fft.fft, 1, chunked_x)
