@@ -210,8 +210,9 @@ def compute_chunked_fft(
     ftrue_y = ftrue_y[1:idx]
 
     if fmax_for_analysis is None:
-        fmax_for_analysis = ftrue_y[-1]
-    fmax_idx = np.searchsorted(ftrue_y, fmax_for_analysis)
+        fmax_idx = len(ftrue_y)
+    else:
+        fmax_idx = np.searchsorted(ftrue_y, fmax_for_analysis)
     fmin_idx = 0
     if fmin_for_analysis is not None:
         fmin_idx = np.searchsorted(ftrue_y, fmin_for_analysis)

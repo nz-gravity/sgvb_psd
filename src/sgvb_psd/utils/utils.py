@@ -12,11 +12,17 @@ def get_freq(
     else:  # the length per chunk is odd
         freq = freq[1 : int((n - 1) / 2)]
 
-    if fmax is not None:
-        fmax_idx = np.searchsorted(freq, fmax)
-        freq = freq[0:fmax_idx]
+    fmin_idx = 0
+    fmax_idx = len(freq)
 
     if fmin is not None:
         fmin_idx = np.searchsorted(freq, fmin)
-        freq = freq[fmin_idx:]
-    return freq
+    if fmax is not None:
+        fmax_idx = np.searchsorted(freq, fmax)
+
+    fmin_idx = int(np.clip(fmin_idx, 0, len(freq)))
+    fmax_idx = int(np.clip(fmax_idx, 0, len(freq)))
+    if fmax_idx < fmin_idx:
+        fmax_idx = fmin_idx
+
+    return freq[fmin_idx:fmax_idx]
