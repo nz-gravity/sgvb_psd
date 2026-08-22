@@ -5,7 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from hyperopt import fmin, hp, tpe
 
-from .backend import BayesianModel, FactorizedViRunner, ViRunner
+from .backend import (
+    BayesianModel,
+    EigenbasisViRunner,
+    FactorizedViRunner,
+    ViRunner,
+)
 from .logging import logger
 from .postproc import plot_coherence
 from .postproc.plot_losses import plot_losses
@@ -96,6 +101,7 @@ class PSDEstimator:
         fmin_idx_extension=0,
         fmax_idx_extension=32,
         Nbw=1.0,
+        use_eigenbasis=False,
         posterior_mode="joint",
     ):
         """
@@ -125,12 +131,14 @@ class PSDEstimator:
         :type lr_range: tuple, optional
         :param n_elbo_maximisation_steps: Number of steps for maximizing the ELBO, defaults to 1000.
         :type n_elbo_maximisation_steps: int, optional
-        :param fmin_idx_extension: Number of extra frequency bins to include below fmin_for_analysis during fitting, defaults to 0.
+        :param fmin_idx_extension: Number of extra frequency bins to include below fmin_for_analysis for eigenbasis fitting, defaults to 0.
         :type fmin_idx_extension: int, optional
-        :param fmax_idx_extension: Number of extra frequency bins to include above fmax_for_analysis during fitting, defaults to 32.
+        :param fmax_idx_extension: Number of extra frequency bins to include above fmax_for_analysis for eigenbasis fitting, defaults to 32.
         :type fmax_idx_extension: int, optional
-        :param Nbw: Window bandwidth correction factor multiplying the likelihood, defaults to 1.0.
+        :param Nbw: Effective window-bandwidth correction applied to the likelihood, defaults to 1.0.
         :type Nbw: float, optional
+        :param use_eigenbasis: Whether to use the eigenbasis likelihood representation, defaults to False.
+        :type use_eigenbasis: bool, optional
         :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
         :type posterior_mode: str, optional
         """
@@ -159,9 +167,16 @@ class PSDEstimator:
         self.fmin_idx_extension = fmin_idx_extension
         self.fmax_idx_extension = fmax_idx_extension
         self.Nbw = Nbw
+        if not np.isfinite(self.Nbw) or self.Nbw <= 0:
+            raise ValueError("Nbw must be finite and positive")
+        self.use_eigenbasis = use_eigenbasis
         if posterior_mode not in {"joint", "factorized"}:
             raise ValueError(
                 'posterior_mode must be either "joint" or "factorized"'
+            )
+        if not self.use_eigenbasis and posterior_mode == "factorized":
+            raise ValueError(
+                "posterior_mode='factorized' requires use_eigenbasis=True"
             )
         self.posterior_mode = posterior_mode
         self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
@@ -196,13 +211,8 @@ class PSDEstimator:
         self.uniform_ci = None
         self.psd_all = None
         self.runtimes = {}
-        runner_cls = (
-            FactorizedViRunner
-            if self.posterior_mode == "factorized"
-            else ViRunner
-        )
-        self.inference_runner = runner_cls(
-            self.x,
+        runner_kwargs = dict(
+            x=self.x,
             N_theta=self.N_theta,
             nchunks=self.nchunks,
             fmax_for_analysis=self.fmax_for_analysis,
@@ -210,10 +220,21 @@ class PSDEstimator:
             degree_fluctuate=self.degree_fluctuate,
             fs=self.fs,
             init_params=init_params,
-            fmin_idx_extension=self.fmin_idx_extension,
-            fmax_idx_extension=self.fmax_idx_extension,
             Nbw=self.Nbw,
         )
+        if self.use_eigenbasis:
+            runner_kwargs.update(
+                fmin_idx_extension=self.fmin_idx_extension,
+                fmax_idx_extension=self.fmax_idx_extension,
+            )
+            runner_cls = (
+                FactorizedViRunner
+                if self.posterior_mode == "factorized"
+                else EigenbasisViRunner
+            )
+        else:
+            runner_cls = ViRunner
+        self.inference_runner = runner_cls(**runner_kwargs)
 
     def _learning_rate_optimisation_objective(self, lr):
         """

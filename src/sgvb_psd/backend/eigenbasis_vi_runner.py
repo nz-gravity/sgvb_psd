@@ -8,14 +8,14 @@ import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
 
 from ..logging import logger
-from .analysis_data import AnalysisData
-from .bayesian_model import BayesianModel
+from .eigenbasis_analysis_data import EigenbasisAnalysisData
+from .eigenbasis_bayesian_model import EigenbasisBayesianModel
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class ViRunner:
+class EigenbasisViRunner:
     def __init__(
         self,
         x: np.ndarray,
@@ -28,9 +28,11 @@ class ViRunner:
         init_params: List[tf.Tensor] = None,
         surrogate_posterior: tfd.JointDistributionSequential = None,
         fmin_for_analysis: float = None,
+        fmin_idx_extension: int = 0,
+        fmax_idx_extension: int = 32,
         Nbw: float = 1.0,
     ):
-        self.data = AnalysisData(
+        self.data = EigenbasisAnalysisData(
             x=x,
             nchunks=nchunks,
             fmax_for_analysis=fmax_for_analysis,
@@ -38,10 +40,12 @@ class ViRunner:
             N_theta=N_theta,
             N_delta=N_theta,  # N_theta == N_delta in all cases
             fmin_for_analysis=fmin_for_analysis,
+            fmin_idx_extension=fmin_idx_extension,
+            fmax_idx_extension=fmax_idx_extension,
         )
 
         ## Define Model
-        self.model = BayesianModel(
+        self.model = EigenbasisBayesianModel(
             self.data,
             degree_fluctuate=degree_fluctuate,
             init_params=init_params,
@@ -59,7 +63,9 @@ class ViRunner:
         ntrain_map: int = 5000,
         inference_size: int = 500,
         n_elbo_maximisation_steps: int = 1000,
-    ) -> Tuple[np.ndarray, np.ndarray, BayesianModel, List[tf.Tensor]]:
+    ) -> Tuple[
+        np.ndarray, np.ndarray, EigenbasisBayesianModel, List[tf.Tensor]
+    ]:
         logger.debug("Starting Model Inference Training..")
         self.run_phase1(lr_map, ntrain_map)
         self.run_phase2(n_elbo_maximisation_steps)
@@ -86,7 +92,7 @@ class ViRunner:
 
         @tf.function(reduce_retracing=True)
         def tune_model_to_map(
-            model: BayesianModel, optimizer: Adam, n_train: int
+            model: EigenbasisBayesianModel, optimizer: Adam, n_train: int
         ) -> Tuple[List[tf.Variable], tf.Tensor]:
             n_samp = model.trainable_vars[0].shape[0]
             lpost = tf.constant(0.0, tf.float32, [n_samp])

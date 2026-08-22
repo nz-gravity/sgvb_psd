@@ -10,6 +10,37 @@ This repository contains the code for the paper
 
 Documentation is available at https://nz-gravity.github.io/sgvb_psd/
 
+## Inference modes
+
+Version 2 keeps the original non-eigenbasis joint SGVB method as the
+default and adds joint and factorized eigenbasis methods.
+
+```python
+from sgvb_psd.psd_estimator import PSDEstimator
+
+# Original non-eigenbasis joint SGVB
+legacy = PSDEstimator(x=data)
+
+# Eigenbasis joint SGVB
+eigen_joint = PSDEstimator(
+    x=data,
+    use_eigenbasis=True,
+    posterior_mode="joint",
+)
+
+# Eigenbasis factorized SGVB
+eigen_factorized = PSDEstimator(
+    x=data,
+    use_eigenbasis=True,
+    posterior_mode="factorized",
+)
+```
+
+All three methods accept `Nbw`, an effective window-bandwidth correction
+computed before constructing the estimator. Its default value is `1.0`.
+The eigenbasis methods additionally use `fmin_idx_extension` and
+`fmax_idx_extension`, whose defaults are `0` and `32` frequency bins.
+
 
 
 ## Development

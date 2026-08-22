@@ -6,17 +6,17 @@ import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
 
 from ..logging import logger
-from .analysis_data import AnalysisData
+from .eigenbasis_analysis_data import EigenbasisAnalysisData
 from .compute_psd import compute_psd
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
 
-class BayesianModel:
+class EigenbasisBayesianModel:
     def __init__(
         self,
-        data: AnalysisData,
+        data: EigenbasisAnalysisData,
         degree_fluctuate: float = None,
         init_params: List[tf.Variable] = None,
         Nbw: float = 1.0,
@@ -178,7 +178,7 @@ class BayesianModel:
         x_gamma = tf.matmul(
             self.data.Xmat_delta, tf.transpose(params[0], [0, 2, 1])
         )
-        sum_x_gamma = -tf.reduce_sum(x_gamma, [1, 2])
+        sum_x_gamma = -tf.reduce_sum(x_gamma, [1, 2]) * self.data.nchunks
         exp_x_gamma_inv = tf.exp(-x_gamma)
 
         x_alpha = tf.matmul(
@@ -188,18 +188,27 @@ class BayesianModel:
             self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1])
         )
 
-        # Z = Sum [(x_alpha + i x_beta) * y]
+        # Z = Sum [(x_alpha + i x_beta) * u]
+        u_re = tf.transpose(self.data.u_re, perm=[2, 0, 1])
+        u_im = tf.transpose(self.data.u_im, perm=[2, 0, 1])
+
+        Z_re_blocks = tf.transpose(self.data.Z_re, perm=[1, 0, 2, 3])
+        Z_im_blocks = tf.transpose(self.data.Z_im, perm=[1, 0, 2, 3])
+
         Z_theta_re = tf.linalg.matvec(
-            tf.expand_dims(self.data.Z_re, 0), x_alpha
-        ) - tf.linalg.matvec(tf.expand_dims(self.data.Z_im, 0), x_beta)
+            Z_re_blocks[None, ...], x_alpha
+        ) - tf.linalg.matvec(Z_im_blocks[None, ...], x_beta)
+
         Z_theta_im = tf.linalg.matvec(
-            tf.expand_dims(self.data.Z_re, 0), x_beta
-        ) + tf.linalg.matvec(tf.expand_dims(self.data.Z_im, 0), x_alpha)
+            Z_re_blocks[None, ...], x_beta
+        ) + tf.linalg.matvec(Z_im_blocks[None, ...], x_alpha)
 
-        u_re = self.data.y_re - Z_theta_re
-        u_im = self.data.y_im - Z_theta_im
+        resid_re = u_re[None, ...] - Z_theta_re
+        resid_im = u_im[None, ...] - Z_theta_im
 
-        numerator = tf.square(u_re) + tf.square(u_im)
+        numerator_each = tf.square(resid_re) + tf.square(resid_im)
+        numerator = tf.reduce_sum(numerator_each, axis=1)
+
         internal = tf.multiply(numerator, exp_x_gamma_inv)
         tmp2_ = -tf.reduce_sum(internal, [-2, -1])  # sum over p and freq
         log_lik = tf.reduce_sum(sum_x_gamma + tmp2_)  # sum over all LnL

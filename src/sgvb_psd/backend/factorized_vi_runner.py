@@ -7,9 +7,9 @@ import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
 
 from ..logging import logger
-from .analysis_data import AnalysisData
 from .block_bayesian_model import BlockBayesianModel
 from .compute_psd import compute_psd
+from .eigenbasis_analysis_data import EigenbasisAnalysisData
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -171,7 +171,7 @@ class FactorizedViRunner:
                 "surrogate_posterior is not supported for factorized VI"
             )
 
-        self.data = AnalysisData(
+        self.data = EigenbasisAnalysisData(
             x=x,
             nchunks=nchunks,
             fmax_for_analysis=fmax_for_analysis,

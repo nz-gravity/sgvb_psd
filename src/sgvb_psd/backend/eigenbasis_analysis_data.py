@@ -6,7 +6,7 @@ import tensorflow as tf
 from ..logging import logger
 
 
-class AnalysisData:  # Parent used to create BayesianModel object
+class EigenbasisAnalysisData:
     def __init__(
         self,
         x: np.ndarray,
@@ -16,6 +16,8 @@ class AnalysisData:  # Parent used to create BayesianModel object
         N_theta: int = 15,
         N_delta: int = 15,
         fmin_for_analysis: float = None,
+        fmin_idx_extension: int = 0,
+        fmax_idx_extension: int = 32,
     ):
         # x:      N-by-p, multivariate timeseries with N samples and p dimensions
         # y_ft:   fourier transformed time series
@@ -34,16 +36,25 @@ class AnalysisData:  # Parent used to create BayesianModel object
         self.fs = fs
         self.fmax_for_analysis = fmax_for_analysis
         self.fmin_for_analysis = fmin_for_analysis
+        self.fmin_idx_extension = fmin_idx_extension
+        self.fmax_idx_extension = fmax_idx_extension
 
         # Compute the required datasets
-        self.y_ft, self.freq = compute_chunked_fft(
+        (
+            self.y_ft,
+            self.freq,
+            self.u,
+            self.output_keep_mask,
+        ) = compute_chunked_fft(
             self.x,
             self.nchunks,
             self.fmax_for_analysis,
             self.fs,
             self.fmin_for_analysis,
+            self.fmin_idx_extension,
+            self.fmax_idx_extension,
         )
-        self.Zar = _compute_chunked_Zmatrix(self.y_ft)
+        self.Zar = _compute_Zmatrix_from_u(self.u)
         Xmat_delta, Xmat_theta = _compute_Xmatrices(
             self.freq, N_delta, N_theta
         )
@@ -59,6 +70,10 @@ class AnalysisData:  # Parent used to create BayesianModel object
         self.Z_re = tf.math.real(Zar)
         self.Z_im = tf.math.imag(Zar)
 
+        u = tf.convert_to_tensor(self.u, dtype=tf.complex64)
+        self.u_re = tf.math.real(u)
+        self.u_im = tf.math.imag(u)
+
         logger.info(f"Loaded {self}")
 
     def __repr__(self):
@@ -67,7 +82,7 @@ class AnalysisData:  # Parent used to create BayesianModel object
         Xd = self.Xmat_delta.shape
         Xt = self.Xmat_theta.shape
         Z = self.Zar.shape
-        return f"AnalysisData(x(t)={x}, y(f)={y}, Xmat_delta={Xd}, Xmat_theta={Xt}, Z={Z})"
+        return f"EigenbasisAnalysisData(x(t)={x}, y(f)={y}, Xmat_delta={Xd}, Xmat_theta={Xt}, Z={Z})"
 
 
 def _compute_Xmatrices(
@@ -94,50 +109,55 @@ def _compute_Xmatrices(
     return Xd, Xt
 
 
-def _compute_Zmatrix(y_k: np.ndarray) -> np.ndarray:
+def _compute_Zmatrix_from_uk(u_k: np.ndarray) -> np.ndarray:
     """
-    Compute the design matrix Z_k for each frequency k.
+    Compute the design matrix Z_k from u_k for one frequency.
 
-    Parameters:
-    y_k (np.ndarray): Fourier transformed time series data of shape (n, p).
+    Parameters
+    ----------
+    u_k : np.ndarray
+        Array of shape (p, p), where u_k[:, nu] is the nu-th vector
+        at the current frequency.
 
-    Returns:
-    np.ndarray: Design matrix Z_k of shape (n, p, p*(p-1)/2).
+    Returns
+    -------
+    np.ndarray
+        Design matrix of shape (p, p, p*(p-1)//2).
+        Z_k[nu, j, :] is built from u_k[:, nu].
     """
-    n, p = y_k.shape
-    Z_k = np.zeros((n, p, int(p * (p - 1) / 2)), dtype=np.complex64)
+    p, p2 = u_k.shape
+    if p != p2:
+        raise ValueError(f"Expected u_k.shape = (p, p), got {u_k.shape}")
 
-    for j in range(n):
+    n_theta = p * (p - 1) // 2
+    Z_k = np.zeros((p, p, n_theta), dtype=np.complex64)
+
+    for nu in range(p):
+        vec = u_k[:, nu]
         count = 0
-        for i in range(1, p):
-            Z_k[j, i, count : count + i] = y_k[j, :i]
-            count += i
+        for j in range(1, p):
+            Z_k[nu, j, count : count + j] = vec[:j]
+            count += j
 
     return Z_k
 
 
-def _compute_chunked_Zmatrix(y_ft: np.ndarray) -> np.ndarray:
+def _compute_Zmatrix_from_u(u: np.ndarray) -> np.ndarray:
     """
-    Compute the design matrix Z, a 3D array (The design matrix Z_k for every frequency k).
+    Compute the design matrices for all frequencies and eigen-components.
 
-    Parameters:
-    y_ft (np.ndarray): Fourier transformed time series data of shape (chunks, n_per_chunk, p).
+    Parameters
+    ----------
+    u : np.ndarray
+        Array of shape (n_freq, p, p).
 
-    Returns:
-    np.ndarray: 3D array of design matrices Z_k for each frequency k.
+    Returns
+    -------
+    np.ndarray
+        Array of shape (n_freq, p, p, p*(p-1)//2), interpreted as
+        Z[freq, nu, j, theta].
     """
-    chunks, n_per_chunk, p = y_ft.shape
-    if p == 1:
-        return np.zeros((chunks, n_per_chunk, 0), dtype=np.complex64)
-
-    if chunks == 1:
-        y_ls = np.squeeze(y_ft, axis=0)
-        Z_ = _compute_Zmatrix(y_ls)
-    else:
-        y_ls = np.squeeze(np.split(y_ft, chunks))
-        Z_ = np.array([_compute_Zmatrix(x) for x in y_ls])
-
-    return Z_
+    return np.array([_compute_Zmatrix_from_uk(u_k) for u_k in u])
 
 
 def DR_basis(freq: np.ndarray, N=10):
@@ -163,14 +183,13 @@ def compute_chunked_fft(
     fmax_for_analysis: float,
     fs: float,
     fmin_for_analysis: float = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+    fmin_idx_extension: int = 0,
+    fmax_idx_extension: int = 32,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Scaled fft and get the elements of freq = 1:[Nquist] (or 1:[fmax_for_analysis] if specified)
     discarding the rest of freqs
     """
-
-    if np.any(np.mean(x, axis=0) != 0) or np.any(np.std(x, axis=0) != 1):
-        logger.warning("Input data not standardised!")
 
     orig_n, p = x.shape
     if orig_n < p:
@@ -182,7 +201,7 @@ def compute_chunked_fft(
     chunked_x = np.array(np.split(x[0 : n_per_chunk * nchunks, :], nchunks))
     assert chunked_x.shape == (nchunks, n_per_chunk, p)
 
-    #chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
+    # chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
 
     # compute fft for each chunk
     y_ft = np.apply_along_axis(np.fft.fft, 1, chunked_x)
@@ -216,6 +235,34 @@ def compute_chunked_fft(
     fmin_idx = 0
     if fmin_for_analysis is not None:
         fmin_idx = np.searchsorted(ftrue_y, fmin_for_analysis)
-    y_ft = y_ft[:, fmin_idx:fmax_idx, :]
-    fq_y = fq_y[fmin_idx:fmax_idx]
-    return y_ft, fq_y
+
+    padded_fmin_idx = fmin_idx
+    if fmin_for_analysis is not None:
+        padded_fmin_idx = max(fmin_idx - int(fmin_idx_extension), 0)
+
+    padded_fmax_idx = fmax_idx
+    if fmax_for_analysis is not None:
+        padded_fmax_idx = min(fmax_idx + int(fmax_idx_extension), len(ftrue_y))
+
+    output_keep_mask = np.zeros(padded_fmax_idx - padded_fmin_idx, dtype=bool)
+    output_start = fmin_idx - padded_fmin_idx
+    output_end = output_start + (fmax_idx - fmin_idx)
+    output_keep_mask[output_start:output_end] = True
+
+    y_ft = y_ft[:, padded_fmin_idx:padded_fmax_idx, :]
+    fq_y = fq_y[padded_fmin_idx:padded_fmax_idx]
+
+    block_periodograms = y_ft[:, :, :, None] * np.conjugate(
+        y_ft[:, :, None, :]
+    )
+    summed_periodogram = np.sum(block_periodograms, axis=0)
+    diag_idx = np.arange(summed_periodogram.shape[-1])
+    summed_periodogram[:, diag_idx, diag_idx] = summed_periodogram[
+        :, diag_idx, diag_idx
+    ].real
+
+    eigvals, eigvecs = np.linalg.eigh(summed_periodogram)
+    eigvals = np.clip(eigvals.real, a_min=0.0, a_max=None)
+    u = eigvecs * np.sqrt(eigvals)[:, None, :]
+
+    return y_ft, fq_y, u, output_keep_mask

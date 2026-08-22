@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
 
-from .analysis_data import AnalysisData
+from .eigenbasis_analysis_data import EigenbasisAnalysisData
 
 tfd = tfp.distributions
 tfb = tfp.bijectors
@@ -20,7 +20,7 @@ class BlockBayesianModel:
 
     def __init__(
         self,
-        data: AnalysisData,
+        data: EigenbasisAnalysisData,
         block_index: int,
         degree_fluctuate: float = None,
         init_params: List[tf.Variable] = None,
