@@ -19,9 +19,11 @@ class BayesianModel:
         data: AnalysisData,
         degree_fluctuate: float = None,
         init_params: List[tf.Variable] = None,
+        Nbw: float = 1.0,
     ):
 
         self.data = data
+        self.Nbw = tf.convert_to_tensor(Nbw, dtype=tf.float32)
 
         if degree_fluctuate is None:
             degree_fluctuate = data.N_delta / 2
@@ -176,7 +178,7 @@ class BayesianModel:
         xγ = tf.matmul(
             self.data.Xmat_delta, tf.transpose(params[0], [0, 2, 1])
         )
-        sum_xγ = -tf.reduce_sum(xγ, [1, 2])
+        sum_xγ = -tf.reduce_sum(xγ, [1, 2]) * self.data.nchunks
         exp_xγ_inv = tf.exp(-xγ)
 
         xα = tf.matmul(
@@ -186,22 +188,29 @@ class BayesianModel:
             self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1])
         )
 
-        # Z = Sum [(xα + i xβ) * y]
+        # Z = Sum [(xα + i xβ) * u]
+        u_re = tf.transpose(self.data.u_re, perm=[2, 0, 1])
+        u_im = tf.transpose(self.data.u_im, perm=[2, 0, 1])
+
+        Z_re_blocks = tf.transpose(self.data.Z_re, perm=[1, 0, 2, 3])
+        Z_im_blocks = tf.transpose(self.data.Z_im, perm=[1, 0, 2, 3])
+
         Z_theta_re = tf.linalg.matvec(
-            tf.expand_dims(self.data.Z_re, 0), xα
-        ) - tf.linalg.matvec(tf.expand_dims(self.data.Z_im, 0), xβ)
+            Z_re_blocks[None, ...], xα
+        ) - tf.linalg.matvec(Z_im_blocks[None, ...], xβ)
         Z_theta_im = tf.linalg.matvec(
-            tf.expand_dims(self.data.Z_re, 0), xβ
-        ) + tf.linalg.matvec(tf.expand_dims(self.data.Z_im, 0), xα)
+            Z_re_blocks[None, ...], xβ
+        ) + tf.linalg.matvec(Z_im_blocks[None, ...], xα)
 
-        u_re = self.data.y_re - Z_theta_re
-        u_im = self.data.y_im - Z_theta_im
+        resid_re = u_re[None, ...] - Z_theta_re
+        resid_im = u_im[None, ...] - Z_theta_im
 
-        numerator = tf.square(u_re) + tf.square(u_im)
+        numerator_each = tf.square(resid_re) + tf.square(resid_im)
+        numerator = tf.reduce_sum(numerator_each, axis=1)
         internal = tf.multiply(numerator, exp_xγ_inv)
         tmp2_ = -tf.reduce_sum(internal, [-2, -1])  # sum over p and freq
         log_lik = tf.reduce_sum(sum_xγ + tmp2_)  # sum over all LnL
-        return log_lik
+        return log_lik / self.Nbw
 
     def logpost(self, params: List[tf.Variable]) -> tf.float32:
         return self.loglik(params) + self.logprior(params)
