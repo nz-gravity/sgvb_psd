@@ -2,6 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from matplotlib.lines import Line2D
 
 from sgvb_psd.postproc import format_axes, plot_psdq, plot_single_psd
@@ -9,6 +10,7 @@ from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
 
 
+@pytest.mark.slow
 def test_all_modes(plot_dir):
     sigma = np.array([[1.0, 0.9], [0.9, 1.0]])
     var_coeffs = np.array(
