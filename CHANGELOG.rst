@@ -5,6 +5,24 @@ CHANGELOG
 =========
 
 
+.. _changelog-v2.0.0:
+
+v2.0.0 (2026-08-24)
+===================
+
+Features
+--------
+
+* Add joint and factorized SGVB inference with the blocked eigenbasis likelihood.
+* Preserve the original blocked Whittle likelihood as the default inference mode.
+* Add the effective window-bandwidth correction and frequency-bin extensions.
+
+Testing
+-------
+
+* Add a VAR(2) comparison of all three inference modes against the true PSD.
+
+
 .. _changelog-v0.0.9:
 
 v0.0.9 (2025-09-10)
