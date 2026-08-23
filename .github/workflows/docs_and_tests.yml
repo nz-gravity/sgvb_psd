@@ -1,6 +1,9 @@
 name: Tests and Documentation
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -17,10 +20,12 @@ jobs:
       - run: pip install -e .[dev]
       - run: pytest --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
       - uses: coverallsapp/github-action@v2
+        if: github.event_name == 'push'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   docs:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
