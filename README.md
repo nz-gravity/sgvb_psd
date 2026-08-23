@@ -5,43 +5,38 @@
 
 # SGVB PSD Estimator
 
-This repository contains the code for the paper 
-["Variational inference for correlated gravitational wave detector network noise" by Jianan Liu at al. 2024](https://arxiv.org/abs/2409.13224)
+This repository contains the code for the papers
+
+- ["Variational inference for correlated gravitational wave detector network noise" by Jianan Liu et al. 2024](https://arxiv.org/abs/2409.13224)
+- "Variational Bayesian Inference for the Spectral Structure of LISA Noise" (arXiv link to be added)
 
 Documentation is available at https://nz-gravity.github.io/sgvb_psd/
 
 ## Inference modes
 
-Version 2 keeps the original non-eigenbasis joint SGVB method as the
+Version 2.0.0 keeps the original non-eigenbasis joint SGVB method as the
 default and adds joint and factorized eigenbasis methods.
 
 ```python
 from sgvb_psd.psd_estimator import PSDEstimator
 
-# Original non-eigenbasis joint SGVB
+# Original joint SGVB with the blocked Whittle likelihood (default)
 legacy = PSDEstimator(x=data)
 
-# Eigenbasis joint SGVB
+# Joint SGVB with the blocked eigenbasis likelihood
 eigen_joint = PSDEstimator(
     x=data,
     use_eigenbasis=True,
     posterior_mode="joint",
 )
 
-# Eigenbasis factorized SGVB
+# Factorized (componentwise) SGVB with the blocked eigenbasis likelihood
 eigen_factorized = PSDEstimator(
     x=data,
     use_eigenbasis=True,
     posterior_mode="factorized",
 )
 ```
-
-All three methods accept `Nbw`, an effective window-bandwidth correction
-computed before constructing the estimator. Its default value is `1.0`.
-The eigenbasis methods additionally use `fmin_idx_extension` and
-`fmax_idx_extension`, whose defaults are `0` and `32` frequency bins.
-
-
 
 ## Development
 
@@ -63,6 +58,6 @@ pytest tests/
 2. Push the tag to GitHub
 
 ```
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
+git tag -a v2.0.0 -m "v2.0.0"
+git push origin v2.0.0
 ```
