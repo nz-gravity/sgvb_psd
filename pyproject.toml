@@ -106,6 +106,9 @@ multi_line_output = 3
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: long-running integration and visual comparison tests",
+]
 
 
 [project.scripts]

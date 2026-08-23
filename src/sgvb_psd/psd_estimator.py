@@ -5,7 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from hyperopt import fmin, hp, tpe
 
-from .backend import BayesianModel, ViRunner
+from .backend import (
+    BayesianModel,
+    EigenbasisViRunner,
+    FactorizedViRunner,
+    ViRunner,
+)
 from .logging import logger
 from .postproc import plot_coherence
 from .postproc.plot_losses import plot_losses
@@ -93,6 +98,11 @@ class PSDEstimator:
         n_elbo_maximisation_steps=500,
         init_params=None,
         fmin_for_analysis=None,
+        fmin_idx_extension=0,
+        fmax_idx_extension=32,
+        Nbw=1.0,
+        use_eigenbasis=False,
+        posterior_mode="joint",
     ):
         """
         Initialize the PSDEstimator.
@@ -121,6 +131,16 @@ class PSDEstimator:
         :type lr_range: tuple, optional
         :param n_elbo_maximisation_steps: Number of steps for maximizing the ELBO, defaults to 1000.
         :type n_elbo_maximisation_steps: int, optional
+        :param fmin_idx_extension: Number of extra frequency bins to include below fmin_for_analysis for eigenbasis fitting, defaults to 0.
+        :type fmin_idx_extension: int, optional
+        :param fmax_idx_extension: Number of extra frequency bins to include above fmax_for_analysis for eigenbasis fitting, defaults to 32.
+        :type fmax_idx_extension: int, optional
+        :param Nbw: Effective window-bandwidth correction applied to the likelihood, defaults to 1.0.
+        :type Nbw: float, optional
+        :param use_eigenbasis: Whether to use the eigenbasis likelihood representation, defaults to False.
+        :type use_eigenbasis: bool, optional
+        :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
+        :type posterior_mode: str, optional
         """
 
         if seed is not None:
@@ -144,7 +164,21 @@ class PSDEstimator:
             fmax_for_analysis = self.n // 2
         self.fmax_for_analysis = fmax_for_analysis
         self.fmin_for_analysis = fmin_for_analysis
-
+        self.fmin_idx_extension = fmin_idx_extension
+        self.fmax_idx_extension = fmax_idx_extension
+        self.Nbw = Nbw
+        if not np.isfinite(self.Nbw) or self.Nbw <= 0:
+            raise ValueError("Nbw must be finite and positive")
+        self.use_eigenbasis = use_eigenbasis
+        if posterior_mode not in {"joint", "factorized"}:
+            raise ValueError(
+                'posterior_mode must be either "joint" or "factorized"'
+            )
+        if not self.use_eigenbasis and posterior_mode == "factorized":
+            raise ValueError(
+                "posterior_mode='factorized' requires use_eigenbasis=True"
+            )
+        self.posterior_mode = posterior_mode
         self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
         self.pdgrm = self.pdgrm * self.psd_scaling**2
         self.max_hyperparm_eval = max_hyperparm_eval
@@ -177,8 +211,8 @@ class PSDEstimator:
         self.uniform_ci = None
         self.psd_all = None
         self.runtimes = {}
-        self.inference_runner = ViRunner(
-            self.x,
+        runner_kwargs = dict(
+            x=self.x,
             N_theta=self.N_theta,
             nchunks=self.nchunks,
             fmax_for_analysis=self.fmax_for_analysis,
@@ -186,7 +220,21 @@ class PSDEstimator:
             degree_fluctuate=self.degree_fluctuate,
             fs=self.fs,
             init_params=init_params,
+            Nbw=self.Nbw,
         )
+        if self.use_eigenbasis:
+            runner_kwargs.update(
+                fmin_idx_extension=self.fmin_idx_extension,
+                fmax_idx_extension=self.fmax_idx_extension,
+            )
+            runner_cls = (
+                FactorizedViRunner
+                if self.posterior_mode == "factorized"
+                else EigenbasisViRunner
+            )
+        else:
+            runner_cls = ViRunner
+        self.inference_runner = runner_cls(**runner_kwargs)
 
     def _learning_rate_optimisation_objective(self, lr):
         """
@@ -204,6 +252,8 @@ class PSDEstimator:
             inference_size=self.N_samples,
             n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
+        if isinstance(vi_losses, list):
+            return sum(losses[-1].numpy() for losses in vi_losses)
         return vi_losses[-1].numpy()
 
     def _find_optimal_learing_rate(self):
@@ -271,8 +321,18 @@ class PSDEstimator:
         ) = self.model.compute_psd(
             self.samps, psd_scaling=self.psd_scaling, fs=self.fs
         )
+        self.psd_all = self._trim_to_requested_band(self.psd_all)
+        self.pointwise_ci = self._trim_to_requested_band(self.pointwise_ci)
+        self.uniform_ci = self._trim_to_requested_band(self.uniform_ci)
         self.runtimes = times
         return self.psd_all, self.pointwise_ci, self.uniform_ci
+
+    def _trim_to_requested_band(self, arr: np.ndarray) -> np.ndarray:
+        """Remove extra fitting-only frequency bins from PSD-shaped arrays."""
+        keep_mask = getattr(self.model.data, "output_keep_mask", None)
+        if keep_mask is None:
+            return arr
+        return arr[:, keep_mask, :, :]
 
     @property
     def freq(self) -> np.ndarray:
@@ -409,10 +469,14 @@ class PSDEstimator:
         :return: Samples from the posterior distribution
         :rtype: np.ndarray
         """
-        spline_params = self.inference_runner.surrogate_posterior.sample(
-            n_samples
-        )
+        if hasattr(self.inference_runner, "sample_posterior"):
+            spline_params = self.inference_runner.sample_posterior(n_samples)
+        else:
+            spline_params = self.inference_runner.surrogate_posterior.sample(
+                n_samples
+            )
         psd = self.model.compute_psd(
             spline_params, psd_scaling=self.psd_scaling, fs=self.fs
         )
+        psd = tuple(self._trim_to_requested_band(arr) for arr in psd)
         return spline_params, psd

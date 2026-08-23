@@ -4,49 +4,47 @@ on:
   push:
     branches:
       - main
-#  workflow_run:
-#    workflows: ['Tests and Coverage']
-#    types:
-#      - completed
-
+    tags:
+      - "v*"
 
 jobs:
-
   release:
     runs-on: ubuntu-latest
     concurrency: release
+
     permissions:
       id-token: write
       contents: write
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-          ref: main       # Replace with your branch
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip' # Enable caching for pip dependencies
+          python-version: "3.11"
+          cache: pip
 
-
+      # Normal main updates: calculate and create the next version automatically.
       - name: Semantic Version Release
         id: release
-        # Adjust tag with desired version if applicable.
+        if: github.ref == 'refs/heads/main'
         uses: python-semantic-release/python-semantic-release@v9.12.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"
           git_committer_email: "actions@users.noreply.github.com"
 
-
-      - name: build dist for pypi
-        if: steps.release.outputs.released == 'true'
+      # Build after either an automatic release or a manually pushed version tag.
+      - name: Build distribution
+        if: startsWith(github.ref, 'refs/tags/v') || steps.release.outputs.released == 'true'
         run: |
           python -m pip install --upgrade build
           python -m build --sdist --wheel --outdir dist/
 
-      - name: pypi-publish
-        if: steps.release.outputs.released == 'true'
+      - name: Publish to PyPI
+        if: startsWith(github.ref, 'refs/tags/v') || steps.release.outputs.released == 'true'
         uses: pypa/gh-action-pypi-publish@v1.12.3
