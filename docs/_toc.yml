@@ -5,6 +5,8 @@ chapters:
 - file: examples/simulation_example.ipynb
 - file: examples/ET_example.ipynb
 - file: examples/lisa_example.ipynb
+- file: examples/lisa_example_v2.ipynb
+  title: LISA Example V2
 - file: examples/paper_plots
 - url: https://arxiv.org/abs/2409.13224
   title: Paper
