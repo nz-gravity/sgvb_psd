@@ -55,7 +55,7 @@ dev = [
     "pre-commit",
     "flake8",
     "black",
-    "jupyter-book",
+    "jupyter-book<2",
     "sphinx-inline-tabs",
     "pytest_click"
 ]
