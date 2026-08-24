@@ -26,7 +26,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
 
       # Normal main updates: calculate and create the next version automatically.
       - name: Semantic Version Release
