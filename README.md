@@ -12,6 +12,14 @@ This repository contains the code for the papers
 
 Documentation is available at https://nz-gravity.github.io/sgvb_psd/
 
+## Installation
+
+Install the latest release from PyPI:
+
+```bash
+pip install sgvb_psd
+```
+
 ## Inference modes
 
 Version 2.0.0 keeps the original non-eigenbasis joint SGVB method as the
@@ -50,4 +58,3 @@ Ensure unit tests are passing locally and on the CI!
 ```
 pytest tests/
 ```
-
