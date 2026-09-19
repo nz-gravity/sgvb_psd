@@ -25,6 +25,18 @@ class BayesianModel:
         self.data = data
         self.Nbw = tf.convert_to_tensor(Nbw, dtype=tf.float32)
 
+        # Basis matrices that place the frequency-dependent theta parameters
+        # in the strict lower triangle of the modified Cholesky factor.  The
+        # order matches np.tril_indices and the existing Z-matrix code.
+        p = int(self.data.p)
+        n_theta = p * (p - 1) // 2
+        row_idx, col_idx = np.tril_indices(p, k=-1)
+        strict_lower_basis = np.zeros((n_theta, p, p), dtype=np.complex64)
+        strict_lower_basis[np.arange(n_theta), row_idx, col_idx] = 1.0
+        self.strict_lower_basis = tf.convert_to_tensor(
+            strict_lower_basis, dtype=tf.complex64
+        )
+
         if degree_fluctuate is None:
             degree_fluctuate = data.N_delta / 2
 
@@ -164,7 +176,8 @@ class BayesianModel:
             ltau_theta,
         ]
 
-    def loglik(self, params: List[tf.Variable]) -> tf.float32:
+    def loglik_original(self, params: List[tf.Variable]) -> tf.float32:
+        """Original blocked likelihood evaluated from every block DFT."""
         # y_re:            self.y_re
         # y_im:            self.y_im
         # Z_:              self.Zar
@@ -203,6 +216,43 @@ class BayesianModel:
         internal = tf.multiply(numerator, exp_x_gamma_inv)
         tmp2_ = -tf.reduce_sum(internal, [-2, -1])  # sum over p and freq
         log_lik = tf.reduce_sum(sum_x_gamma + tmp2_)  # sum over all LnL
+        return log_lik / self.Nbw
+
+    def loglik(self, params: List[tf.Variable]) -> tf.float32:
+        """Blocked likelihood evaluated from the summed periodogram matrix."""
+        x_gamma = tf.matmul(
+            self.data.Xmat_delta, tf.transpose(params[0], [0, 2, 1])
+        )
+
+        x_alpha = tf.matmul(
+            self.data.Xmat_theta, tf.transpose(params[2], [0, 2, 1])
+        )
+        x_beta = tf.matmul(
+            self.data.Xmat_theta, tf.transpose(params[4], [0, 2, 1])
+        )
+        theta = tf.complex(x_alpha, x_beta)
+
+        p = int(self.data.p)
+        identity = tf.eye(p, dtype=tf.complex64)[None, None, :, :]
+        lower_triangle = tf.tensordot(
+            theta,
+            self.strict_lower_basis,
+            axes=[[-1], [0]],
+        )
+        T = identity - lower_triangle
+
+        summed_periodogram = self.data.summed_periodogram[None, :, :, :]
+        transformed_periodogram = tf.matmul(
+            tf.matmul(T, summed_periodogram), T, adjoint_b=True
+        )
+        residual_power = tf.math.real(
+            tf.linalg.diag_part(transformed_periodogram)
+        )
+
+        log_lik = -tf.reduce_sum(
+            tf.cast(self.data.nchunks, tf.float32) * x_gamma
+            + residual_power * tf.exp(-x_gamma)
+        )
         return log_lik / self.Nbw
 
     def logpost(self, params: List[tf.Variable]) -> tf.float32:

@@ -43,6 +43,23 @@ class AnalysisData:  # Parent used to create BayesianModel object
             self.fs,
             self.fmin_for_analysis,
         )
+
+        # Sum the block-level Fourier outer products once.  The blocked
+        # Whittle likelihood only depends on the blocks through this matrix,
+        # so it can be reused at every MAP and VI iteration.
+        block_periodograms = self.y_ft[:, :, :, None] * np.conjugate(
+            self.y_ft[:, :, None, :]
+        )
+        summed_periodogram = np.sum(block_periodograms, axis=0)
+        del block_periodograms
+
+        # The diagonal is real by construction; remove round-off imaginary
+        # parts before converting the matrix to a TensorFlow tensor.
+        diag_idx = np.arange(summed_periodogram.shape[-1])
+        summed_periodogram[:, diag_idx, diag_idx] = np.real(
+            summed_periodogram[:, diag_idx, diag_idx]
+        )
+
         self.Zar = _compute_chunked_Zmatrix(self.y_ft)
         Xmat_delta, Xmat_theta = _compute_Xmatrices(
             self.freq, N_delta, N_theta
@@ -52,6 +69,9 @@ class AnalysisData:  # Parent used to create BayesianModel object
         y_ft = tf.convert_to_tensor(self.y_ft, dtype=tf.complex64)
         self.y_re = tf.math.real(y_ft)
         self.y_im = tf.math.imag(y_ft)
+        self.summed_periodogram = tf.convert_to_tensor(
+            summed_periodogram, dtype=tf.complex64
+        )
         self.Xmat_delta = tf.convert_to_tensor(Xmat_delta, dtype=tf.float32)
         self.Xmat_theta = tf.convert_to_tensor(Xmat_theta, dtype=tf.float32)
 
