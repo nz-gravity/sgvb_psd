@@ -1,0 +1,98 @@
+[
+  {
+    "case": "ar1-small",
+    "backend": "jax",
+    "seed": 0,
+    "exit_code": 0,
+    "first_result_wall_s": 2.3418413330218755,
+    "process_total_s_including_evaluation": 3.249633875035215
+  },
+  {
+    "case": "ar1-small",
+    "backend": "tf",
+    "seed": 0,
+    "exit_code": 0,
+    "first_result_wall_s": 6.887620958965272,
+    "process_total_s_including_evaluation": 14.72165620897431
+  },
+  {
+    "case": "ar1-small",
+    "backend": "tf",
+    "seed": 1,
+    "exit_code": 0,
+    "first_result_wall_s": 6.890245374990627,
+    "process_total_s_including_evaluation": 14.771262041002046
+  },
+  {
+    "case": "ar1-small",
+    "backend": "jax",
+    "seed": 1,
+    "exit_code": 0,
+    "first_result_wall_s": 2.344545875035692,
+    "process_total_s_including_evaluation": 3.2447240000474267
+  },
+  {
+    "case": "var2-small",
+    "backend": "jax",
+    "seed": 0,
+    "exit_code": 0,
+    "first_result_wall_s": 3.4150544999865815,
+    "process_total_s_including_evaluation": 5.393015249981545
+  },
+  {
+    "case": "var2-small",
+    "backend": "tf",
+    "seed": 0,
+    "exit_code": 0,
+    "first_result_wall_s": 7.0070601250045,
+    "process_total_s_including_evaluation": 15.242802832974121
+  },
+  {
+    "case": "var2-small",
+    "backend": "tf",
+    "seed": 1,
+    "exit_code": 0,
+    "first_result_wall_s": 6.983830415992998,
+    "process_total_s_including_evaluation": 15.228265165991616
+  },
+  {
+    "case": "var2-small",
+    "backend": "jax",
+    "seed": 1,
+    "exit_code": 0,
+    "first_result_wall_s": 3.419554582971614,
+    "process_total_s_including_evaluation": 5.392534792015795
+  },
+  {
+    "case": "var2-large",
+    "backend": "jax",
+    "seed": 0,
+    "exit_code": 0,
+    "first_result_wall_s": 5.294544333009981,
+    "process_total_s_including_evaluation": 11.760838625021279
+  },
+  {
+    "case": "var2-large",
+    "backend": "tf",
+    "seed": 0,
+    "exit_code": 0,
+    "first_result_wall_s": 8.1095808329992,
+    "process_total_s_including_evaluation": 19.392230874975212
+  },
+  {
+    "case": "var2-large",
+    "backend": "tf",
+    "seed": 1,
+    "exit_code": 0,
+    "first_result_wall_s": 8.167400417034514,
+    "process_total_s_including_evaluation": 19.437510917021427
+  },
+  {
+    "case": "var2-large",
+    "backend": "jax",
+    "seed": 1,
+    "exit_code": 0,
+    "first_result_wall_s": 5.438894084014464,
+    "process_total_s_including_evaluation": 12.201540625013877
+  }
+]

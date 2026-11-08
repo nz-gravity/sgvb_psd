@@ -1,0 +1,20 @@
+12:36:45|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+12:36:45|SGVB-PSD|INFO| Dividing data (512, 1) into (2, 256, 1) chunks
+12:36:45|SGVB-PSD|INFO| Final PSD will be of shape: 127 x 1 x 1
+12:36:45|SGVB-PSD|WARNING| Input data not standardised!
+12:36:46|SGVB-PSD|INFO| Using provided learning rate: 0.003
+12:36:46|SGVB-PSD|INFO| Training model
+12:36:46|SGVB-PSD|INFO| Model trained in 0.78s
+12:36:46|SGVB-PSD|INFO| Computing posterior PSDs
+FIRST_RESULT {"worker_elapsed_s": 2.322772999992594}
+12:36:47|SGVB-PSD|WARNING| Input data not standardised!
+12:36:47|SGVB-PSD|INFO| Using provided learning rate: 0.003
+12:36:47|SGVB-PSD|INFO| Training model
+12:36:47|SGVB-PSD|INFO| Model trained in 0.04s
+12:36:47|SGVB-PSD|INFO| Computing posterior PSDs
+12:36:47|SGVB-PSD|WARNING| Input data not standardised!
+12:36:47|SGVB-PSD|INFO| Using provided learning rate: 0.003
+12:36:47|SGVB-PSD|INFO| Training model
+12:36:47|SGVB-PSD|INFO| Model trained in 0.04s
+12:36:47|SGVB-PSD|INFO| Computing posterior PSDs
+12:36:48|SGVB-PSD|WARNING| Input data not standardised!

@@ -13,13 +13,14 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import numpyro
+import reference_bootstrap
 import tensorflow as tf
 import tensorflow_probability as tfp
 from numpyro.distributions import constraints
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.optim import Adam
 
-from sgvb_psd.backend import AnalysisData, BayesianModel, ViRunner
+from sgvb_tf.backend import AnalysisData, BayesianModel, ViRunner
 from sgvb_psd.jax_backend import JaxViRunner
 from sgvb_psd.jax_backend.model import PARAMETER_NAMES
 from simulation_cases import cases
@@ -193,8 +194,11 @@ def compare_summaries(a, b):
 class FreeMeanDiagnosticRunner(JaxViRunner):
     """Reproduce the initial implementation's distinct variational family."""
 
-    def _guide(self):
-        for name, a in zip(PARAMETER_NAMES, self.model.trainable_vars):
+    def _guide(self, locations=None):
+        for name, a in zip(
+            PARAMETER_NAMES,
+            self.model.trainable_vars if locations is None else locations,
+        ):
             if a.size:
                 loc = numpyro.param(name + "_loc", a[0])
                 scale = numpyro.param(

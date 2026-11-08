@@ -1,0 +1,213 @@
+warning: The cache directory `.uv-cache` is inside the build source directory `.` and may be included in distributions
+Building wheel...
+INFO add_decision: Id::<PubGrubPackage>(0) @ 0a0.dev0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(1) @ 84.2.1 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(2) @ 10.3.4 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(3) @ 0.48.0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(4) @ 2.6.0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(5) @ 26.3 without checking dependencies
+<repo>/.uv-cache/builds-v0/.tmpeawb0y/lib/python3.12/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: SetuptoolsDeprecationWarning: `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  corresp(dist, value, root_dir)
+<repo>/.uv-cache/builds-v0/.tmpeawb0y/lib/python3.12/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+!!
+
+        ********************************************************************************
+        Please consider removing the following classifiers in favor of a SPDX license expression:
+
+        License :: OSI Approved :: MIT License
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  dist._finalize_license_expression()
+<repo>/.uv-cache/builds-v0/.tmpeawb0y/lib/python3.12/site-packages/setuptools/dist.py:765: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+!!
+
+        ********************************************************************************
+        Please consider removing the following classifiers in favor of a SPDX license expression:
+
+        License :: OSI Approved :: MIT License
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  self._finalize_license_expression()
+running egg_info
+writing src/sgvb_psd.egg-info/PKG-INFO
+writing dependency_links to src/sgvb_psd.egg-info/dependency_links.txt
+writing entry points to src/sgvb_psd.egg-info/entry_points.txt
+writing requirements to src/sgvb_psd.egg-info/requires.txt
+writing top-level names to src/sgvb_psd.egg-info/top_level.txt
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/sgvb_psd.egg-info/SOURCES.txt'
+<repo>/.uv-cache/builds-v0/.tmpeawb0y/lib/python3.12/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: SetuptoolsDeprecationWarning: `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  corresp(dist, value, root_dir)
+<repo>/.uv-cache/builds-v0/.tmpeawb0y/lib/python3.12/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+!!
+
+        ********************************************************************************
+        Please consider removing the following classifiers in favor of a SPDX license expression:
+
+        License :: OSI Approved :: MIT License
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  dist._finalize_license_expression()
+<repo>/.uv-cache/builds-v0/.tmpeawb0y/lib/python3.12/site-packages/setuptools/dist.py:765: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+!!
+
+        ********************************************************************************
+        Please consider removing the following classifiers in favor of a SPDX license expression:
+
+        License :: OSI Approved :: MIT License
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  self._finalize_license_expression()
+running bdist_wheel
+running build
+running build_py
+creating build/lib/sgvb_psd
+copying src/sgvb_psd/logging.py -> build/lib/sgvb_psd
+copying src/sgvb_psd/psd_estimator.py -> build/lib/sgvb_psd
+copying src/sgvb_psd/_version.py -> build/lib/sgvb_psd
+copying src/sgvb_psd/_psd_summary.py -> build/lib/sgvb_psd
+copying src/sgvb_psd/__init__.py -> build/lib/sgvb_psd
+copying src/sgvb_psd/_spectral.py -> build/lib/sgvb_psd
+creating build/lib/sgvb_psd/postproc
+copying src/sgvb_psd/postproc/plot_coherence.py -> build/lib/sgvb_psd/postproc
+copying src/sgvb_psd/postproc/plot_triangle_psd_coherence.py -> build/lib/sgvb_psd/postproc
+copying src/sgvb_psd/postproc/__init__.py -> build/lib/sgvb_psd/postproc
+copying src/sgvb_psd/postproc/plot_losses.py -> build/lib/sgvb_psd/postproc
+copying src/sgvb_psd/postproc/plot_psd.py -> build/lib/sgvb_psd/postproc
+copying src/sgvb_psd/postproc/psd_analyzer.py -> build/lib/sgvb_psd/postproc
+creating build/lib/sgvb_psd/utils
+copying src/sgvb_psd/utils/sim_varma.py -> build/lib/sgvb_psd/utils
+copying src/sgvb_psd/utils/periodogram.py -> build/lib/sgvb_psd/utils
+copying src/sgvb_psd/utils/__init__.py -> build/lib/sgvb_psd/utils
+copying src/sgvb_psd/utils/utils.py -> build/lib/sgvb_psd/utils
+creating build/lib/sgvb_psd/backend
+copying src/sgvb_psd/backend/__init__.py -> build/lib/sgvb_psd/backend
+creating build/lib/sgvb_psd/jax_backend
+copying src/sgvb_psd/jax_backend/vi_runner.py -> build/lib/sgvb_psd/jax_backend
+copying src/sgvb_psd/jax_backend/guides.py -> build/lib/sgvb_psd/jax_backend
+copying src/sgvb_psd/jax_backend/__init__.py -> build/lib/sgvb_psd/jax_backend
+copying src/sgvb_psd/jax_backend/model.py -> build/lib/sgvb_psd/jax_backend
+creating build/lib/sgvb_psd/utils/benchmark
+copying src/sgvb_psd/utils/benchmark/benchmark.py -> build/lib/sgvb_psd/utils/benchmark
+copying src/sgvb_psd/utils/benchmark/__init__.py -> build/lib/sgvb_psd/utils/benchmark
+copying src/sgvb_psd/utils/benchmark/cli.py -> build/lib/sgvb_psd/utils/benchmark
+running egg_info
+writing src/sgvb_psd.egg-info/PKG-INFO
+writing dependency_links to src/sgvb_psd.egg-info/dependency_links.txt
+writing entry points to src/sgvb_psd.egg-info/entry_points.txt
+writing requirements to src/sgvb_psd.egg-info/requires.txt
+writing top-level names to src/sgvb_psd.egg-info/top_level.txt
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/sgvb_psd.egg-info/SOURCES.txt'
+copying src/sgvb_psd/postproc/matplotlibrc -> build/lib/sgvb_psd/postproc
+installing to build/bdist.macosx-11.0-arm64/wheel
+running install
+running install_lib
+creating build/bdist.macosx-11.0-arm64/wheel
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd
+copying build/lib/sgvb_psd/logging.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd
+copying build/lib/sgvb_psd/psd_estimator.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd
+copying build/lib/sgvb_psd/_version.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd
+copying build/lib/sgvb_psd/_psd_summary.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/matplotlibrc -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/plot_coherence.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/plot_triangle_psd_coherence.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/__init__.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/plot_losses.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/plot_psd.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/postproc/psd_analyzer.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/postproc
+copying build/lib/sgvb_psd/__init__.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd/utils
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd/utils/benchmark
+copying build/lib/sgvb_psd/utils/benchmark/benchmark.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils/benchmark
+copying build/lib/sgvb_psd/utils/benchmark/__init__.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils/benchmark
+copying build/lib/sgvb_psd/utils/benchmark/cli.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils/benchmark
+copying build/lib/sgvb_psd/utils/sim_varma.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils
+copying build/lib/sgvb_psd/utils/periodogram.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils
+copying build/lib/sgvb_psd/utils/__init__.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils
+copying build/lib/sgvb_psd/utils/utils.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/utils
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd/backend
+copying build/lib/sgvb_psd/backend/__init__.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/backend
+copying build/lib/sgvb_psd/_spectral.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd/jax_backend
+copying build/lib/sgvb_psd/jax_backend/vi_runner.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/jax_backend
+copying build/lib/sgvb_psd/jax_backend/guides.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/jax_backend
+copying build/lib/sgvb_psd/jax_backend/__init__.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/jax_backend
+copying build/lib/sgvb_psd/jax_backend/model.py -> build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd/jax_backend
+running install_egg_info
+Copying src/sgvb_psd.egg-info to build/bdist.macosx-11.0-arm64/wheel/./sgvb_psd-2.0.1.dev12+g40a46f571.d20261108-py3.12.egg-info
+running install_scripts
+creating build/bdist.macosx-11.0-arm64/wheel/sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/WHEEL
+creating '/tmp/sgvb-upgrade-wheel/.tmp-vrmdd0gi/sgvb_psd-2.0.1.dev12+g40a46f571.d20261108-py3-none-any.whl' and adding 'build/bdist.macosx-11.0-arm64/wheel' to it
+adding 'sgvb_psd/__init__.py'
+adding 'sgvb_psd/_psd_summary.py'
+adding 'sgvb_psd/_spectral.py'
+adding 'sgvb_psd/_version.py'
+adding 'sgvb_psd/logging.py'
+adding 'sgvb_psd/psd_estimator.py'
+adding 'sgvb_psd/backend/__init__.py'
+adding 'sgvb_psd/jax_backend/__init__.py'
+adding 'sgvb_psd/jax_backend/guides.py'
+adding 'sgvb_psd/jax_backend/model.py'
+adding 'sgvb_psd/jax_backend/vi_runner.py'
+adding 'sgvb_psd/postproc/__init__.py'
+adding 'sgvb_psd/postproc/matplotlibrc'
+adding 'sgvb_psd/postproc/plot_coherence.py'
+adding 'sgvb_psd/postproc/plot_losses.py'
+adding 'sgvb_psd/postproc/plot_psd.py'
+adding 'sgvb_psd/postproc/plot_triangle_psd_coherence.py'
+adding 'sgvb_psd/postproc/psd_analyzer.py'
+adding 'sgvb_psd/utils/__init__.py'
+adding 'sgvb_psd/utils/periodogram.py'
+adding 'sgvb_psd/utils/sim_varma.py'
+adding 'sgvb_psd/utils/utils.py'
+adding 'sgvb_psd/utils/benchmark/__init__.py'
+adding 'sgvb_psd/utils/benchmark/benchmark.py'
+adding 'sgvb_psd/utils/benchmark/cli.py'
+adding 'sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/licenses/LICENSE'
+adding 'sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/METADATA'
+adding 'sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/WHEEL'
+adding 'sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/entry_points.txt'
+adding 'sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/top_level.txt'
+adding 'sgvb_psd-2.0.1.dev12+g40a46f571.d20261108.dist-info/RECORD'
+removing build/bdist.macosx-11.0-arm64/wheel
+Successfully built /tmp/sgvb-upgrade-wheel/sgvb_psd-2.0.1.dev12+g40a46f571.d20261108-py3-none-any.whl

@@ -183,3 +183,5 @@ cython_debug/
 !/validation/*.log
 !/validation/vi-diagnosis/*.log
 !/validation/guide-comparison/*.log
+!/validation/reference/requirements.txt
+!/validation/upgrade-benchmark/*.log

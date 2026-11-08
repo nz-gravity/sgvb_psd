@@ -1,0 +1,137 @@
+{
+  "case": "ar1-small",
+  "backend": "tf",
+  "seed": 1,
+  "import_and_prepare_s": 3.039666833006777,
+  "config": {
+    "fs": 1.0,
+    "chunks": 2,
+    "basis": 6,
+    "samples": 512,
+    "channels": 1,
+    "map_steps": 1000,
+    "vi_steps": 5000,
+    "output_draws": 128,
+    "heldout_draws": 2048,
+    "lr_map": 0.003,
+    "lr_vi": 0.05,
+    "vi_family": "fixed MAP mean diagonal",
+    "full_model_calibration_validated": false
+  },
+  "fits": [
+    {
+      "iteration": 0,
+      "fit_s": 3.8306479590246454,
+      "map_s": 0.8172938749776222,
+      "vi_s": 2.6362829169956967,
+      "postprocess_and_sampling_s": 0.3770711670513265,
+      "finite": true,
+      "negative_elbo": 183.35057575846412,
+      "negative_elbo_mc_se": 0.05610886199953912,
+      "functional_names": [
+        "PSD[0] at 0.05 cycles/sample",
+        "PSD[0] at 0.2 cycles/sample",
+        "PSD[0] at 0.4 cycles/sample",
+        "bandpower[0] positive bins x2"
+      ],
+      "functional_quantiles": [
+        [
+          2.989277735947715,
+          0.9731405386932855,
+          0.3420867702333801,
+          1.214676478469023
+        ],
+        [
+          3.7042228468303757,
+          1.1527905013544801,
+          0.42611657688916493,
+          1.420259478376393
+        ],
+        [
+          4.486119724942291,
+          1.3622357820760997,
+          0.5332493945233916,
+          1.639209264696925
+        ]
+      ],
+      "artifact": "ar1-small-tf-1-0.npz"
+    },
+    {
+      "iteration": 1,
+      "fit_s": 3.6483206669799984,
+      "map_s": 0.6234940839931369,
+      "vi_s": 2.6563002499751747,
+      "postprocess_and_sampling_s": 0.3685263330116868,
+      "finite": true,
+      "negative_elbo": 183.35057575846412,
+      "negative_elbo_mc_se": 0.05610886199953912,
+      "functional_names": [
+        "PSD[0] at 0.05 cycles/sample",
+        "PSD[0] at 0.2 cycles/sample",
+        "PSD[0] at 0.4 cycles/sample",
+        "bandpower[0] positive bins x2"
+      ],
+      "functional_quantiles": [
+        [
+          2.989277735947715,
+          0.9731405386932855,
+          0.3420867702333801,
+          1.214676478469023
+        ],
+        [
+          3.7042228468303757,
+          1.1527905013544801,
+          0.42611657688916493,
+          1.420259478376393
+        ],
+        [
+          4.486119724942291,
+          1.3622357820760997,
+          0.5332493945233916,
+          1.639209264696925
+        ]
+      ],
+      "artifact": "ar1-small-tf-1-1.npz"
+    },
+    {
+      "iteration": 2,
+      "fit_s": 3.555364834028296,
+      "map_s": 0.6200169160147198,
+      "vi_s": 2.568865666980855,
+      "postprocess_and_sampling_s": 0.36648225103272125,
+      "finite": true,
+      "negative_elbo": 183.35057575846412,
+      "negative_elbo_mc_se": 0.05610886199953912,
+      "functional_names": [
+        "PSD[0] at 0.05 cycles/sample",
+        "PSD[0] at 0.2 cycles/sample",
+        "PSD[0] at 0.4 cycles/sample",
+        "bandpower[0] positive bins x2"
+      ],
+      "functional_quantiles": [
+        [
+          2.989277735947715,
+          0.9731405386932855,
+          0.3420867702333801,
+          1.214676478469023
+        ],
+        [
+          3.7042228468303757,
+          1.1527905013544801,
+          0.42611657688916493,
+          1.420259478376393
+        ],
+        [
+          4.486119724942291,
+          1.3622357820760997,
+          0.5332493945233916,
+          1.639209264696925
+        ]
+      ],
+      "artifact": "ar1-small-tf-1-2.npz"
+    }
+  ],
+  "first_result_worker_elapsed_s": 6.872053375001997,
+  "loaded_jax": false,
+  "loaded_tensorflow": true
+}

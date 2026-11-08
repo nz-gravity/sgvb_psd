@@ -3,10 +3,10 @@
 This report began with the first usable JAX/NumPyro implementation of the original joint
 SGVB model for 1D and multivariate input. It is an incremental migration in
 `nz-gravity/sgvb_psd`; it does not combine two duplicate source trees.
-The current branch now defaults to a JAX-only runtime, with TensorFlow
-isolated in an optional legacy extra. Eigenbasis modes remain available only
-through explicit legacy selection until their JAX ports are validated. See
-the [current guide/runtime report](GUIDE_COMPARISON.md).
+The current branch is a JAX-only runtime. TensorFlow code is archived under
+`validation/reference`, outside the installable package; no legacy extra
+remains. Eigenbasis modes are not yet ported to JAX. See the
+[current upgrade and benchmark report](UPGRADE_BENCHMARK.md).
 
 **Follow-up:** the initial 30% VI discrepancy was traced to trainable JAX
 means versus fixed TensorFlow MAP means. The current JAX default now matches
@@ -41,8 +41,8 @@ summaries and filenames did not locate the separate earlier JAX prototype.
 ## Implementation
 
 Select `PSDEstimator(..., backend="jax", seed=0)` for the JAX implementation.
-The input may be `(n,)` or `(n, p)`. The original target and optional TensorFlow
-modes are preserved; the runtime default changes to JAX. JAX eigenbasis/factorized selection raises an explicit
+The input may be `(n,)` or `(n, p)`. The original joint target is preserved; the installed runtime uses JAX.
+Historical TensorFlow modes remain only in the validation archive. JAX eigenbasis/factorized selection raises an explicit
 error; it never silently changes the requested method.
 
 Shared NumPy preprocessing and existing interval summaries were extracted
@@ -68,8 +68,8 @@ without changing their formulas. The new backend provides:
 - PSD plotting retains a two-dimensional axes array even for one channel.
 
 `import sgvb_psd.jax_backend` works without importing TensorFlow. The public
-`PSDEstimator` now also imports and runs without TensorFlow. The retained
-comparison/eigenbasis backend is imported lazily and requires `[legacy]`.
+`PSDEstimator` now also imports and runs without TensorFlow. The comparison/eigenbasis source is now outside the installed runtime,
+under `validation/reference`.
 
 ## Checks and numerical evidence
 
@@ -78,7 +78,9 @@ Commands were run from the repository root:
 ```bash
 UV_CACHE_DIR=.uv-cache uv venv --python 3.12 .venv
 UV_CACHE_DIR=.uv-cache uv pip install --python .venv/bin/python \
-  -e '.[dev,legacy]' -c validation/jax-constraints.txt
+  -e '.[dev]' -c validation/jax-constraints.txt
+UV_CACHE_DIR=.uv-cache uv pip install --python .venv/bin/python \
+  -r validation/reference/requirements.txt
 export MPLBACKEND=Agg MPLCONFIGDIR=.mpl-cache
 .venv/bin/python -m pytest -m 'not slow' -q
 .venv/bin/python -m pytest tests/test_all_modes.py -q
@@ -192,7 +194,8 @@ guides, explicit decisions on prior
 scale and PSD units, then provenance-cleared AR workflow integration and
 the JAX eigenbasis/factorized port. GW150914, GPU behavior, long-run
 calibration, and the remote Linux CI result are not claimed by the local
-checks. Do not merge or retire TensorFlow on the strength of these controls.
+checks. The runtime dependency removal is an authorized upgrade, not evidence
+that all historical modes or full-model calibration have been replaced.
 
 ## Delivery status
 

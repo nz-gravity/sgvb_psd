@@ -1,0 +1,21 @@
+12:45:54|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+/tmp/sgvb-wheel-smoke/sgvb_psd/postproc/plot_psd.py:260: SyntaxWarning: invalid escape sequence '\m'
+  lbl = "\mathbf{S}_{" + lbl + "}"
+/tmp/sgvb-wheel-smoke/sgvb_psd/postproc/plot_psd.py:263: SyntaxWarning: invalid escape sequence '\R'
+  lbl = "$\Re(" + lbl + ")$"
+/tmp/sgvb-wheel-smoke/sgvb_psd/postproc/plot_psd.py:265: SyntaxWarning: invalid escape sequence '\I'
+  lbl = "$\Im(" + lbl + ")$"
+12:45:54|SGVB-PSD|INFO| Final PSD will be of shape: 31 x 1 x 1
+12:45:54|SGVB-PSD|WARNING| Input data not standardised!
+12:45:55|SGVB-PSD|INFO| Using provided learning rate: 0.001
+12:45:55|SGVB-PSD|INFO| Training model
+12:45:55|SGVB-PSD|INFO| Model trained in 0.60s
+12:45:55|SGVB-PSD|INFO| Computing posterior PSDs
+wheel public inference passed 1 channels (8, 31, 1, 1)
+12:45:55|SGVB-PSD|INFO| Final PSD will be of shape: 31 x 2 x 2
+12:45:55|SGVB-PSD|WARNING| Input data not standardised!
+12:45:55|SGVB-PSD|INFO| Using provided learning rate: 0.001
+12:45:55|SGVB-PSD|INFO| Training model
+12:45:56|SGVB-PSD|INFO| Model trained in 0.90s
+12:45:56|SGVB-PSD|INFO| Computing posterior PSDs
+wheel public inference passed 2 channels (8, 31, 2, 2)

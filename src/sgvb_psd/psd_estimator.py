@@ -137,25 +137,25 @@ class PSDEstimator:
         :type use_eigenbasis: bool, optional
         :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
         :type posterior_mode: str, optional
-        :param backend: "jax" (default) or optional legacy "tensorflow". JAX
+        :param backend: "jax". TensorFlow is archived outside the runtime. JAX
             supports the original joint model for one or more channels.
         :param elbo_samples: Number of Monte Carlo particles per JAX ELBO
-            step, defaults to 1. Ignored by TensorFlow.
+            step, defaults to 1.
         :param optimize_mean: Optimize JAX guide means as well as scales.
             The default False matches TensorFlow's fixed MAP means. This
             changes the variational approximation, not the target model.
         """
 
-        if backend not in {"tensorflow", "jax"}:
-            raise ValueError('backend must be either "tensorflow" or "jax"')
-        if backend == "jax" and (use_eigenbasis or posterior_mode != "joint"):
+        if backend != "jax":
+            raise ValueError(
+                "This upgrade requires backend='jax'; TensorFlow is an archived validation reference, not a runtime backend"
+            )
+        if use_eigenbasis or posterior_mode != "joint":
             raise ValueError(
                 "the JAX backend currently supports original joint inference only; "
-                "eigenbasis modes require backend='tensorflow' with sgvb_psd[legacy]"
+                "eigenbasis/factorized JAX modes are not yet ported; the old implementation is archived under validation/reference"
             )
         self.backend = backend
-        if backend == "tensorflow" and optimize_mean:
-            raise ValueError("optimize_mean=True requires backend='jax'")
         if backend == "jax":
             x = np.asarray(x)
             if x.ndim == 1:
@@ -168,21 +168,6 @@ class PSDEstimator:
                 raise ValueError(
                     "x must have positive finite standard deviation"
                 )
-
-        if backend == "tensorflow":
-            try:
-                from .backend import (
-                    EigenbasisViRunner,
-                    FactorizedViRunner,
-                    ViRunner,
-                )
-                from .utils.tf_utils import set_seed
-            except ModuleNotFoundError as error:
-                raise ImportError(
-                    "TensorFlow comparison/eigenbasis modes require sgvb_psd[legacy]"
-                ) from error
-            if seed is not None:
-                set_seed(seed)
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -260,28 +245,12 @@ class PSDEstimator:
             init_params=init_params,
             Nbw=self.Nbw,
         )
-        if backend == "jax":
-            from .jax_backend import JaxViRunner
+        from .jax_backend import JaxViRunner
 
-            runner_cls = JaxViRunner
-            runner_kwargs.update(
-                seed=seed,
-                elbo_samples=elbo_samples,
-                optimize_mean=optimize_mean,
-            )
-        elif self.use_eigenbasis:
-            runner_kwargs.update(
-                fmin_idx_extension=self.fmin_idx_extension,
-                fmax_idx_extension=self.fmax_idx_extension,
-            )
-            runner_cls = (
-                FactorizedViRunner
-                if self.posterior_mode == "factorized"
-                else EigenbasisViRunner
-            )
-        else:
-            runner_cls = ViRunner
-        self.inference_runner = runner_cls(**runner_kwargs)
+        runner_kwargs.update(
+            seed=seed, elbo_samples=elbo_samples, optimize_mean=optimize_mean
+        )
+        self.inference_runner = JaxViRunner(**runner_kwargs)
 
     def _learning_rate_optimisation_objective(self, lr):
         """

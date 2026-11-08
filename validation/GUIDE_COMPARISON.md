@@ -14,7 +14,7 @@ is the leading next experiment, not yet a validated production replacement.
 
 ## What the TensorFlow custom guide actually is
 
-In [ViRunner.init_surrogate_posterior](../src/sgvb_psd/backend/vi_runner.py#L156):
+In [ViRunner.init_surrogate_posterior](reference/sgvb_tf/backend/vi_runner.py#L156):
 
 - Default `variation_factor <= 0`: a product of TFP diagonal multivariate
   Normals, assembled into a joint distribution. Means are MAP tensor
@@ -200,27 +200,22 @@ qualified independent references remain required.
 
 ## Runtime change and remaining scientific capabilities
 
-`PSDEstimator` now defaults to JAX, lazily importing the old backend only
-for `backend="tensorflow"`. TensorFlow/TFP/tf-keras are removed from normal
-dependencies and live in the optional `[legacy]` extra. Python 3.10+ is
-required; local validation uses 3.12. Logging and shared test fixtures no
-longer force a TensorFlow import. The old `[jax]` extra remains an alias.
+The installed package now supports JAX only. TensorFlow/TFP/tf-keras and
+the optional `[legacy]` extra have been removed. Historical code and tests
+opt into the checkout-only `validation/reference/sgvb_tf` archive; it is
+excluded from the wheel. Python 3.10+ is required. The old `[jax]` extra
+remains an empty compatibility alias. The [upgrade report](UPGRADE_BENCHMARK.md)
+records current tests, packaging inspection and measured cold/warm costs;
+the earlier 65-test/27-test results below are historical experiment logs.
 
-A fresh `.venv-jaxonly` installed from project-local cache contains **no
-TensorFlow, TFP or tf-keras**. It passed **27 tests**, with five explicitly
-skipped legacy-reference modules. The full comparison environment passed
-**65 tests**, with one expected missing-extra test skipped. A subprocess
-test forbids all legacy imports while importing and running the public
-default estimator. Metadata tests also check normal dependencies.
-
-This is a JAX-only **default runtime**, not complete replacement of every
-scientific mode. Joint and factorized eigenbasis inference still require
-the optional legacy backend and explicit selection; unsupported JAX mode
-requests fail clearly. The original-joint 1D/multivariate model, PSD/coherence
-postprocessing and benchmark CLI run without TensorFlow. AR integration
-still requires provenance clearance. Scientific normalization/prior-scale
-questions and the calibration limitations remain separate from dependency
-cleanup. No remote publication was retried during this investigation.
+This removes the legacy runtime dependency, while leaving explicit scientific
+gaps. Original-joint 1D/multivariate inference, PSD/coherence postprocessing
+and the benchmark CLI run in JAX. Eigenbasis joint/factorized modes are
+archived and requests now fail explicitly until JAX ports are validated.
+AR integration still requires provenance clearance. Prior-scale/PSD-unit
+questions and full-model calibration remain open. The richer guides above
+are research comparisons, not a production family selector. No remote
+publication was retried during this investigation.
 
 Reproduction: [guide experiment](compare_guides.py),
 [shared target and row grouping](guide_tools.py),

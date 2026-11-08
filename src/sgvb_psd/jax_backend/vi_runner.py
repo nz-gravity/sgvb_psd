@@ -14,6 +14,23 @@ from numpyro.optim import Adam
 from .model import PARAMETER_NAMES, JaxAnalysisData, JaxBayesianModel
 
 
+def _fit_map(model, initial_params, learning_rate, steps):
+    """Reuse compilation for one immutable data/model configuration."""
+    optimizer = Adam(learning_rate)
+
+    def step(state, _):
+        params = optimizer.get_params(state)
+        loss, grads = jax.value_and_grad(lambda z: -jnp.sum(model.logpost(z)))(
+            params
+        )
+        return optimizer.update(grads, state), -loss
+
+    state, values = jax.lax.scan(
+        step, optimizer.init(initial_params), None, length=steps
+    )
+    return optimizer.get_params(state), values
+
+
 class JaxViRunner:
     def __init__(
         self,
@@ -53,8 +70,16 @@ class JaxViRunner:
         self.elbo_samples = elbo_samples
         self.optimize_mean = bool(optimize_mean)
         self.svi_params = None
+        self.svi = None
+        self._svi_fits = {}
+        model = self.model
+        # A per-runner cache avoids retaining every dataset in a global cache.
+        self._map_fit = jax.jit(
+            lambda initial, rate, steps: _fit_map(model, initial, rate, steps),
+            static_argnames=("steps",),
+        )
 
-    def _numpyro_model(self):
+    def _numpyro_model(self, locations=None):
         params = []
         for name, shape in zip(PARAMETER_NAMES, self.model.parameter_shapes):
             if np.prod(shape):
@@ -68,8 +93,11 @@ class JaxViRunner:
         # improper base measure avoids adding another prior or Jacobian.
         numpyro.factor("log_posterior", self.model.logpost(tuple(params))[0])
 
-    def _guide(self):
-        for name, initial in zip(PARAMETER_NAMES, self.model.trainable_vars):
+    def _guide(self, locations=None):
+        locations = (
+            self.model.trainable_vars if locations is None else locations
+        )
+        for name, initial in zip(PARAMETER_NAMES, locations):
             shape = initial.shape[1:]
             if np.prod(shape):
                 # The reference TF guide captures params[i][0] as a tensor:
@@ -89,23 +117,15 @@ class JaxViRunner:
             raise ValueError("lr_map must be finite and positive")
         if not isinstance(ntrain_map, int) or ntrain_map < 0:
             raise ValueError("ntrain_map must be a nonnegative integer")
-        optimizer = Adam(lr_map)
-        state = optimizer.init(self.model.trainable_vars)
-
-        def step(state, _):
-            params = optimizer.get_params(state)
-            loss, grads = jax.value_and_grad(
-                lambda z: -jnp.sum(self.model.logpost(z))
-            )(params)
-            return optimizer.update(grads, state), -loss
-
         start = time.perf_counter()
-        state, self.lp = jax.jit(
-            lambda s: jax.lax.scan(step, s, None, length=ntrain_map)
-        )(state)
-        jax.block_until_ready((state, self.lp))
+        params, self.lp = self._map_fit(
+            self.model.trainable_vars,
+            jnp.asarray(lr_map, jnp.float32),
+            ntrain_map,
+        )
+        jax.block_until_ready((params, self.lp))
         self.map_time = time.perf_counter() - start
-        self.model.trainable_vars = optimizer.get_params(state)
+        self.model.trainable_vars = params
 
     def run_phase2(self, n_elbo_maximisation_steps=1000):
         if (
@@ -116,17 +136,27 @@ class JaxViRunner:
                 "n_elbo_maximisation_steps must be a positive integer"
             )
         self.rng_key, key = jax.random.split(self.rng_key)
-        self.svi = SVI(
-            self._numpyro_model,
-            self._guide,
-            Adam(5e-2),
-            Trace_ELBO(num_particles=self.elbo_samples),
-        )
+        if self.svi is None:
+            self.svi = SVI(
+                self._numpyro_model,
+                self._guide,
+                Adam(5e-2),
+                Trace_ELBO(num_particles=self.elbo_samples),
+            )
+        if n_elbo_maximisation_steps not in self._svi_fits:
+            # Locations are dynamic arguments. Capturing mutable MAP arrays
+            # in a cached guide would silently reuse stale means on reruns.
+            self._svi_fits[n_elbo_maximisation_steps] = jax.jit(
+                lambda rng_key, locations: self.svi.run(
+                    rng_key,
+                    n_elbo_maximisation_steps,
+                    locations,
+                    progress_bar=False,
+                )
+            )
         start = time.perf_counter()
-        result = self.svi.run(
-            key,
-            n_elbo_maximisation_steps,
-            progress_bar=False,
+        result = self._svi_fits[n_elbo_maximisation_steps](
+            key, self.model.trainable_vars
         )
         jax.block_until_ready(result)
         self.vi_time = time.perf_counter() - start

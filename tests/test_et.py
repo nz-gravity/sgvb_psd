@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_tf.psd_estimator import PSDEstimator
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(HERE, "..", "docs")
@@ -28,7 +28,6 @@ def load_et_data(npts):
 def test_et(plot_dir):
     t0 = time.time()
     optim = PSDEstimator(
-        backend="tensorflow",
         x=load_et_data(2**14),
         N_theta=100,
         nchunks=8,

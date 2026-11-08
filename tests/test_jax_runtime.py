@@ -68,17 +68,46 @@ def test_default_package_requirements_exclude_tensorflow():
     )
 
 
-def test_missing_legacy_extra_has_explicit_error():
-    import importlib.util
-
-    if importlib.util.find_spec("tensorflow") is not None:
-        pytest.skip(
-            "legacy dependencies installed in this comparison environment"
-        )
-    with pytest.raises(ImportError, match=r"sgvb_psd\[legacy\]"):
+def test_removed_tensorflow_runtime_has_explicit_error():
+    with pytest.raises(ValueError, match="archived validation reference"):
         PSDEstimator(
             np.random.default_rng(0).normal(size=(64, 2)), backend="tensorflow"
         )
+
+
+def test_cached_vi_uses_updated_map_locations():
+    x = np.random.default_rng(7).normal(size=64)
+    runner = JaxViRunner(x, N_theta=2)
+    runner.map_time = 0.0
+    runner.rng_key = jax.random.PRNGKey(7)
+    runner.run_phase2(1)
+    first = np.asarray(runner.kdl_losses)
+    changed = list(runner.model.trainable_vars)
+    changed[0] = changed[0].at[0, 0, 0].add(0.7)
+    runner.model.trainable_vars = tuple(changed)
+    runner.rng_key = jax.random.PRNGKey(7)
+    runner.run_phase2(1)
+    fresh = JaxViRunner(x, N_theta=2, init_params=changed)
+    fresh.map_time = 0.0
+    fresh.rng_key = jax.random.PRNGKey(7)
+    fresh.run_phase2(1)
+    np.testing.assert_allclose(runner.kdl_losses, fresh.kdl_losses, rtol=1e-6)
+    assert not np.allclose(first, runner.kdl_losses)
+
+
+def test_cached_map_respects_changed_learning_rate():
+    x = np.random.default_rng(8).normal(size=64)
+    runner = JaxViRunner(x, N_theta=2)
+    initial = runner.model.trainable_vars
+    runner.run_phase1(lr_map=0.001, ntrain_map=2)
+    slow = runner.model.trainable_vars
+    runner.model.trainable_vars = initial
+    runner.run_phase1(lr_map=0.02, ntrain_map=2)
+    fresh = JaxViRunner(x, N_theta=2)
+    fresh.run_phase1(lr_map=0.02, ntrain_map=2)
+    for a, b in zip(runner.model.trainable_vars, fresh.model.trainable_vars):
+        np.testing.assert_allclose(a, b, rtol=1e-6)
+    assert not np.allclose(slow[0], runner.model.trainable_vars[0])
 
 
 def varied_params(model, draws=4):

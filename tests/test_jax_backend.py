@@ -16,7 +16,7 @@ pytest.importorskip("numpyro")
 import jax.numpy as jnp
 
 from sgvb_psd._spectral import compute_chunked_fft
-from sgvb_psd.backend import AnalysisData, BayesianModel
+from sgvb_tf.backend import AnalysisData, BayesianModel
 from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel, JaxViRunner
 from sgvb_psd.psd_estimator import PSDEstimator
 
@@ -158,7 +158,7 @@ def test_prior_jacobians_against_independent_scalar_formula():
 @pytest.mark.parametrize("p", [1, 2])
 def test_reference_and_default_jax_guides_keep_map_locations(p):
     from numpyro.handlers import seed, substitute, trace
-    from sgvb_psd.backend import ViRunner
+    from sgvb_tf.backend import ViRunner
     from sgvb_psd.jax_backend.model import PARAMETER_NAMES
 
     reference, model = paired_models(p, 3)

@@ -1,0 +1,7 @@
+reformatted src/sgvb_psd/jax_backend/vi_runner.py
+reformatted validation/summarize_upgrade.py
+reformatted validation/benchmark_conditional_accuracy.py
+reformatted validation/benchmark_upgrade.py
+
+All done! ✨ 🍰 ✨
+4 files reformatted, 12 files left unchanged.

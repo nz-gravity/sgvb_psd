@@ -22,37 +22,23 @@ pip install sgvb_psd
 
 On this migration branch, install the new JAX-only runtime from the checkout
 with `pip install -e .` (Python 3.10+; validation uses 3.12). TensorFlow and
-TensorFlow Probability are no longer default dependencies. Existing PyPI
+TensorFlow Probability are no longer runtime dependencies or install extras. Existing PyPI
 releases may still use the previous runtime.
 
 ## Inference modes
 
-The original non-eigenbasis joint SGVB model now runs in JAX by default.
-Eigenbasis modes are retained in the optional legacy comparison path;
-install `pip install -e '.[legacy]'` and explicitly select TensorFlow until
-their JAX ports are validated.
+The original non-eigenbasis joint SGVB model runs in JAX for one or more
+channels. This is a breaking runtime upgrade: TensorFlow selection and
+both eigenbasis modes are removed from the installed package. Requests for
+unported modes fail explicitly. The MIT historical implementation remains
+under [validation/reference](validation/reference/README.md) for isolated
+comparisons, outside the runtime and wheel. Eigenbasis and factorized JAX
+ports remain unfinished.
 
 ```python
 from sgvb_psd.psd_estimator import PSDEstimator
 
-# Original joint SGVB with the blocked Whittle likelihood (default)
-joint = PSDEstimator(x=data)
-
-# Joint SGVB with the blocked eigenbasis likelihood
-eigen_joint = PSDEstimator(
-    x=data,
-    backend="tensorflow",
-    use_eigenbasis=True,
-    posterior_mode="joint",
-)
-
-# Factorized (componentwise) SGVB with the blocked eigenbasis likelihood
-eigen_factorized = PSDEstimator(
-    x=data,
-    backend="tensorflow",
-    use_eigenbasis=True,
-    posterior_mode="factorized",
-)
+joint = PSDEstimator(x=data)  # blocked Whittle likelihood
 ```
 
 ## JAX runtime and experimental migration
@@ -76,8 +62,7 @@ estimator = PSDEstimator(
 psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
 ```
 
-The default runtime imports no TensorFlow; the optional legacy path retains
-the eigenbasis modes. The JAX
+The installed runtime imports no TensorFlow. The JAX
 guide keeps its means at MAP by default, matching the current TensorFlow
 implementation. Set `optimize_mean=True` to train JAX guide means too;
 this changes the variational approximation while keeping the target model.
@@ -89,6 +74,9 @@ include AR prewhitening or eigenbasis inference. See the
 checks, conventions, known issues, and the remaining consolidation work.
 The [guide comparison](validation/GUIDE_COMPARISON.md) distinguishes the
 custom guide family from its inference engine and compares richer options.
+The [upgrade benchmark](validation/UPGRADE_BENCHMARK.md) reports cold and
+warmed costs alongside posterior agreement and conditional accuracy checks;
+full-model calibration is not yet established.
 
 ## Development
 

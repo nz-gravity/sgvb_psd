@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 tf = pytest.importorskip("tensorflow", reason="optional legacy comparison")
-from sgvb_psd.backend import BayesianModel, AnalysisData
+from sgvb_tf.backend import BayesianModel, AnalysisData
 from sgvb_psd.logging import logger
 from sgvb_psd.postproc.plot_psd import plot_psdq
 from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
-from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_tf.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
-from sgvb_psd.utils.tf_utils import set_seed
+from sgvb_tf.utils.tf_utils import set_seed
 
 
 def get_var_data(npts):
@@ -43,7 +43,7 @@ def test_var_psd_generation(plot_dir):
         fs=2 * np.pi,
         seed=0,
     )
-    optim = PSDEstimator(backend="tensorflow", **kwags)
+    optim = PSDEstimator(**kwags)
 
     optim.run()
 
@@ -89,9 +89,7 @@ def test_var_psd_generation(plot_dir):
 
     # see if we can load old params
     spline_params, psd = optim.sample_posterior(1)
-    optim2 = PSDEstimator(
-        backend="tensorflow", **kwags, init_params=spline_params
-    )
+    optim2 = PSDEstimator(**kwags, init_params=spline_params)
 
 
 def test_one_train_step_with_chunks():
@@ -118,8 +116,7 @@ def test_one_train_step_with_chunks():
 #
 # def test_var_psd_save_and_resume(plot_dir, output_dir):
 #     var2_data = get_var_data(2 ** 8)
-#     optim = PSDEstimator(backend="tensorflow",
-#         N_theta=30,
+#     optim = PSDEstimator(#         N_theta=30,
 #         nchunks=1,
 #         ntrain_map=100,
 #         max_hyperparm_eval=1,

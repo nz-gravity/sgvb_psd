@@ -51,7 +51,6 @@ dependencies = [
 
 [project.optional-dependencies]
 jax = [] # Compatibility alias; JAX is now the default runtime.
-legacy = ["tensorflow-probability>=0.24.0", "tf-keras"]
 dev = [
     "pytest",
     "pytest-cov",

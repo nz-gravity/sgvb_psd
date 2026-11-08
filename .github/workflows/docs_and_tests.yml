@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
-      - run: pip install -e '.[dev,legacy]' -c validation/jax-constraints.txt
+      - run: pip install -e '.[dev]' -c validation/jax-constraints.txt
       - name: Build the book
         run: jupyter-book build docs --config docs/_config.yaml
       - name: GitHub Pages action
@@ -55,7 +55,8 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
-      - run: pip install -e '.[dev,legacy]' -c validation/jax-constraints.txt
+      - run: pip install -e '.[dev]' -c validation/jax-constraints.txt
+      - run: pip install -r validation/reference/requirements.txt
       - run: pytest tests/test_jax_backend.py -q
         env:
           MPLBACKEND: Agg

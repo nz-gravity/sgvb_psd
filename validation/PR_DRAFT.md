@@ -1,26 +1,34 @@
-Title: Make the default SGVB runtime JAX-only and retain explicit legacy comparisons
+Title: Upgrade SGVB to a JAX-only runtime with 1D support and measured parity
 
-Add `PSDEstimator(..., backend="jax")` for univariate and multivariate
-original-joint inference. Shared preprocessing and interval summaries retain
-the current conventions. TensorFlow is removed from default dependencies
-and imports; both eigenbasis modes remain in the explicitly selected
-optional `[legacy]` path until their JAX ports are validated. The JAX default matches the reference's fixed
-MAP guide means; `optimize_mean=True` explicitly enables trainable means.
+Replace the installed TensorFlow runtime with JAX/NumPyro for original-joint
+1D and multivariate SGVB. Preserve the blocked Whittle target, priors and
+PSD conventions, with one target value per variational draw. The default
+guide keeps means at MAP as in TF; `optimize_mean=True` explicitly trains
+them. Cache compiled MAP/VI functions per prepared runner, passing current
+means and learning rates dynamically.
 
-The initial roughly 30% short-run PSD difference was traced to the different
-guide means, rather than a changed target. Matched-noise ELBO values,
-gradients and first optimizer updates agree; longer three-seed comparisons
-approach the same held-out objective. See `validation/VI_DIAGNOSIS.md`.
+This is a breaking upgrade: TensorFlow dependencies and the legacy extra
+are removed. Historical MIT source lives only in `validation/reference`,
+excluded from the installed package/wheel. Eigenbasis joint/factorized JAX
+ports are unfinished and requests fail explicitly. AR code from
+`cleared_unisgvb` has not been copied because licensing remains unresolved.
 
-Validation: the complete local suite passed 65 tests (one expected skip), and a fresh TensorFlow-free environment passed 27 tests (five legacy modules skipped), including existing
-VAR2D/all-mode cases and new likelihood/prior/gradient/PSD/FFT/RNG/guide tests.
-CI gains a pinned-stack JAX parity job; no remote CI result is claimed yet.
+Validation: 68 tests pass with the archived reference installed; 29 pass
+and five reference modules skip in a fresh TensorFlow-free environment.
+An offline wheel has no TF imports/dependencies or reference code, and
+passes public 1D/VAR2D smoke inference with TF imports forbidden.
 
-Keep this experimental: a 64-simulation conditional prior-predictive screen
-finds undercoverage in both diagonal guide variants. Full-covariance
-conditional controls agree much better with quadrature, but full-model
-calibration and a production covariance-aware guide remain open. AR code
-from `cleared_unisgvb` was not copied because its licensing/provenance is
-unresolved. No merge or full replacement of every scientific mode is proposed. The
-custom optional low-rank scale family has an exact JAX building block, and
-bounded comparisons of seven guide options are in `validation/GUIDE_COMPARISON.md`.
+On the UoA CPU, measured full-pipeline first-result costs improve 1.52–2.94×
+and repeated fits 1.77–10.41× across three cases. Functional medians differ
+<.46%, but interval widths differ up to 29%; these are not equal-accuracy
+or full-calibration claims. A separate 64-dataset conditional full-Gaussian
+control passes identical quadrature accuracy gates in both engines, with
+matching coverage counts and 5.17× cold/7.78× warm speedup. It is not full SGVB.
+Protocol, raw artifacts, limits and commands: `validation/UPGRADE_BENCHMARK.md`.
+
+The earlier ~30% discrepancy came from trainable versus frozen guide means.
+Matched-noise target/gradient checks and richer custom/NumPyro guide
+comparisons are in `VI_DIAGNOSIS.md` and `GUIDE_COMPARISON.md`. The inherited
+diagonal approximation has conditional undercoverage. Covariance-aware
+production inference and full-model SBC remain open. CI configuration is
+updated; no remote CI result or automatic main merge is claimed.

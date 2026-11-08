@@ -3,7 +3,7 @@ import pytest
 
 tf = pytest.importorskip("tensorflow", reason="optional legacy comparison")
 
-from sgvb_psd.backend import (
+from sgvb_tf.backend import (
     AnalysisData,
     BayesianModel,
     EigenbasisAnalysisData,
@@ -12,8 +12,8 @@ from sgvb_psd.backend import (
     FactorizedViRunner,
     ViRunner,
 )
-from sgvb_psd.backend.block_bayesian_model import BlockBayesianModel
-from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_tf.backend.block_bayesian_model import BlockBayesianModel
+from sgvb_tf.psd_estimator import PSDEstimator
 
 
 def _standardized_data(n_samples=256, dimension=3):
@@ -108,7 +108,6 @@ def test_psd_estimator_selects_requested_runner(
     use_eigenbasis, posterior_mode, runner_type
 ):
     estimator = PSDEstimator(
-        backend="tensorflow",
         x=_standardized_data(n_samples=128, dimension=2),
         N_theta=6,
         nchunks=2,
@@ -123,7 +122,6 @@ def test_psd_estimator_selects_requested_runner(
 
 def test_legacy_mode_does_not_use_eigenbasis_or_frequency_extension():
     estimator = PSDEstimator(
-        backend="tensorflow",
         x=_standardized_data(n_samples=128, dimension=2),
         N_theta=6,
         nchunks=2,
@@ -160,7 +158,6 @@ def test_eigenbasis_frequency_extension_stops_at_highest_available_bin():
 def test_psd_estimator_rejects_invalid_bandwidth_correction(Nbw):
     with pytest.raises(ValueError, match="Nbw"):
         PSDEstimator(
-            backend="tensorflow",
             x=_standardized_data(n_samples=128, dimension=2),
             N_theta=6,
             nchunks=2,
@@ -172,7 +169,6 @@ def test_psd_estimator_rejects_invalid_bandwidth_correction(Nbw):
 def test_factorized_mode_requires_eigenbasis():
     with pytest.raises(ValueError, match="requires use_eigenbasis=True"):
         PSDEstimator(
-            backend="tensorflow",
             x=_standardized_data(n_samples=128, dimension=2),
             N_theta=6,
             nchunks=2,
@@ -184,7 +180,6 @@ def test_factorized_mode_requires_eigenbasis():
 def test_psd_estimator_rejects_unknown_posterior_mode():
     with pytest.raises(ValueError, match="posterior_mode"):
         PSDEstimator(
-            backend="tensorflow",
             x=_standardized_data(n_samples=128, dimension=2),
             N_theta=6,
             nchunks=2,
@@ -196,7 +191,6 @@ def test_psd_estimator_rejects_unknown_posterior_mode():
 @pytest.mark.parametrize("posterior_mode", ["joint", "factorized"])
 def test_eigenbasis_estimator_smoke_run(posterior_mode):
     estimator = PSDEstimator(
-        backend="tensorflow",
         x=_standardized_data(n_samples=128, dimension=2),
         N_theta=6,
         N_samples=3,

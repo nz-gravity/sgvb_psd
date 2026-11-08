@@ -15,12 +15,14 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import numpyro
+import reference_bootstrap
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from sgvb_psd.backend import AnalysisData, BayesianModel
+from sgvb_tf.backend import AnalysisData, BayesianModel
 from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel
 from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_tf.psd_estimator import PSDEstimator as TFEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
 
 OUT = Path(__file__).resolve().parent
@@ -183,7 +185,7 @@ def main():
             alpha=0.2,
         )
         if name == "var2":
-            tf_estimator = PSDEstimator(**options, backend="tensorflow")
+            tf_estimator = TFEstimator(**options)
             start = time.perf_counter()
             _, tf_ci, _ = tf_estimator.run(lr=0.003)
             fit["tf_total_s_including_compile_and_postprocessing"] = (
