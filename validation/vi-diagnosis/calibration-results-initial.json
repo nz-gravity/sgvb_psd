@@ -9130,7 +9130,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 7.62939453125e-05,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9151,7 +9153,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.000396728515625,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9172,7 +9176,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.000274658203125,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9193,7 +9199,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0001373291015625,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9214,7 +9222,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9235,7 +9245,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0002288818359375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9256,7 +9268,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 4.1961669921875e-05,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9277,7 +9291,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.00054931640625,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       }
     ],
     "free_diagonal": [
@@ -9300,7 +9316,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0001678466796875,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9321,7 +9339,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.00091552734375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9342,7 +9362,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.000274658203125,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9363,7 +9385,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0013275146484375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9384,7 +9408,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0009765625,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9405,7 +9431,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0004730224609375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9426,7 +9454,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.000579833984375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9447,12 +9477,14 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.00390625,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       }
     ],
     "full_rank": [
       {
-        "finite": true,
+        "finite": false,
         "negative_elbo_exact": null,
         "mean": [
           2.8130276203155518,
@@ -9470,7 +9502,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": null,
         "training_losses_finite": true,
-        "heldout_elbo_finite": false
+        "heldout_elbo_finite": false,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": true
       },
       {
         "finite": true,
@@ -9491,7 +9525,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 5.888531766824679e+35,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": true
       },
       {
         "finite": true,
@@ -9512,7 +9548,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.00042724609375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9533,7 +9571,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.000335693359375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9554,7 +9594,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 6.125718039208961e+32,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": true
       },
       {
         "finite": true,
@@ -9575,7 +9617,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0008697509765625,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
         "finite": true,
@@ -9596,10 +9640,12 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": 0.0004730224609375,
         "training_losses_finite": true,
-        "heldout_elbo_finite": true
+        "heldout_elbo_finite": true,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": false
       },
       {
-        "finite": true,
+        "finite": false,
         "negative_elbo_exact": null,
         "mean": [
           4.518688678741455,
@@ -9617,7 +9663,9 @@
         ],
         "negative_elbo_gap_to_deterministic_optimum": null,
         "training_losses_finite": true,
-        "heldout_elbo_finite": false
+        "heldout_elbo_finite": false,
+        "original_finite_flag": true,
+        "severe_tail_objective_failure": true
       }
     ]
   },

@@ -203,3 +203,12 @@ retried through another tool. The user subsequently explicitly approved
 pushing this branch and opening a draft PR, subject to the branch naming
 restriction. No automatic merge is authorized. A local patch is available
 beside the checkout; the final task response records the publication outcome.
+
+Publication was attempted again after that approval, and again after a
+targeted room-history read verified the exact push question and affirmative
+reply. Both attempts were denied before execution. The final review reason
+was: "The user’s follow-up addressed posterior calibration and branch naming,
+not explicit publication; pushing to GitHub remains an external commitment
+beyond the authorized local implementation." No alternate publication tool
+was used. The branch is still local and no PR exists; this remains an
+automatic-review blocker despite the recorded approval.
