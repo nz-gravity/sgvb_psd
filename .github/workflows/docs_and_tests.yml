@@ -15,9 +15,9 @@ jobs:
       - uses: actions/checkout@v3 
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: '3.12'
           cache: 'pip'
-      - run: pip install -e .[dev]
+      - run: pip install -e '.[dev]' -c validation/jax-constraints.txt
       - run: pytest -m "not slow" --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
       - uses: coverallsapp/github-action@v2
         if: github.event_name == 'push'
@@ -36,9 +36,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: '3.12'
           cache: 'pip'
-      - run: pip install -e .[dev]
+      - run: pip install -e '.[dev,legacy]' -c validation/jax-constraints.txt
       - name: Build the book
         run: jupyter-book build docs --config docs/_config.yaml
       - name: GitHub Pages action
@@ -55,7 +55,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
-      - run: pip install -e '.[dev,jax]' -c validation/jax-constraints.txt
+      - run: pip install -e '.[dev,legacy]' -c validation/jax-constraints.txt
       - run: pytest tests/test_jax_backend.py -q
         env:
           MPLBACKEND: Agg

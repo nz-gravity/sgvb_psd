@@ -19,7 +19,7 @@ namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 [project]
 name = "sgvb_psd"
 dynamic = ["version"] # scm versioning (using tags)
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 description = "A python package for estimating the power spectral density (PSD) of correlated multivariate detector noise using variational inference (VI)."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -32,14 +32,15 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: Jupyter"
 ]
 dependencies = [
-    "tensorflow-probability>=0.24.0",
-    "tf-keras",
+    "jax>=0.6.2",
+    "numpyro>=0.19.0",
+    "scipy",
     "pandas",
     "numpy",
     "matplotlib",
@@ -49,10 +50,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-jax = [
-    "jax>=0.4.25",
-    "numpyro>=0.15",
-]
+jax = [] # Compatibility alias; JAX is now the default runtime.
+legacy = ["tensorflow-probability>=0.24.0", "tf-keras"]
 dev = [
     "pytest",
     "pytest-cov",

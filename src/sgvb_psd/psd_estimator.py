@@ -5,18 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from hyperopt import fmin, hp, tpe
 
-from .backend import (
-    BayesianModel,
-    EigenbasisViRunner,
-    FactorizedViRunner,
-    ViRunner,
-)
 from .logging import logger
 from .postproc import plot_coherence
 from .postproc.plot_losses import plot_losses
 from .postproc.plot_psd import plot_psd
 from .utils.periodogram import get_periodogram
-from .utils.tf_utils import set_seed
 from .utils.utils import get_freq
 
 
@@ -103,7 +96,7 @@ class PSDEstimator:
         Nbw=1.0,
         use_eigenbasis=False,
         posterior_mode="joint",
-        backend="tensorflow",
+        backend="jax",
         elbo_samples=1,
         optimize_mean=False,
     ):
@@ -144,7 +137,7 @@ class PSDEstimator:
         :type use_eigenbasis: bool, optional
         :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
         :type posterior_mode: str, optional
-        :param backend: "tensorflow" (default) or experimental "jax". JAX
+        :param backend: "jax" (default) or optional legacy "tensorflow". JAX
             supports the original joint model for one or more channels.
         :param elbo_samples: Number of Monte Carlo particles per JAX ELBO
             step, defaults to 1. Ignored by TensorFlow.
@@ -157,7 +150,8 @@ class PSDEstimator:
             raise ValueError('backend must be either "tensorflow" or "jax"')
         if backend == "jax" and (use_eigenbasis or posterior_mode != "joint"):
             raise ValueError(
-                "the JAX backend currently supports original joint inference only"
+                "the JAX backend currently supports original joint inference only; "
+                "eigenbasis modes require backend='tensorflow' with sgvb_psd[legacy]"
             )
         self.backend = backend
         if backend == "tensorflow" and optimize_mean:
@@ -175,8 +169,20 @@ class PSDEstimator:
                     "x must have positive finite standard deviation"
                 )
 
-        if seed is not None and backend == "tensorflow":
-            set_seed(seed)
+        if backend == "tensorflow":
+            try:
+                from .backend import (
+                    EigenbasisViRunner,
+                    FactorizedViRunner,
+                    ViRunner,
+                )
+                from .utils.tf_utils import set_seed
+            except ModuleNotFoundError as error:
+                raise ImportError(
+                    "TensorFlow comparison/eigenbasis modes require sgvb_psd[legacy]"
+                ) from error
+            if seed is not None:
+                set_seed(seed)
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -237,7 +243,7 @@ class PSDEstimator:
         )
 
         # Internal variables
-        self.model: BayesianModel = None
+        self.model = None
         self.samps = None
         self.pointwise_ci = None
         self.uniform_ci = None

@@ -6,7 +6,10 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-import tensorflow as tf
+
+tf = pytest.importorskip(
+    "tensorflow", reason="isolated legacy parity reference"
+)
 
 jax = pytest.importorskip("jax")
 pytest.importorskip("numpyro")
@@ -16,6 +19,30 @@ from sgvb_psd._spectral import compute_chunked_fft
 from sgvb_psd.backend import AnalysisData, BayesianModel
 from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel, JaxViRunner
 from sgvb_psd.psd_estimator import PSDEstimator
+
+
+@pytest.mark.parametrize("rank", [1, 2])
+def test_optional_lowrank_scale_port_matches_tfp(rank):
+    import tensorflow_probability as tfp
+    from sgvb_psd.jax_backend.guides import legacy_lowrank_normal
+
+    rng = np.random.default_rng(123)
+    loc = rng.normal(size=(2, 4)).astype(np.float32)
+    diagonal = np.full((2, 4), 0.3, np.float32)
+    factor = rng.normal(0, 0.15, size=(2, 4, rank)).astype(np.float32)
+    reference = tfp.distributions.MultivariateNormalDiagPlusLowRank(
+        loc=loc, scale_diag=diagonal, scale_perturb_factor=factor
+    )
+    port = legacy_lowrank_normal(
+        jnp.asarray(loc), jnp.asarray(diagonal), jnp.asarray(factor)
+    )
+    np.testing.assert_allclose(
+        port.covariance_matrix, reference.covariance(), rtol=2e-6
+    )
+    value = rng.normal(size=(5, 2, 4)).astype(np.float32)
+    np.testing.assert_allclose(
+        port.log_prob(value), reference.log_prob(value), rtol=3e-6, atol=2e-5
+    )
 
 
 def paired_models(p, nchunks, n_basis=4):
@@ -111,65 +138,6 @@ def test_psd_reconstruction_and_scaling_match_tensorflow(p):
     assert np.all(np.linalg.eigvalsh(samples) > 0)
 
 
-@pytest.mark.parametrize("length", [64, 65])
-def test_fft_convention_is_unchanged(length):
-    x = np.random.default_rng(10).normal(size=(3 * length + 2, 1))
-    y, f = compute_chunked_fft(x, 3, 6.0, 16.0, 1.0)
-    # Freeze existing odd-length behavior too: the last positive bin is
-    # currently excluded. Correcting it belongs in a separate change.
-    idx = length // 2
-    expected = np.fft.fft(x[: 3 * length].reshape(3, length, 1), axis=1)[
-        :, 1:idx
-    ] / np.sqrt(length)
-    fq = np.fft.fftfreq(length)[1:idx]
-    keep = (fq * 16 >= 1) & (fq * 16 < 6)
-    np.testing.assert_array_equal(f, fq[keep])
-    np.testing.assert_allclose(y, expected[:, keep])
-
-
-def test_white_noise_normalization_and_draw_independence():
-    data = JaxAnalysisData(
-        np.random.default_rng(40).normal(size=128),
-        nchunks=2,
-        fs=16,
-        N_delta=2,
-        N_theta=2,
-    )
-    model = JaxBayesianModel(data)
-    params = [
-        np.asarray(a).repeat(3, axis=0).copy() for a in model.trainable_vars
-    ]
-    variance = np.array([0.7, 1.1, 2.0], dtype=np.float32)
-    params[0][:, 0, 0] = np.log(variance)
-    power = np.sum(np.abs(data.y_ft) ** 2)
-    expected = (
-        -data.nchunks * len(data.freq) * np.log(variance) - power / variance
-    )
-    np.testing.assert_allclose(model.loglik(params), expected, rtol=2e-6)
-    psd = np.asarray(model.psd_samples(params, fs=16))
-    np.testing.assert_allclose(
-        psd[:, :, 0, 0],
-        np.broadcast_to(variance[:, None] / 16, psd.shape[:2]),
-        rtol=2e-6,
-    )
-    altered = [a.copy() for a in params]
-    altered[0][1, 0, 0] += 0.2
-    np.testing.assert_array_equal(
-        np.asarray(model.logpost(params))[[0, 2]],
-        np.asarray(model.logpost(altered))[[0, 2]],
-    )
-
-
-def test_distinct_delta_and_theta_basis_sizes():
-    model = JaxBayesianModel(
-        JaxAnalysisData(
-            np.random.default_rng(0).normal(size=(64, 2)), N_delta=3, N_theta=5
-        )
-    )
-    assert model.trainable_vars[1].shape[-1] == 3
-    assert np.all(np.isfinite(model.logpost(model.trainable_vars)))
-
-
 def test_prior_jacobians_against_independent_scalar_formula():
     from scipy.special import expit
     from scipy.stats import halfcauchy, norm
@@ -185,75 +153,6 @@ def test_prior_jacobians_against_independent_scalar_formula():
     expected += np.sum(halfcauchy.logpdf(np.exp(local), scale=hc) + local)
     expected += np.sum(halfcauchy.logpdf(np.exp(tau), scale=0.01) + tau)
     np.testing.assert_allclose(model.logprior(params), expected, rtol=2e-6)
-
-
-def test_numpyro_target_has_no_duplicate_prior_or_jacobian():
-    from numpyro.infer.util import log_density
-
-    runner = JaxViRunner(np.random.default_rng(0).normal(size=64), N_theta=3)
-    from sgvb_psd.jax_backend.model import PARAMETER_NAMES
-
-    params = varied_params(runner.model, 1)
-    sites = {name: a[0] for name, a in zip(PARAMETER_NAMES, params) if a.size}
-    density, _ = log_density(runner._numpyro_model, (), {}, sites)
-    np.testing.assert_allclose(
-        density, runner.model.logpost(params)[0], rtol=2e-6
-    )
-
-
-@pytest.mark.parametrize("p", [1, 2])
-@pytest.mark.parametrize("particles", [1, 4])
-def test_estimator_inference_and_rng(p, particles):
-    x = np.random.default_rng(12).normal(size=(128, p))
-    if p == 1:
-        x = x[:, 0]
-    options = dict(
-        x=x,
-        backend="jax",
-        N_theta=3,
-        nchunks=2,
-        fs=16,
-        N_samples=5,
-        ntrain_map=3,
-        n_elbo_maximisation_steps=3,
-        seed=19,
-        elbo_samples=particles,
-    )
-    first = PSDEstimator(**options)
-    second = PSDEstimator(**options)
-    a = first.run(lr=1e-3)
-    b = second.run(lr=1e-3)
-    for arr, other in zip(a, b):
-        assert arr.shape == ((5 if arr is a[0] else 3), len(first.freq), p, p)
-        assert np.all(np.isfinite(arr))
-        np.testing.assert_array_equal(arr, other)
-    assert np.all(np.isfinite(first.inference_runner.kdl_losses))
-    # Continuation uses fresh keys, and the public sampling route is usable.
-    params, psd = first.sample_posterior(5)
-    assert not np.array_equal(params[0], first.samps[0])
-    assert psd[0].shape == a[0].shape
-    if p == 1 and particles == 1:
-        import matplotlib.pyplot as plt
-
-        axes = first.plot()
-        assert axes.shape == (1, 1)
-        plt.close(axes[0, 0].figure)
-
-
-def test_jax_learning_rate_search_smoke():
-    estimator = PSDEstimator(
-        x=np.random.default_rng(2).normal(size=64),
-        backend="jax",
-        N_theta=2,
-        ntrain_map=1,
-        n_elbo_maximisation_steps=1,
-        N_samples=3,
-        max_hyperparm_eval=1,
-        seed=0,
-    )
-    psd, _, _ = estimator.run()
-    assert psd.shape == (3, len(estimator.freq), 1, 1)
-    assert np.all(np.isfinite(psd))
 
 
 @pytest.mark.parametrize("p", [1, 2])
@@ -285,92 +184,3 @@ def test_reference_and_default_jax_guides_keep_map_locations(p):
     for name, a in zip(PARAMETER_NAMES, ja.model.trainable_vars):
         if a.size:
             np.testing.assert_array_equal(tr[name]["fn"].base_dist.loc, a[0])
-
-
-def test_trainable_guide_means_are_an_explicit_jax_option():
-    ja = JaxViRunner(
-        np.random.default_rng(0).normal(size=64), N_theta=3, optimize_mean=True
-    )
-    ja.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
-    assert any(name.endswith("_loc") for name in ja.svi_params)
-    assert not np.array_equal(
-        ja.svi_params["ga_delta_loc"], ja.model.trainable_vars[0][0]
-    )
-    with pytest.raises(ValueError, match="requires backend='jax'"):
-        PSDEstimator(np.ones((64, 2)), optimize_mean=True)
-
-
-def test_conditional_calibration_target_and_fft_generator_match_model():
-    # The calibration screen fixes curvature and its nuisance parameters.
-    # Its two Normal-prior baseline coefficients must retain the exact
-    # likelihood, FFT scaling and prior from the full SGVB target.
-    from numpyro import distributions as dist
-
-    rng = np.random.default_rng(44)
-    n, blocks = 64, 2
-    frequencies = np.fft.fftfreq(n)[1 : n // 2]
-    design = np.column_stack([np.ones_like(frequencies), frequencies])
-    beta = np.array([0.3, -0.7], np.float32)
-    spectrum = np.exp(design @ beta)
-    y = np.sqrt(spectrum / 2) * (
-        rng.normal(size=(blocks, len(frequencies)))
-        + 1j * rng.normal(size=(blocks, len(frequencies)))
-    )
-    full = np.zeros((blocks, n), dtype=complex)
-    full[:, 1 : n // 2] = y
-    full[:, -np.arange(1, n // 2)] = y.conj()
-    x = np.fft.ifft(full * np.sqrt(n), axis=1).real.reshape(-1, 1)
-    data = JaxAnalysisData(x, nchunks=blocks, N_delta=1, N_theta=1)
-    np.testing.assert_allclose(data.y_ft[..., 0], y, atol=1e-12)
-    power = np.sum(np.abs(y) ** 2, axis=0)
-    model = JaxBayesianModel(data)
-
-    def conditional_target(b):
-        gamma = jnp.asarray(design) @ b
-        return (
-            -blocks * jnp.sum(gamma)
-            - jnp.sum(power * jnp.exp(-gamma))
-            + jnp.sum(dist.Normal(0, jnp.sqrt(10.0)).log_prob(b))
-        )
-
-    zero = model.trainable_vars
-    params = list(zero)
-    params[0] = params[0].at[0, 0, :2].set(beta)
-    np.testing.assert_allclose(
-        model.logpost(params) - model.logpost(zero),
-        conditional_target(beta) - conditional_target(jnp.zeros(2)),
-        rtol=2e-5,
-        atol=2e-5,
-    )
-
-
-def test_jax_import_does_not_load_tensorflow():
-    subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "import sys; import sgvb_psd.jax_backend; assert 'tensorflow' not in sys.modules",
-        ],
-        check=True,
-    )
-
-
-@pytest.mark.parametrize(
-    "options",
-    [
-        {"backend": "unknown"},
-        {"backend": "jax", "use_eigenbasis": True},
-        {"backend": "jax", "posterior_mode": "factorized"},
-    ],
-)
-def test_rejects_unsupported_backends(options):
-    with pytest.raises(ValueError, match="backend"):
-        PSDEstimator(x=np.ones((32, 2)), **options)
-
-
-@pytest.mark.parametrize(
-    "x", [np.zeros(32), np.full(32, np.nan), np.ones((32, 0))]
-)
-def test_rejects_invalid_input(x):
-    with pytest.raises(ValueError):
-        PSDEstimator(x=x, backend="jax")

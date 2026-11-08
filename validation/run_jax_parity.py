@@ -183,7 +183,7 @@ def main():
             alpha=0.2,
         )
         if name == "var2":
-            tf_estimator = PSDEstimator(**options)
+            tf_estimator = PSDEstimator(**options, backend="tensorflow")
             start = time.perf_counter()
             _, tf_ci, _ = tf_estimator.run(lr=0.003)
             fit["tf_total_s_including_compile_and_postprocessing"] = (

@@ -135,6 +135,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-*/
 env/
 venv/
 ENV/
@@ -181,3 +182,4 @@ cython_debug/
 !/validation/jax-constraints.txt
 !/validation/*.log
 !/validation/vi-diagnosis/*.log
+!/validation/guide-comparison/*.log

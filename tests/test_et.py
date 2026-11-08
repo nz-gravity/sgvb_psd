@@ -1,3 +1,8 @@
+import pytest
+
+pytest.importorskip(
+    "tensorflow", reason="optional legacy eigenbasis comparison"
+)
 import os
 
 import h5py
@@ -23,6 +28,7 @@ def load_et_data(npts):
 def test_et(plot_dir):
     t0 = time.time()
     optim = PSDEstimator(
+        backend="tensorflow",
         x=load_et_data(2**14),
         N_theta=100,
         nchunks=8,
@@ -46,5 +52,7 @@ def test_et(plot_dir):
 
     end_time = time.time()
     estimation_time = end_time - t0
-    assert estimation_time < 50, f"Estimation time {estimation_time} is too long"
+    assert (
+        estimation_time < 50
+    ), f"Estimation time {estimation_time} is too long"
     print(f"Test passed in {estimation_time} seconds")

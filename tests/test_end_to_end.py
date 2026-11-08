@@ -1,9 +1,11 @@
+import pytest
 import os.path
 import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
+
+tf = pytest.importorskip("tensorflow", reason="optional legacy comparison")
 from sgvb_psd.backend import BayesianModel, AnalysisData
 from sgvb_psd.logging import logger
 from sgvb_psd.postproc.plot_psd import plot_psdq
@@ -28,7 +30,7 @@ def get_var_data(npts):
 
 
 def test_var_psd_generation(plot_dir):
-    var2_data = get_var_data(2 ** 9)
+    var2_data = get_var_data(2**9)
     print("Starting VAR PSD generation test")
     start_time = time.time()
     kwags = dict(
@@ -39,8 +41,9 @@ def test_var_psd_generation(plot_dir):
         max_hyperparm_eval=1,
         n_elbo_maximisation_steps=50,
         fs=2 * np.pi,
-        seed=0,)
-    optim = PSDEstimator(**kwags)
+        seed=0,
+    )
+    optim = PSDEstimator(backend="tensorflow", **kwags)
 
     optim.run()
 
@@ -49,14 +52,14 @@ def test_var_psd_generation(plot_dir):
         true_psd=[var2_data.psd, var2_data.freq],
         off_symlog=False,
         xlims=[0, np.pi],
-        quantiles='pointwise',
+        quantiles="pointwise",
     )
     plot_psdq(
         optim.uniform_ci,
         freqs=optim.freq,
         axs=ax,
-        color='red',
-        ls='--',
+        color="red",
+        ls="--",
     )
 
     plt.savefig(f"{plot_dir}/var_psd250.png")
@@ -79,18 +82,21 @@ def test_var_psd_generation(plot_dir):
 
     end_time = time.time()
     estimation_time = end_time - start_time
-    assert estimation_time < 50, f"Estimation time {estimation_time} is too long"
+    assert (
+        estimation_time < 50
+    ), f"Estimation time {estimation_time} is too long"
     logger.info(f"Test passed in {estimation_time} seconds")
 
     # see if we can load old params
     spline_params, psd = optim.sample_posterior(1)
-    optim2 = PSDEstimator(**kwags, init_params=spline_params)
-
+    optim2 = PSDEstimator(
+        backend="tensorflow", **kwags, init_params=spline_params
+    )
 
 
 def test_one_train_step_with_chunks():
     t0 = time.time()
-    var2_data = get_var_data(2 ** 7)
+    var2_data = get_var_data(2**7)
     analysis_data = AnalysisData(
         x=var2_data.data,
         nchunks=2,
@@ -103,13 +109,16 @@ def test_one_train_step_with_chunks():
     opts = tf.keras.optimizers.Adam(0.01)
     model.map_train_step(opts)
     estimation_time = time.time() - t0
-    assert estimation_time < 2, f"Estimation time {estimation_time} is too long"
+    assert (
+        estimation_time < 2
+    ), f"Estimation time {estimation_time} is too long"
     logger.info(f"Test passed in {estimation_time} seconds")
+
 
 #
 # def test_var_psd_save_and_resume(plot_dir, output_dir):
 #     var2_data = get_var_data(2 ** 8)
-#     optim = PSDEstimator(
+#     optim = PSDEstimator(backend="tensorflow",
 #         N_theta=30,
 #         nchunks=1,
 #         ntrain_map=100,
