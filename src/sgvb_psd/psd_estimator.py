@@ -103,6 +103,8 @@ class PSDEstimator:
         Nbw=1.0,
         use_eigenbasis=False,
         posterior_mode="joint",
+        backend="tensorflow",
+        elbo_samples=1,
     ):
         """
         Initialize the PSDEstimator.
@@ -141,9 +143,33 @@ class PSDEstimator:
         :type use_eigenbasis: bool, optional
         :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
         :type posterior_mode: str, optional
+        :param backend: "tensorflow" (default) or experimental "jax". JAX
+            supports the original joint model for one or more channels.
+        :param elbo_samples: Number of Monte Carlo particles per JAX ELBO
+            step, defaults to 1. Ignored by TensorFlow.
         """
 
-        if seed is not None:
+        if backend not in {"tensorflow", "jax"}:
+            raise ValueError('backend must be either "tensorflow" or "jax"')
+        if backend == "jax" and (use_eigenbasis or posterior_mode != "joint"):
+            raise ValueError(
+                "the JAX backend currently supports original joint inference only"
+            )
+        self.backend = backend
+        if backend == "jax":
+            x = np.asarray(x)
+            if x.ndim == 1:
+                x = x[:, None]
+            if x.ndim != 2 or x.shape[1] < 1 or not np.all(np.isfinite(x)):
+                raise ValueError(
+                    "x must be a finite time series of shape (n, p)"
+                )
+            if not np.isfinite(np.std(x)) or np.std(x) <= 0:
+                raise ValueError(
+                    "x must have positive finite standard deviation"
+                )
+
+        if seed is not None and backend == "tensorflow":
             set_seed(seed)
 
         self.N_theta = N_theta
@@ -222,7 +248,12 @@ class PSDEstimator:
             init_params=init_params,
             Nbw=self.Nbw,
         )
-        if self.use_eigenbasis:
+        if backend == "jax":
+            from .jax_backend import JaxViRunner
+
+            runner_cls = JaxViRunner
+            runner_kwargs.update(seed=seed, elbo_samples=elbo_samples)
+        elif self.use_eigenbasis:
             runner_kwargs.update(
                 fmin_idx_extension=self.fmin_idx_extension,
                 fmax_idx_extension=self.fmax_idx_extension,
@@ -254,7 +285,7 @@ class PSDEstimator:
         )
         if isinstance(vi_losses, list):
             return sum(losses[-1].numpy() for losses in vi_losses)
-        return vi_losses[-1].numpy()
+        return float(np.asarray(vi_losses[-1]))
 
     def _find_optimal_learing_rate(self):
         """

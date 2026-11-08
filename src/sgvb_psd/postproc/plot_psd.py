@@ -141,7 +141,9 @@ def _generate_fig(p):
     """
     This is a utility function to generate a figure with pxp subplots.
     """
-    fig, axs = plt.subplots(p, p, figsize=(p * 2.2, p * 2.2), sharex=True)
+    fig, axs = plt.subplots(
+        p, p, figsize=(p * 2.2, p * 2.2), sharex=True, squeeze=False
+    )
     return fig, axs
 
 
@@ -174,7 +176,7 @@ def _format_spines(
             max([axes[i, i].get_ylim()[1] for i in range(p)]),
         )
 
-    if off_ylims is None:
+    if off_ylims is None and p > 1:
         off_ylims = (
             min(
                 [

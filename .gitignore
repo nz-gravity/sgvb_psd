@@ -174,3 +174,8 @@ cython_debug/
 /src/sgvb_psd/_version.py
 /studies/out_simulation_results/
 /studies/out_gibbs/
+/.uv-cache/
+/.mpl-cache/
+/tests/out_plots/
+/tests/out/
+!/validation/jax-constraints.txt

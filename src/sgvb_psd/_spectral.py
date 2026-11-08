@@ -1,0 +1,159 @@
+"""Shared NumPy Fourier preprocessing; preserves legacy bin conventions."""
+
+import logging
+from typing import Tuple
+
+import numpy as np
+
+logger = logging.getLogger("SGVB-PSD")
+
+
+def _compute_Xmatrices(
+    freq, N_delta: int = 15, N_theta: int = 15
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Returns the X matrices for delta and theta based on the provided frequencies.
+
+    Parameters:
+    freq (np.ndarray): vector of frequencies
+    N_delta (int): The number of basis functions to use for delta (default is 15).
+    N_theta (int): The number of basis functions to use for theta (default is 15).
+
+    Returns:
+    Xd (np.ndarray): The design matrix for Demmler-Reinsch basis functions of delta,
+                     the shape is (n, 2 + N_delta).
+    Xt (np.ndarray): The design matrix for Demmler-Reinsch basis functions of theta,
+                     the shape is (n, 2 + N_theta).
+
+    """
+    fstack = np.column_stack([np.repeat(1, freq.shape[0]), freq])
+    Xd = np.concatenate([fstack, DR_basis(freq, N=N_delta)], axis=1)
+    Xt = np.concatenate([fstack, DR_basis(freq, N=N_theta)], axis=1)
+    return Xd, Xt
+
+
+def _compute_Zmatrix(y_k: np.ndarray) -> np.ndarray:
+    """
+    Compute the design matrix Z_k for each frequency k.
+
+    Parameters:
+    y_k (np.ndarray): Fourier transformed time series data of shape (n, p).
+
+    Returns:
+    np.ndarray: Design matrix Z_k of shape (n, p, p*(p-1)/2).
+    """
+    n, p = y_k.shape
+    Z_k = np.zeros((n, p, int(p * (p - 1) / 2)), dtype=np.complex64)
+
+    for j in range(n):
+        count = 0
+        for i in range(1, p):
+            Z_k[j, i, count : count + i] = y_k[j, :i]
+            count += i
+
+    return Z_k
+
+
+def _compute_chunked_Zmatrix(y_ft: np.ndarray) -> np.ndarray:
+    """
+    Compute the design matrix Z, a 3D array (The design matrix Z_k for every frequency k).
+
+    Parameters:
+    y_ft (np.ndarray): Fourier transformed time series data of shape (chunks, n_per_chunk, p).
+
+    Returns:
+    np.ndarray: 3D array of design matrices Z_k for each frequency k.
+    """
+    chunks, n_per_chunk, p = y_ft.shape
+    if p == 1:
+        return np.zeros((chunks, n_per_chunk, 0), dtype=np.complex64)
+
+    if chunks == 1:
+        y_ls = np.squeeze(y_ft, axis=0)
+        Z_ = _compute_Zmatrix(y_ls)
+    else:
+        y_ls = np.squeeze(np.split(y_ft, chunks))
+        Z_ = np.array([_compute_Zmatrix(x) for x in y_ls])
+
+    return Z_
+
+
+def DR_basis(freq: np.ndarray, N=10):
+    """
+    Return the basis matrix for the Demmler-Reinsch basis
+    for linear smoothing splines (Eubank,1999)
+
+            # freq: vector of frequencies
+    # N:  amount of basis used
+    # return a len(freq)-by-N matrix
+    """
+    return np.array(
+        [
+            np.sqrt(2) * np.cos(x * np.pi * freq * 2)
+            for x in np.arange(1, N + 1)
+        ]
+    ).T
+
+
+def compute_chunked_fft(
+    x: np.ndarray,
+    nchunks: int,
+    fmax_for_analysis: float,
+    fs: float,
+    fmin_for_analysis: float = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Scaled fft and get the elements of freq = 1:[Nquist] (or 1:[fmax_for_analysis] if specified)
+    discarding the rest of freqs
+    """
+
+    if np.any(np.mean(x, axis=0) != 0) or np.any(np.std(x, axis=0) != 1):
+        logger.warning("Input data not standardised!")
+
+    orig_n, p = x.shape
+    if orig_n < p:
+        raise ValueError(
+            f"Number of samples {orig_n} is less than number of dimensions {p}."
+        )
+    # split x into chunks
+    n_per_chunk = x.shape[0] // nchunks
+    chunked_x = np.array(np.split(x[0 : n_per_chunk * nchunks, :], nchunks))
+    assert chunked_x.shape == (nchunks, n_per_chunk, p)
+
+    # chunked_x = chunked_x - np.mean(chunked_x, axis=1, keepdims=True)
+
+    # compute fft for each chunk
+    y_ft = np.apply_along_axis(np.fft.fft, 1, chunked_x)
+    #
+    # y = []
+    # for i in range(nchunks):
+    #     y_fft = np.apply_along_axis(np.fft.fft, 0, chunked_x[i])
+    #     y.append(y_fft)
+    # y = np.array(y)
+
+    # scale it
+    y_ft = y_ft / np.sqrt(n_per_chunk)
+    Ts = 1  # for VB backend we use Duration of 1.0 (rescale later)
+    fq_y = np.fft.fftfreq(np.size(chunked_x, axis=1), Ts)
+    ftrue_y = np.fft.fftfreq(n_per_chunk, d=1 / fs)
+
+    # Truncate the FFT'd data
+    if np.mod(n_per_chunk, 2) == 0:  # n is even
+        idx = int(n_per_chunk / 2)
+    else:  # n is odd
+        idx = int((n_per_chunk - 1) / 2)
+
+    y_ft = y_ft[:, 1:idx, :]
+    fq_y = fq_y[1:idx]
+    ftrue_y = ftrue_y[1:idx]
+
+    if fmax_for_analysis is None:
+        fmax_idx = len(ftrue_y)
+    else:
+        fmax_idx = np.searchsorted(ftrue_y, fmax_for_analysis)
+    fmin_idx = 0
+    if fmin_for_analysis is not None:
+        fmin_idx = np.searchsorted(ftrue_y, fmin_for_analysis)
+    y_ft = y_ft[:, fmin_idx:fmax_idx, :]
+    fq_y = fq_y[fmin_idx:fmax_idx]
+    return y_ft, fq_y

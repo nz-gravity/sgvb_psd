@@ -46,6 +46,33 @@ eigen_factorized = PSDEstimator(
 )
 ```
 
+## Experimental JAX backend
+
+Install with `pip install 'sgvb_psd[jax]'` (or `pip install -e '.[dev,jax]'`
+from a checkout). The original joint model can now run in JAX/NumPyro for
+univariate or multivariate input:
+
+```python
+estimator = PSDEstimator(
+    x=data,                  # (n,) or (n, p)
+    backend="jax",
+    fs=sample_rate,
+    nchunks=4,
+    N_theta=15,
+    ntrain_map=1000,
+    n_elbo_maximisation_steps=500,
+    seed=0,
+    elbo_samples=4,
+)
+psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
+```
+
+TensorFlow remains the default and retains the eigenbasis modes. The JAX
+backend preserves the current model and PSD conventions; it does not yet
+include AR prewhitening or eigenbasis inference. See the
+[migration and parity report](validation/JAX_MIGRATION.md) for measured
+checks, conventions, known issues, and the remaining consolidation work.
+
 ## Development
 
 Install in editable mode with dev dependencies
