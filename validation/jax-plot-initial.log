@@ -1,0 +1,160 @@
+.....................F...........                                        [100%]
+=================================== FAILURES ===================================
+____________________ test_estimator_inference_and_rng[1-1] _____________________
+
+p = 1, particles = 1
+
+    @pytest.mark.parametrize("p", [1, 2])
+    @pytest.mark.parametrize("particles", [1, 4])
+    def test_estimator_inference_and_rng(p, particles):
+        x = np.random.default_rng(12).normal(size=(128, p))
+        if p == 1:
+            x = x[:, 0]
+        options = dict(
+            x=x,
+            backend="jax",
+            N_theta=3,
+            nchunks=2,
+            fs=16,
+            N_samples=5,
+            ntrain_map=3,
+            n_elbo_maximisation_steps=3,
+            seed=19,
+            elbo_samples=particles,
+        )
+        first = PSDEstimator(**options)
+        second = PSDEstimator(**options)
+        a = first.run(lr=1e-3)
+        b = second.run(lr=1e-3)
+        for arr, other in zip(a, b):
+            assert arr.shape == ((5 if arr is a[0] else 3), len(first.freq), p, p)
+            assert np.all(np.isfinite(arr))
+            np.testing.assert_array_equal(arr, other)
+        assert np.all(np.isfinite(first.inference_runner.kdl_losses))
+        # Continuation uses fresh keys, and the public sampling route is usable.
+        params, psd = first.sample_posterior(5)
+        assert not np.array_equal(params[0], first.samps[0])
+        assert psd[0].shape == a[0].shape
+        if p == 1 and particles == 1:
+            import matplotlib.pyplot as plt
+
+>           axes = first.plot()
+                   ^^^^^^^^^^^^
+
+tests/test_jax_backend.py:238:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src/sgvb_psd/psd_estimator.py:455: in plot
+    return plot_psd(
+src/sgvb_psd/postproc/plot_psd.py:39: in plot_psd
+    axes = plot_peridogram(*pdgrm, axs=axes, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/sgvb_psd/postproc/plot_psd.py:125: in plot_peridogram
+    format_axes(axs, **kwargs)
+src/sgvb_psd/postproc/plot_psd.py:154: in format_axes
+    _format_spines(axes, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+axes = array([[<Axes: >]], dtype=object), tick_ln = 5, diag_spline_thickness = 2
+xlims = None
+diag_ylims = (np.float64(-0.01583538235126055), np.float64(0.37958651449720293))
+off_ylims = None, diag_log = True, off_symlog = True, sylmog_thresh = 1e-49
+kwargs = {}
+
+    def _format_spines(
+            axes,
+            tick_ln=5,
+            diag_spline_thickness=2,
+            xlims=None,
+            diag_ylims=None,
+            off_ylims=None,
+            diag_log=True,
+            off_symlog=True,
+            sylmog_thresh=1e-49,
+            **kwargs,
+    ):
+        p = axes.shape[0]
+        plt.subplots_adjust(hspace=0.0, wspace=0.0)
+
+        if diag_ylims is None:
+            diag_ylims = (
+                min([axes[i, i].get_ylim()[0] for i in range(p)]),
+                max([axes[i, i].get_ylim()[1] for i in range(p)]),
+            )
+
+        if off_ylims is None:
+            off_ylims = (
+>               min(
+                    [
+                        axes[i, j].get_ylim()[0]
+                        for i in range(p)
+                        for j in range(p)
+                        if i != j
+                    ]
+                ),
+                max(
+                    [
+                        axes[i, j].get_ylim()[1]
+                        for i in range(p)
+                        for j in range(p)
+                        if i != j
+                    ]
+                ),
+            )
+E           ValueError: min() iterable argument is empty
+
+src/sgvb_psd/postproc/plot_psd.py:181: ValueError
+----------------------------- Captured stdout call -----------------------------
+10:40:36|SGVB-PSD|INFO| Dividing data (128, 1) into (2, 64, 1) chunks
+10:40:36|SGVB-PSD|INFO| Final PSD will be of shape: 31 x 1 x 1
+10:40:36|SGVB-PSD|WARNING| Input data not standardised!
+10:40:36|SGVB-PSD|INFO| Dividing data (128, 1) into (2, 64, 1) chunks
+10:40:36|SGVB-PSD|INFO| Final PSD will be of shape: 31 x 1 x 1
+10:40:36|SGVB-PSD|WARNING| Input data not standardised!
+10:40:36|SGVB-PSD|INFO| Using provided learning rate: 0.001
+10:40:36|SGVB-PSD|INFO| Training model
+10:40:37|SGVB-PSD|INFO| Model trained in 1.07s
+10:40:37|SGVB-PSD|INFO| Computing posterior PSDs
+10:40:37|SGVB-PSD|INFO| Using provided learning rate: 0.001
+10:40:37|SGVB-PSD|INFO| Training model
+10:40:38|SGVB-PSD|INFO| Model trained in 0.36s
+10:40:38|SGVB-PSD|INFO| Computing posterior PSDs
+------------------------------ Captured log call -------------------------------
+INFO     SGVB-PSD:psd_estimator.py:214 Dividing data (128, 1) into (2, 64, 1) chunks
+INFO     SGVB-PSD:psd_estimator.py:229 Final PSD will be of shape: 31 x 1 x 1
+WARNING  SGVB-PSD:_spectral.py:111 Input data not standardised!
+INFO     SGVB-PSD:psd_estimator.py:214 Dividing data (128, 1) into (2, 64, 1) chunks
+INFO     SGVB-PSD:psd_estimator.py:229 Final PSD will be of shape: 31 x 1 x 1
+WARNING  SGVB-PSD:_spectral.py:111 Input data not standardised!
+INFO     SGVB-PSD:psd_estimator.py:332 Using provided learning rate: 0.001
+INFO     SGVB-PSD:psd_estimator.py:341 Training model
+INFO     SGVB-PSD:psd_estimator.py:345 Model trained in 1.07s
+INFO     SGVB-PSD:psd_estimator.py:347 Computing posterior PSDs
+INFO     SGVB-PSD:psd_estimator.py:332 Using provided learning rate: 0.001
+INFO     SGVB-PSD:psd_estimator.py:341 Training model
+INFO     SGVB-PSD:psd_estimator.py:345 Model trained in 0.36s
+INFO     SGVB-PSD:psd_estimator.py:347 Computing posterior PSDs
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/tensorflow_probability/python/__init__.py:57
+  <repo>/.venv/lib/python3.12/site-packages/tensorflow_probability/python/__init__.py:57: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    if (distutils.version.LooseVersion(tf.__version__) <
+
+.venv/lib/python3.12/site-packages/tensorflow_probability/python/__init__.py:58
+  <repo>/.venv/lib/python3.12/site-packages/tensorflow_probability/python/__init__.py:58: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    distutils.version.LooseVersion(required_tensorflow_version)):
+
+src/sgvb_psd/postproc/plot_psd.py:260
+  <repo>/src/sgvb_psd/postproc/plot_psd.py:260: SyntaxWarning: invalid escape sequence '\m'
+    lbl = "\mathbf{S}_{" + lbl + "}"
+
+src/sgvb_psd/postproc/plot_psd.py:263
+  <repo>/src/sgvb_psd/postproc/plot_psd.py:263: SyntaxWarning: invalid escape sequence '\R'
+    lbl = "$\Re(" + lbl + ")$"
+
+src/sgvb_psd/postproc/plot_psd.py:265
+  <repo>/src/sgvb_psd/postproc/plot_psd.py:265: SyntaxWarning: invalid escape sequence '\I'
+    lbl = "$\Im(" + lbl + ")$"
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_jax_backend.py::test_estimator_inference_and_rng[1-1] - Val...
+1 failed, 32 passed, 5 warnings in 26.86s

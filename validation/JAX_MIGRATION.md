@@ -181,3 +181,14 @@ scale and PSD units, then provenance-cleared AR workflow integration and
 the JAX eigenbasis/factorized port. GW150914, GPU behavior, long-run
 calibration, and the remote Linux CI result are not claimed by the local
 checks. Do not merge or retire TensorFlow on the strength of these controls.
+
+## Delivery status
+
+Implementation and validation are committed locally. Publishing the branch
+`feature/jax-sgvb` to `nz-gravity/sgvb_psd` was denied before execution by
+automatic approval review: it judged the implementation request insufficient
+authorization to publish code to GitHub. The user history was checked and
+contained no materially new, explicit push authorization. The push was not
+retried through another tool. No PR was created and no remote branch or
+main branch was changed. Explicit approval is required to push this branch
+and open the prepared draft PR. A local patch is available beside the checkout.

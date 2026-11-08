@@ -179,3 +179,4 @@ cython_debug/
 /tests/out_plots/
 /tests/out/
 !/validation/jax-constraints.txt
+!/validation/*.log

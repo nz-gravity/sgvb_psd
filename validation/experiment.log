@@ -1,0 +1,107 @@
+10:36:00|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+10:36:01|SGVB-PSD|WARNING| Input data not standardised!
+10:36:01|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:36:01|SGVB-PSD|WARNING| Input data not standardised!
+2026-11-09 10:36:02.922676: W external/local_xla/xla/tsl/platform/profile_utils/cpu_utils.cc:145] Failed to get CPU frequency: 0 Hz
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1794173762.932207 5231465 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+10:36:02|SGVB-PSD|INFO| Dividing data (512, 1) into (2, 256, 1) chunks
+10:36:02|SGVB-PSD|INFO| Final PSD will be of shape: 127 x 1 x 1
+10:36:02|SGVB-PSD|WARNING| Input data not standardised!
+10:36:03|SGVB-PSD|INFO| Using provided learning rate: 0.003
+10:36:03|SGVB-PSD|INFO| Training model
+10:36:04|SGVB-PSD|INFO| Model trained in 1.06s
+10:36:04|SGVB-PSD|INFO| Computing posterior PSDs
+10:36:04|SGVB-PSD|INFO| Dividing data (512, 2) into (2, 256, 2) chunks
+10:36:04|SGVB-PSD|INFO| Final PSD will be of shape: 127 x 2 x 2
+10:36:04|SGVB-PSD|WARNING| Input data not standardised!
+10:36:05|SGVB-PSD|INFO| Using provided learning rate: 0.003
+10:36:05|SGVB-PSD|INFO| Training model
+10:36:06|SGVB-PSD|INFO| Model trained in 1.40s
+10:36:06|SGVB-PSD|INFO| Computing posterior PSDs
+10:36:06|SGVB-PSD|INFO| Dividing data (512, 2) into (2, 256, 2) chunks
+10:36:06|SGVB-PSD|INFO| Final PSD will be of shape: 127 x 2 x 2
+10:36:06|SGVB-PSD|WARNING| Input data not standardised!
+10:36:06|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:36:06|SGVB-PSD|INFO| Using provided learning rate: 0.003
+10:36:06|SGVB-PSD|INFO| Training model
+W0000 00:00:1794173769.563417 5231465 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794173769.568856 5231465 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+10:36:09|SGVB-PSD|INFO| Model trained in 2.86s
+10:36:09|SGVB-PSD|INFO| Computing posterior PSDs
+{
+  "host": "UOA484808",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "python": "3.12.16",
+  "jax": "0.6.2",
+  "numpyro": "0.19.0",
+  "tensorflow": "2.20.0",
+  "tfp": "0.25.0",
+  "numpy": "2.5.4",
+  "devices": [
+    "TFRT_CPU_0"
+  ],
+  "dtype": "float32/complex64",
+  "fits": {
+    "ar1": {
+      "seed": 0,
+      "samples": 512,
+      "chunks": 2,
+      "basis": 6,
+      "map_steps": 100,
+      "vi_steps": 50,
+      "elbo_particles": 1,
+      "initial_log_target": -268.3828430175781,
+      "map_log_target": -198.66552734375,
+      "map_s_including_compile": 0.11759320803685114,
+      "vi_s_including_compile": 0.6377659169957042,
+      "total_s_including_postprocessing": 1.3173352919984609,
+      "finite_intervals": true,
+      "finite_elbo": true,
+      "median_relative_l2_to_truth_channel0": 0.1818779839092972
+    },
+    "var2": {
+      "seed": 0,
+      "samples": 512,
+      "chunks": 2,
+      "basis": 6,
+      "map_steps": 100,
+      "vi_steps": 50,
+      "elbo_particles": 1,
+      "initial_log_target": -517.2716674804688,
+      "map_log_target": -299.7265930175781,
+      "map_s_including_compile": 0.1959194170194678,
+      "vi_s_including_compile": 0.9561222909833305,
+      "total_s_including_postprocessing": 1.7255388329504058,
+      "finite_intervals": true,
+      "finite_elbo": true,
+      "median_relative_l2_to_truth_channel0": 0.277883361986288,
+      "tf_total_s_including_compile_and_postprocessing": 3.066028540953994,
+      "map_psd_relative_l2_to_tf": 1.516886385388716e-07,
+      "tf_map_log_target_on_jax": -299.7265319824219,
+      "median_relative_l2_to_tf_channel0": 0.29879389977549775
+    }
+  },
+  "fixed_parameter_parity": {
+    "draws": 4,
+    "chunks": 2,
+    "channels": 2,
+    "tf_log_target_sum": -2120.20068359375,
+    "jax_log_target_sum": -2120.20068359375,
+    "target_abs_error": 0.0,
+    "gradient_max_abs_error": 7.62939453125e-05,
+    "psd_max_abs_error": 4.470371095521841e-08
+  },
+  "target_timing": {
+    "jax": {
+      "first_call_s": 0.08666287502273917,
+      "warm_median_s": 6.997949094511569e-05,
+      "warm_calls": 30
+    },
+    "tensorflow": {
+      "first_call_s": 0.1941510000033304,
+      "warm_median_s": 0.0002890630275942385,
+      "warm_calls": 30
+    }
+  }
+}

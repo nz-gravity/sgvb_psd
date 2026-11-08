@@ -218,6 +218,11 @@ def main():
         ax.legend()
     fig.tight_layout()
     fig.savefig(OUT / "jax-fit-control.svg")
+    svg = OUT / "jax-fit-control.svg"
+    svg.write_text(
+        "\n".join(line.rstrip() for line in svg.read_text().splitlines())
+        + "\n"
+    )
     plt.close(fig)
     (OUT / "jax-results.json").write_text(json.dumps(results, indent=2) + "\n")
     print(json.dumps(results, indent=2))
