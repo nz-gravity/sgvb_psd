@@ -1,8 +1,9 @@
 # VI discrepancy and conditional Bayesian calibration
 
-The latest complete regression suite passed **58 tests** in 94.33 seconds,
+At this diagnostic stage, the complete regression suite passed **58 tests** in 94.33 seconds,
 including the original slow all-mode comparison and 37 JAX tests.
-[Final test log](vi-diagnosis/final-tests.log).
+[Stage test log](vi-diagnosis/final-tests.log). The newer JAX-only runtime
+and guide comparison are documented in [GUIDE_COMPARISON.md](GUIDE_COMPARISON.md).
 
 The approximately 30% short-run PSD difference had a concrete cause: the
 initial JAX guide optimized its Normal means; TensorFlow's existing guide

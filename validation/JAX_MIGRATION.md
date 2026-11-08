@@ -1,10 +1,12 @@
 # Initial JAX migration and parity control
 
-This change adds a usable JAX/NumPyro implementation of the original joint
+This report began with the first usable JAX/NumPyro implementation of the original joint
 SGVB model for 1D and multivariate input. It is an incremental migration in
 `nz-gravity/sgvb_psd`; it does not combine two duplicate source trees.
-TensorFlow remains the default, and both existing eigenbasis modes remain
-available through TensorFlow.
+The current branch now defaults to a JAX-only runtime, with TensorFlow
+isolated in an optional legacy extra. Eigenbasis modes remain available only
+through explicit legacy selection until their JAX ports are validated. See
+the [current guide/runtime report](GUIDE_COMPARISON.md).
 
 **Follow-up:** the initial 30% VI discrepancy was traced to trainable JAX
 means versus fixed TensorFlow MAP means. The current JAX default now matches
@@ -39,8 +41,8 @@ summaries and filenames did not locate the separate earlier JAX prototype.
 ## Implementation
 
 Select `PSDEstimator(..., backend="jax", seed=0)` for the JAX implementation.
-The input may be `(n,)` or `(n, p)`. The original default API and TensorFlow
-modes are preserved. JAX eigenbasis/factorized selection raises an explicit
+The input may be `(n,)` or `(n, p)`. The original target and optional TensorFlow
+modes are preserved; the runtime default changes to JAX. JAX eigenbasis/factorized selection raises an explicit
 error; it never silently changes the requested method.
 
 Shared NumPy preprocessing and existing interval summaries were extracted
@@ -66,8 +68,8 @@ without changing their formulas. The new backend provides:
 - PSD plotting retains a two-dimensional axes array even for one channel.
 
 `import sgvb_psd.jax_backend` works without importing TensorFlow. The public
-`PSDEstimator` still imports the retained TensorFlow implementation and
-TensorFlow remains a base package dependency during this migration.
+`PSDEstimator` now also imports and runs without TensorFlow. The retained
+comparison/eigenbasis backend is imported lazily and requires `[legacy]`.
 
 ## Checks and numerical evidence
 
@@ -76,7 +78,7 @@ Commands were run from the repository root:
 ```bash
 UV_CACHE_DIR=.uv-cache uv venv --python 3.12 .venv
 UV_CACHE_DIR=.uv-cache uv pip install --python .venv/bin/python \
-  -e '.[dev,jax]' -c validation/jax-constraints.txt
+  -e '.[dev,legacy]' -c validation/jax-constraints.txt
 export MPLBACKEND=Agg MPLCONFIGDIR=.mpl-cache
 .venv/bin/python -m pytest -m 'not slow' -q
 .venv/bin/python -m pytest tests/test_all_modes.py -q

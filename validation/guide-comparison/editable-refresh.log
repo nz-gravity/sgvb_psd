@@ -1,0 +1,16 @@
+INFO add_decision: Id::<PubGrubPackage>(0) @ 0a0.dev0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(0) @ 0a0.dev0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(1) @ 84.2.1 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(2) @ 10.3.4 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(3) @ 0.48.0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(4) @ 2.6.0 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(5) @ 26.3 without checking dependencies
+INFO add_decision: Id::<PubGrubPackage>(1) @ 2.0.1.dev10+g1fe7869dd.d20261108 without checking dependencies
+Resolved 1 package in 1.34s
+   Building sgvb-psd @ file://<repo>
+      Built sgvb-psd @ file://<repo>
+Prepared 1 package in 327ms
+Uninstalled 1 package in 6ms
+Installed 1 package in 6ms
+ - sgvb-psd==2.0.1.dev5+g8b0f1f592 (from file://<repo>)
+ + sgvb-psd==2.0.1.dev10+g1fe7869dd.d20261108 (from file://<repo>)

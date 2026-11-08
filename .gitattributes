@@ -3,3 +3,5 @@ validation/*.svg linguist-generated=true
 validation/*.log linguist-generated=true
 validation/vi-diagnosis/*.json linguist-generated=true
 validation/vi-diagnosis/*.log linguist-generated=true
+validation/guide-comparison/*.json linguist-generated=true
+validation/guide-comparison/*.log linguist-generated=true

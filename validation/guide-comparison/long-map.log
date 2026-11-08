@@ -1,0 +1,8 @@
+11:39:07|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+11:39:07|SGVB-PSD|WARNING| Input data not standardised!
+var2 numpyro_frozen_diagonal 0 seconds 2.285 ELBO 66.02021460535919 finite True
+var2 numpyro_frozen_diagonal 1 seconds 1.802 ELBO 65.96913770849466 finite True
+var2 auto_diagonal 0 seconds 2.095 ELBO 53.650904881948776 finite True
+var2 auto_diagonal 1 seconds 1.784 ELBO 53.978286683660386 finite True
+var2 structured_row_gaussian 0 seconds 2.529 ELBO 41.400853852261385 finite True
+var2 structured_row_gaussian 1 seconds 1.966 ELBO 41.394539346079426 finite True

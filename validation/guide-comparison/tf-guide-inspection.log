@@ -1,0 +1,24 @@
+11:22:28|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+11:22:29|SGVB-PSD|WARNING| Input data not standardised!
+11:22:29|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(64, 2), y(f)=(1, 31, 2), Xmat_delta=(31, 5), Xmat_theta=(31, 5), Z=(31, 2, 1))
+variation_factor 0 guide classes ['MultivariateNormalDiag', 'MultivariateNormalDiag', 'MultivariateNormalDiag', 'MultivariateNormalDiag', 'MultivariateNormalDiag', 'MultivariateNormalDiag', 'MultivariateNormalDiag', 'MultivariateNormalDiag']
+variables [('q_z_scale:0', (2, 5)), ('q_z_scale:0', (2, 3)), ('q_z_scale:0', (1, 5)), ('q_z_scale:0', (1, 5)), ('q_z_scale:0', (1, 5)), ('q_z_scale:0', (1, 5)), ('q_z_scale:0', (2, 1)), ('q_z_scale:0', (1, 1))]
+11:22:29|SGVB-PSD|WARNING| Input data not standardised!
+11:22:29|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(64, 2), y(f)=(1, 31, 2), Xmat_delta=(31, 5), Xmat_theta=(31, 5), Z=(31, 2, 1))
+variation_factor 1 guide classes ['MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank']
+variables [('Variable:0', (2, 5)), ('Variable:0', (2, 5, 1)), ('Variable:0', (2, 3)), ('Variable:0', (2, 3, 1)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 1)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 1)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 1)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 1)), ('Variable:0', (2, 1)), ('Variable:0', (2, 1, 1)), ('Variable:0', (1, 1)), ('Variable:0', (1, 1, 1))]
+11:22:29|SGVB-PSD|WARNING| Input data not standardised!
+11:22:29|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(64, 2), y(f)=(1, 31, 2), Xmat_delta=(31, 5), Xmat_theta=(31, 5), Z=(31, 2, 1))
+variation_factor 1.0 FAILED TypeError Dimension value must be integer or None or have an __index__ method, got value '1.0' with type '<class 'float'>'
+11:22:29|SGVB-PSD|WARNING| Input data not standardised!
+11:22:29|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(64, 2), y(f)=(1, 31, 2), Xmat_delta=(31, 5), Xmat_theta=(31, 5), Z=(31, 2, 1))
+variation_factor 2 guide classes ['MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank', 'MultivariateNormalDiagPlusLowRank']
+variables [('Variable:0', (2, 5)), ('Variable:0', (2, 5, 2)), ('Variable:0', (2, 3)), ('Variable:0', (2, 3, 2)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 2)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 2)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 2)), ('Variable:0', (1, 5)), ('Variable:0', (1, 5, 2)), ('Variable:0', (2, 1)), ('Variable:0', (2, 1, 2)), ('Variable:0', (1, 1)), ('Variable:0', (1, 1, 2))]
+11:22:29|SGVB-PSD|WARNING| Input data not standardised!
+11:22:29|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(64, 2), y(f)=(1, 31, 2), Xmat_delta=(31, 5), Xmat_theta=(31, 5), Z=(31, 2, 1))
+11:22:29|SGVB-PSD|WARNING| Input data not standardised!
+11:22:29|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(64, 2), y(f)=(1, 31, 2), Xmat_delta=(31, 5), Xmat_theta=(31, 5), Z=(31, 2, 1))
+2026-11-09 11:22:29.911358: W external/local_xla/xla/tsl/platform/profile_utils/cpu_utils.cc:145] Failed to get CPU frequency: 0 Hz
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1794176550.348241 5270051 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+supplied guide preserved through phase2: False
