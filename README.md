@@ -68,7 +68,12 @@ psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
 ```
 
 TensorFlow remains the default and retains the eigenbasis modes. The JAX
-backend preserves the current model and PSD conventions; it does not yet
+guide keeps its means at MAP by default, matching the current TensorFlow
+implementation. Set `optimize_mean=True` to train JAX guide means too;
+this changes the variational approximation while keeping the target model.
+The diagonal guide has known calibration limitations in a small conditional
+prior-predictive control; full-model uncertainty calibration remains open.
+The JAX backend preserves the current model and PSD conventions; it does not yet
 include AR prewhitening or eigenbasis inference. See the
 [migration and parity report](validation/JAX_MIGRATION.md) for measured
 checks, conventions, known issues, and the remaining consolidation work.

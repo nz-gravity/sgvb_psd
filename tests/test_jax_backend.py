@@ -256,6 +256,94 @@ def test_jax_learning_rate_search_smoke():
     assert np.all(np.isfinite(psd))
 
 
+@pytest.mark.parametrize("p", [1, 2])
+def test_reference_and_default_jax_guides_keep_map_locations(p):
+    from numpyro.handlers import seed, substitute, trace
+    from sgvb_psd.backend import ViRunner
+    from sgvb_psd.jax_backend.model import PARAMETER_NAMES
+
+    reference, model = paired_models(p, 3)
+    runner = ViRunner.__new__(ViRunner)
+    runner.variation_factor = 0.0
+    runner.init_surrogate_posterior(reference.trainable_vars)
+    # Regression for the 30% discrepancy: TF only exposes scale variables.
+    assert all(
+        "q_z_scale" in v.name
+        for v in runner.surrogate_posterior.trainable_variables
+    )
+    assert not any(
+        isinstance(d.distribution.loc, tf.Variable)
+        for d in runner.surrogate_posterior.model
+    )
+
+    ja = JaxViRunner(np.random.default_rng(0).normal(size=(96, p)), N_theta=3)
+    ja.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
+    assert all(name.endswith("_scale") for name in ja.svi_params)
+    tr = trace(
+        seed(substitute(ja._guide, data=ja.svi_params), rng_seed=0)
+    ).get_trace()
+    for name, a in zip(PARAMETER_NAMES, ja.model.trainable_vars):
+        if a.size:
+            np.testing.assert_array_equal(tr[name]["fn"].base_dist.loc, a[0])
+
+
+def test_trainable_guide_means_are_an_explicit_jax_option():
+    ja = JaxViRunner(
+        np.random.default_rng(0).normal(size=64), N_theta=3, optimize_mean=True
+    )
+    ja.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
+    assert any(name.endswith("_loc") for name in ja.svi_params)
+    assert not np.array_equal(
+        ja.svi_params["ga_delta_loc"], ja.model.trainable_vars[0][0]
+    )
+    with pytest.raises(ValueError, match="requires backend='jax'"):
+        PSDEstimator(np.ones((64, 2)), optimize_mean=True)
+
+
+def test_conditional_calibration_target_and_fft_generator_match_model():
+    # The calibration screen fixes curvature and its nuisance parameters.
+    # Its two Normal-prior baseline coefficients must retain the exact
+    # likelihood, FFT scaling and prior from the full SGVB target.
+    from numpyro import distributions as dist
+
+    rng = np.random.default_rng(44)
+    n, blocks = 64, 2
+    frequencies = np.fft.fftfreq(n)[1 : n // 2]
+    design = np.column_stack([np.ones_like(frequencies), frequencies])
+    beta = np.array([0.3, -0.7], np.float32)
+    spectrum = np.exp(design @ beta)
+    y = np.sqrt(spectrum / 2) * (
+        rng.normal(size=(blocks, len(frequencies)))
+        + 1j * rng.normal(size=(blocks, len(frequencies)))
+    )
+    full = np.zeros((blocks, n), dtype=complex)
+    full[:, 1 : n // 2] = y
+    full[:, -np.arange(1, n // 2)] = y.conj()
+    x = np.fft.ifft(full * np.sqrt(n), axis=1).real.reshape(-1, 1)
+    data = JaxAnalysisData(x, nchunks=blocks, N_delta=1, N_theta=1)
+    np.testing.assert_allclose(data.y_ft[..., 0], y, atol=1e-12)
+    power = np.sum(np.abs(y) ** 2, axis=0)
+    model = JaxBayesianModel(data)
+
+    def conditional_target(b):
+        gamma = jnp.asarray(design) @ b
+        return (
+            -blocks * jnp.sum(gamma)
+            - jnp.sum(power * jnp.exp(-gamma))
+            + jnp.sum(dist.Normal(0, jnp.sqrt(10.0)).log_prob(b))
+        )
+
+    zero = model.trainable_vars
+    params = list(zero)
+    params[0] = params[0].at[0, 0, :2].set(beta)
+    np.testing.assert_allclose(
+        model.logpost(params) - model.logpost(zero),
+        conditional_target(beta) - conditional_target(jnp.zeros(2)),
+        rtol=2e-5,
+        atol=2e-5,
+    )
+
+
 def test_jax_import_does_not_load_tensorflow():
     subprocess.run(
         [

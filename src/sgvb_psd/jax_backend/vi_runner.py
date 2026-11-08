@@ -28,6 +28,7 @@ class JaxViRunner:
         Nbw=1.0,
         seed=None,
         elbo_samples=1,
+        optimize_mean=False,
     ):
         if not isinstance(elbo_samples, int) or elbo_samples < 1:
             raise ValueError("elbo_samples must be a positive integer")
@@ -50,6 +51,7 @@ class JaxViRunner:
             seed = int(np.random.SeedSequence().generate_state(1)[0])
         self.rng_key = jax.random.PRNGKey(seed)
         self.elbo_samples = elbo_samples
+        self.optimize_mean = bool(optimize_mean)
         self.svi_params = None
 
     def _numpyro_model(self):
@@ -70,7 +72,11 @@ class JaxViRunner:
         for name, initial in zip(PARAMETER_NAMES, self.model.trainable_vars):
             shape = initial.shape[1:]
             if np.prod(shape):
-                loc = numpyro.param(name + "_loc", initial[0])
+                # The reference TF guide captures params[i][0] as a tensor:
+                # its location stays at MAP and only its scale is trainable.
+                loc = initial[0]
+                if self.optimize_mean:
+                    loc = numpyro.param(name + "_loc", loc)
                 scale = numpyro.param(
                     name + "_scale",
                     jnp.full(shape, 1e-4),
@@ -136,14 +142,19 @@ class JaxViRunner:
         self.rng_key, key = jax.random.split(self.rng_key)
         keys = jax.random.split(key, len(PARAMETER_NAMES))
         samples = []
-        for name, shape, key in zip(
+        for name, shape, key, initial in zip(
             PARAMETER_NAMES,
             self.model.parameter_shapes,
             keys,
+            self.model.trainable_vars,
         ):
             if np.prod(shape):
                 samples.append(
-                    self.svi_params[name + "_loc"]
+                    (
+                        self.svi_params[name + "_loc"]
+                        if self.optimize_mean
+                        else initial[0]
+                    )
                     + self.svi_params[name + "_scale"]
                     * jax.random.normal(
                         key, (n_samples,) + shape, dtype=jnp.float32

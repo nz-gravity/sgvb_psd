@@ -105,6 +105,7 @@ class PSDEstimator:
         posterior_mode="joint",
         backend="tensorflow",
         elbo_samples=1,
+        optimize_mean=False,
     ):
         """
         Initialize the PSDEstimator.
@@ -147,6 +148,9 @@ class PSDEstimator:
             supports the original joint model for one or more channels.
         :param elbo_samples: Number of Monte Carlo particles per JAX ELBO
             step, defaults to 1. Ignored by TensorFlow.
+        :param optimize_mean: Optimize JAX guide means as well as scales.
+            The default False matches TensorFlow's fixed MAP means. This
+            changes the variational approximation, not the target model.
         """
 
         if backend not in {"tensorflow", "jax"}:
@@ -156,6 +160,8 @@ class PSDEstimator:
                 "the JAX backend currently supports original joint inference only"
             )
         self.backend = backend
+        if backend == "tensorflow" and optimize_mean:
+            raise ValueError("optimize_mean=True requires backend='jax'")
         if backend == "jax":
             x = np.asarray(x)
             if x.ndim == 1:
@@ -252,7 +258,11 @@ class PSDEstimator:
             from .jax_backend import JaxViRunner
 
             runner_cls = JaxViRunner
-            runner_kwargs.update(seed=seed, elbo_samples=elbo_samples)
+            runner_kwargs.update(
+                seed=seed,
+                elbo_samples=elbo_samples,
+                optimize_mean=optimize_mean,
+            )
         elif self.use_eigenbasis:
             runner_kwargs.update(
                 fmin_idx_extension=self.fmin_idx_extension,
