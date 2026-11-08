@@ -1,0 +1,65 @@
+10:54:45|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+10:54:48|SGVB-PSD|WARNING| Input data not standardised!
+10:54:48|SGVB-PSD|WARNING| Input data not standardised!
+10:54:48|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:54:50|SGVB-PSD|WARNING| Input data not standardised!
+10:54:51|SGVB-PSD|WARNING| Input data not standardised!
+10:54:51|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:54:51|SGVB-PSD|WARNING| Input data not standardised!
+2026-11-09 10:54:52.192026: W external/local_xla/xla/tsl/platform/profile_utils/cpu_utils.cc:145] Failed to get CPU frequency: 0 Hz
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1794174893.464107 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794174893.469781 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+ar1 0 50 {'negative_elbo_difference': 0.012969970703125, 'psd_median_relative_l2': 4.511425574519941e-06, 'psd_width_relative_l2': 0.002713893362409094, 'scale_relative_l2': 0.0026451329303501313}
+ar1 0 1000 {'negative_elbo_difference': 0.4559326171875, 'psd_median_relative_l2': 0.0017799495920997495, 'psd_width_relative_l2': 0.07390667644012988, 'scale_relative_l2': 0.3946383699144886}
+ar1 0 5000 {'negative_elbo_difference': 0.2355499267578125, 'psd_median_relative_l2': 0.0017816407870314146, 'psd_width_relative_l2': 0.06770802127729844, 'scale_relative_l2': 0.10893991890442442}
+ar1 0 10000 {'negative_elbo_difference': 0.0218658447265625, 'psd_median_relative_l2': 0.0011672688557294434, 'psd_width_relative_l2': 0.05618416874749337, 'scale_relative_l2': 0.10092570188206924}
+10:54:56|SGVB-PSD|WARNING| Input data not standardised!
+10:54:56|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:54:56|SGVB-PSD|WARNING| Input data not standardised!
+W0000 00:00:1794174898.578071 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794174898.583836 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+ar1 1 50 {'negative_elbo_difference': -0.00360107421875, 'psd_median_relative_l2': 2.2359256899190845e-06, 'psd_width_relative_l2': 0.0011177341927088953, 'scale_relative_l2': 0.0011075024982796844}
+ar1 1 1000 {'negative_elbo_difference': -0.9142303466796875, 'psd_median_relative_l2': 0.0017906885235279898, 'psd_width_relative_l2': 0.12347302910764216, 'scale_relative_l2': 0.38313071093486817}
+ar1 1 5000 {'negative_elbo_difference': 2.091339111328125, 'psd_median_relative_l2': 0.0022426204820015206, 'psd_width_relative_l2': 0.14983352132649477, 'scale_relative_l2': 0.4209217302201095}
+ar1 1 10000 {'negative_elbo_difference': 0.006561279296875, 'psd_median_relative_l2': 0.0012132791042452837, 'psd_width_relative_l2': 0.035231719372604706, 'scale_relative_l2': 0.07683415111487213}
+10:55:02|SGVB-PSD|WARNING| Input data not standardised!
+10:55:02|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:55:02|SGVB-PSD|WARNING| Input data not standardised!
+W0000 00:00:1794174903.779559 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794174903.785298 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+ar1 2 50 {'negative_elbo_difference': 0.000946044921875, 'psd_median_relative_l2': 1.6210130783693509e-06, 'psd_width_relative_l2': 0.0005196101906216804, 'scale_relative_l2': 0.0005940031026761627}
+ar1 2 1000 {'negative_elbo_difference': 0.2799072265625, 'psd_median_relative_l2': 0.002329749393254631, 'psd_width_relative_l2': 0.1267534712877658, 'scale_relative_l2': 0.3309034297091374}
+ar1 2 5000 {'negative_elbo_difference': -0.66082763671875, 'psd_median_relative_l2': 0.00194739577985794, 'psd_width_relative_l2': 0.07592771492735109, 'scale_relative_l2': 0.3075122084617814}
+ar1 2 10000 {'negative_elbo_difference': -0.05499267578125, 'psd_median_relative_l2': 0.0012735334825398658, 'psd_width_relative_l2': 0.09764613687633197, 'scale_relative_l2': 0.10705125108521522}
+10:55:07|SGVB-PSD|WARNING| Input data not standardised!
+10:55:07|SGVB-PSD|WARNING| Input data not standardised!
+10:55:07|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:55:09|SGVB-PSD|WARNING| Input data not standardised!
+10:55:10|SGVB-PSD|WARNING| Input data not standardised!
+10:55:10|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:55:11|SGVB-PSD|WARNING| Input data not standardised!
+W0000 00:00:1794174912.768474 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794174912.774249 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+var2 0 50 {'negative_elbo_difference': 0.0341796875, 'psd_median_relative_l2': 3.197635315995484e-06, 'psd_width_relative_l2': 0.000955717462709166, 'scale_relative_l2': 0.0022466168133809445}
+var2 0 1000 {'negative_elbo_difference': -1.661376953125, 'psd_median_relative_l2': 0.0022960089924818875, 'psd_width_relative_l2': 0.23866802993513228, 'scale_relative_l2': 0.3389068845530649}
+var2 0 5000 {'negative_elbo_difference': -2.31536865234375, 'psd_median_relative_l2': 0.002170916977930883, 'psd_width_relative_l2': 0.10988295346482876, 'scale_relative_l2': 0.381492998567929}
+var2 0 10000 {'negative_elbo_difference': 0.00408935546875, 'psd_median_relative_l2': 0.001125447602683566, 'psd_width_relative_l2': 0.031861047882931925, 'scale_relative_l2': 0.05978887114100186}
+10:55:18|SGVB-PSD|WARNING| Input data not standardised!
+10:55:18|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:55:18|SGVB-PSD|WARNING| Input data not standardised!
+W0000 00:00:1794174920.563951 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794174920.569771 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+var2 1 50 {'negative_elbo_difference': -0.0030517578125, 'psd_median_relative_l2': 5.593199543132002e-06, 'psd_width_relative_l2': 0.002249093837953413, 'scale_relative_l2': 0.0015772701852646187}
+var2 1 1000 {'negative_elbo_difference': -1.184783935546875, 'psd_median_relative_l2': 0.0013769267036993862, 'psd_width_relative_l2': 0.17370889354551566, 'scale_relative_l2': 0.25802736397202486}
+var2 1 5000 {'negative_elbo_difference': 0.540496826171875, 'psd_median_relative_l2': 0.001921310558320168, 'psd_width_relative_l2': 0.15982155513609694, 'scale_relative_l2': 0.33186741396703673}
+var2 1 10000 {'negative_elbo_difference': 0.01776123046875, 'psd_median_relative_l2': 0.0011299332725749917, 'psd_width_relative_l2': 0.039726947444363225, 'scale_relative_l2': 0.07419045874815287}
+10:55:26|SGVB-PSD|WARNING| Input data not standardised!
+10:55:26|SGVB-PSD|INFO| Loaded AnalysisData(x(t)=(512, 2), y(f)=(2, 127, 2), Xmat_delta=(127, 8), Xmat_theta=(127, 8), Z=(2, 127, 2, 1))
+10:55:26|SGVB-PSD|WARNING| Input data not standardised!
+W0000 00:00:1794174928.223259 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+W0000 00:00:1794174928.229144 5248506 op_level_cost_estimator.cc:743] Invalid device specifications for CPU: type: "CPU" model: "0" num_cores: 18 environment { key: "cpu_instruction_set" value: "ARM NEON" } environment { key: "eigen" value: "3.4.90" } l1_cache_size: 16384 l2_cache_size: 524288 l3_cache_size: 524288 memory_size: 268435456
+var2 2 50 {'negative_elbo_difference': -0.0006103515625, 'psd_median_relative_l2': 3.4488272510109067e-07, 'psd_width_relative_l2': 0.00013050430024394576, 'scale_relative_l2': 0.0018731237827901714}
+var2 2 1000 {'negative_elbo_difference': 0.26275634765625, 'psd_median_relative_l2': 0.0017388071024420943, 'psd_width_relative_l2': 0.1601260252087455, 'scale_relative_l2': 0.31120879831141285}
+var2 2 5000 {'negative_elbo_difference': -0.515380859375, 'psd_median_relative_l2': 0.0019089945719286737, 'psd_width_relative_l2': 0.06252373079667296, 'scale_relative_l2': 0.27039808467375803}
+var2 2 10000 {'negative_elbo_difference': 0.039276123046875, 'psd_median_relative_l2': 0.0011116062221878747, 'psd_width_relative_l2': 0.022841115983034326, 'scale_relative_l2': 0.08192431275371401}

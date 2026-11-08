@@ -180,3 +180,4 @@ cython_debug/
 /tests/out/
 !/validation/jax-constraints.txt
 !/validation/*.log
+!/validation/vi-diagnosis/*.log

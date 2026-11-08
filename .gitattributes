@@ -1,0 +1,5 @@
+validation/*.json linguist-generated=true
+validation/*.svg linguist-generated=true
+validation/*.log linguist-generated=true
+validation/vi-diagnosis/*.json linguist-generated=true
+validation/vi-diagnosis/*.log linguist-generated=true

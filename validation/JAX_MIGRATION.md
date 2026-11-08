@@ -6,6 +6,12 @@ SGVB model for 1D and multivariate input. It is an incremental migration in
 TensorFlow remains the default, and both existing eigenbasis modes remain
 available through TensorFlow.
 
+**Follow-up:** the initial 30% VI discrepancy was traced to trainable JAX
+means versus fixed TensorFlow MAP means. The current JAX default now matches
+the reference; `optimize_mean=True` is an explicit alternative approximation.
+See [VI diagnosis and calibration](VI_DIAGNOSIS.md) for the matched-family
+controls, longer runs, and the conditional calibration limitations.
+
 ## Revisions and environment
 
 - Destination base: `8b0f1f59241b0e5918c962212a4516123d8c8131` (`main` at inspection).
@@ -49,7 +55,8 @@ without changing their formulas. The new backend provides:
   empty theta blocks for the one-channel case. The NumPyro improper base
   measure adds no second prior; the factor supplies the full target.
 - Independent Normal guide parameters, softplus-constrained positive
-  scales initialized at `1e-4`, matching the reference guide family.
+  scales initialized at `1e-4`, and fixed MAP means by default, matching the
+  reference guide family. Mean optimization is opt-in through `optimize_mean`.
 - Per-runner PRNG state. Identical seeds reproduce a fixed-learning-rate run; subsequent
   posterior sampling advances keys. No global JAX dtype configuration is
   changed. Model arrays use float32/complex64, matching the reference.
@@ -97,7 +104,7 @@ Because TF `AnalysisData` rejects 1D, the 1D TF oracle restricts its
 MIT-licensed BayesianModel data to one channel; independent scalar-prior
 and white-noise formulas provide an additional check.
 
-The seeded fixed-parameter VAR2D control (four draws, two blocks) measured:
+The initial seeded fixed-parameter VAR2D control (four draws, two blocks) measured:
 
 | Quantity | Result |
 |---|---:|
@@ -114,11 +121,12 @@ The [experiment script](run_jax_parity.py),
 had finite ELBO values and interval arrays. The AR(1) fit improved its MAP
 target from -268.38 to -198.67; VAR2D improved from -517.27 to -299.73.
 
-The short VAR2D fitted median differs from TensorFlow by about **29.9%**
+In the initial implementation, the short VAR2D fitted median differed from TensorFlow by about **29.9%**
 relative L2 on channel 0 despite nearly identical MAP results. Different
-random-number streams and optimizer implementations remain; the fit has
-only 50 VI updates. This is **not** evidence of equivalent fitted
-posteriors or calibrated uncertainty. The short AR(1) and VAR2D channel-0
+guide families caused this discrepancy: JAX trained its means while TF
+kept them fixed. The corrected matched-family 50-step control differs by
+less than 0.001% across three VAR2D seeds. This does not establish accurate
+individual posteriors or calibrated uncertainty. The initial short AR(1) and VAR2D channel-0
 median errors against truth were about 18.2% and 27.8%, respectively. A
 preliminary four-particle JAX run was also finite and showed a similar
 short-fit discrepancy; the recorded paired timing uses equal particle counts.
@@ -175,8 +183,10 @@ whitening/recolouring, and GW150914 comparison are therefore not ported or
 validated. Permission/provenance is needed before importing that code into
 this MIT package. This does not block the independently ported MIT model.
 
-Next steps are a matched-draw ELBO/optimizer convergence study with longer
-VI runs, simulation-based uncertainty checks, explicit decisions on prior
+Matched-draw objective/optimizer controls, longer VI runs, and a conditional
+prior-predictive screen are now in [VI_DIAGNOSIS.md](VI_DIAGNOSIS.md).
+Next steps are full-model simulation-based uncertainty checks, covariance-aware
+guides, explicit decisions on prior
 scale and PSD units, then provenance-cleared AR workflow integration and
 the JAX eigenbasis/factorized port. GW150914, GPU behavior, long-run
 calibration, and the remote Linux CI result are not claimed by the local
@@ -184,11 +194,12 @@ checks. Do not merge or retire TensorFlow on the strength of these controls.
 
 ## Delivery status
 
-Implementation and validation are committed locally. Publishing the branch
+Implementation and validation are committed locally. An initial attempt to publish the branch
 `feature/jax-sgvb` to `nz-gravity/sgvb_psd` was denied before execution by
 automatic approval review: it judged the implementation request insufficient
 authorization to publish code to GitHub. The user history was checked and
 contained no materially new, explicit push authorization. The push was not
-retried through another tool. No PR was created and no remote branch or
-main branch was changed. Explicit approval is required to push this branch
-and open the prepared draft PR. A local patch is available beside the checkout.
+retried through another tool. The user subsequently explicitly approved
+pushing this branch and opening a draft PR, subject to the branch naming
+restriction. No automatic merge is authorized. A local patch is available
+beside the checkout; the final task response records the publication outcome.
