@@ -1,6 +1,7 @@
 """MAP followed by mean-field SGVB using NumPyro's reparameterized ELBO."""
 
 import time
+from numbers import Real
 
 import jax
 import jax.numpy as jnp
@@ -49,9 +50,18 @@ class ViRunner:
         reference_psd=None,
         data_scale=1.0,
         coarse_grain=None,
+        vi_learning_rate=0.05,
     ):
         if not isinstance(elbo_samples, int) or elbo_samples < 1:
             raise ValueError("elbo_samples must be a positive integer")
+        if (
+            isinstance(vi_learning_rate, (bool, np.bool_))
+            or not isinstance(vi_learning_rate, Real)
+            or not np.isfinite(vi_learning_rate)
+            or vi_learning_rate <= 0
+        ):
+            raise ValueError("vi_learning_rate must be finite and positive")
+        self.vi_learning_rate = float(vi_learning_rate)
         self.data = AnalysisData(
             x,
             nchunks,
@@ -145,7 +155,7 @@ class ViRunner:
             self.svi = SVI(
                 self._numpyro_model,
                 self._guide,
-                Adam(5e-2),
+                Adam(self.vi_learning_rate),
                 Trace_ELBO(num_particles=self.elbo_samples),
             )
         if n_elbo_maximisation_steps not in self._svi_fits:

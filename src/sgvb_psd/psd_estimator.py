@@ -101,6 +101,7 @@ class PSDEstimator:
         reference_psd=None,
         parallel_rows=False,
         coarse_grain=None,
+        vi_learning_rate=0.05,
     ):
         """
         Initialize the PSDEstimator.
@@ -144,6 +145,9 @@ class PSDEstimator:
         :param optimize_mean: Optimize guide means as well as scales.
             By default, means remain fixed at their MAP estimates. This
             changes the variational approximation, not the target model.
+        :param vi_learning_rate: Positive Adam step size for VI, defaults to
+            0.05. A smaller rate can help when training many guide means.
+            The MAP rate is still supplied separately to run(lr=...).
         :param reference_psd: Fixed reference spectral density in original
             input units squared per frequency unit (two-sided, positive bins).
             Provide a callable of physical frequencies, an array on the
@@ -260,6 +264,7 @@ class PSDEstimator:
             reference_psd=reference_psd,
             data_scale=float(self.psd_scaling),
             coarse_grain=coarse_grain,
+            vi_learning_rate=vi_learning_rate,
         )
         runner_cls = RowViRunner if self.parallel_rows else ViRunner
         self.inference_runner = runner_cls(**runner_kwargs)

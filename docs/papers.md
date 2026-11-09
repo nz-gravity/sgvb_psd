@@ -55,7 +55,11 @@ are separate modelling and inference choices.
   structure described by [Nam et al., Table 2](https://arxiv.org/html/2211.02539v2).
 - The [LVK example](examples/LVK_example.ipynb) uses public strain data from
   the [Gravitational Wave Open Science Center](https://gwosc.org/), with the
-  exact GW150914 file URLs and quality checks recorded in the notebook.
+  fixed-revision off-source excerpt from
+  [Jianan’s AR-SGVB example](https://github.com/jianan-joseph-liu/cleared_unisgvb/blob/ee515546a389e935b01d1bb1fac26240a52563b0/estimate_gw150914_psd.py).
+  The notebook records checksums and timestamps; this excerpt does not include
+  data-quality masks. Its fixed-order AR baseline follows the same prewhitening
+  idea, with whitening/reconstruction handled by the JAX implementation.
 - The [ET example](examples/ET_example.ipynb) uses the repository's small
   three-channel ET sample associated with the correlated-noise work above.
 
