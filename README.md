@@ -149,3 +149,42 @@ uv run --no-sync pytest -m "not slow"
 ```
 
 After dependency changes, run `uv lock` and commit the updated `uv.lock`.
+
+
+## Publishing
+
+Merging ordinary changes into `main` does not publish a release. When ready,
+choose the exact version and push a commit to `main` with this subject:
+
+```bash
+git commit --allow-empty -m "release: v2.1.0"
+git push origin main
+```
+
+`2.1.0` is an example, not a scheduled release. The version is explicit;
+`feat!`/`fix` commits never choose or trigger a release. Only the final pushed
+commit subject is checked; a release marker in an older commit or a merge
+message body does not publish. If using a squash merge, keep the final commit
+subject `release: v2.1.0` (GitHub’s trailing `(#123)` is also accepted).
+
+Alternatively, open **Actions → Release → Run workflow**, select `main`, and
+enter `2.1.0`. This works without pushing directly to a protected branch.
+For a preview version use, for example, `2.1.0rc1`; GitHub marks it as a
+prerelease and ordinary pip installs continue to prefer stable versions.
+
+The workflow validates the version against existing tags, tests the selected
+commit, builds and checks one wheel and source distribution, then creates the
+`v<version>` tag, publishes those artifacts to PyPI, and creates GitHub release
+notes. Versions are derived from the tag by setuptools-scm; do not edit the
+generated `_version.py`. Plain tag pushes do not start another publication.
+
+A tag cannot be moved to different source code. Re-run failed workflow jobs
+for a transient error; already uploaded PyPI files are skipped, never replaced.
+A full retry of the same version must select the same commit (use the original
+run if `main` has advanced). Changed code needs a new version. Releases are
+serialized and an in-progress upload is not cancelled.
+
+Publishing keeps the existing token-free PyPI Trusted Publisher identity:
+`nz-gravity/sgvb_psd`, workflow `publish.yml`. No API-token secret is required;
+the corresponding publisher must be configured on the PyPI project. The
+workflow must reach `main` before its manual launch option becomes available.
