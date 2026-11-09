@@ -458,19 +458,21 @@ local execution uses the project environment. Data downloads are cached locally.
 <td><p>Correlated VAR(2), analytic truth and parallel Cholesky rows</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="examples/ET_example.html"><span class="std std-doc">ET example</span></a></p></td>
-<td><p>Short, anti-aliased sample of three-channel ET noise</p></td>
+<td><p>Paper Case-A Gaussian coherence peaks, full VAR reference and held-out checks</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="examples/lisa_example.html"><span class="std std-doc">LISA example</span></a></p></td>
 <td><p>Shared public noise-simulation slice and full reference model in XYZ2 and AET coordinates</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="examples/LVK_example.html"><span class="std std-doc">LVK example</span></a></p></td>
-<td><p>Pre-event strain with AR order selection on a separate training segment</p></td>
+<td><p>Off-source strain with a fixed-order AR line reference and held-out checks</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>Defaults use 1000 MAP steps, 300 VI steps and 96 posterior draws. These small
-examples demonstrate the workflow; scientific analyses require convergence
+<p>Simulation/LISA defaults use 1000 MAP steps, 300 VI steps and 96 posterior
+draws. ET/LVK use fixed AR/VAR references, 1500/8000 MAP steps respectively,
+2000 VI steps with four particles and 128 draws. These bounded examples
+demonstrate the workflow; scientific analyses require convergence
 and uncertainty-calibration checks. The LISA example uses a 13.8 MB excerpt
 and supports an explicit synthetic mode or a user-supplied HDF5 file.</p>
 <ul class="simple">
