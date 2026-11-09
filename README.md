@@ -21,19 +21,18 @@ pip install sgvb_psd
 ```
 
 On this migration branch, install the new JAX-only runtime from the checkout
-with `pip install -e .` (Python 3.10+; validation uses 3.12). TensorFlow and
+with `uv sync --locked` (Python 3.10+; validation uses 3.12). TensorFlow and
 TensorFlow Probability are no longer runtime dependencies or install extras. Existing PyPI
 releases may still use the previous runtime.
 
 ## Inference modes
 
 The original non-eigenbasis joint SGVB model runs in JAX for one or more
-channels. This is a breaking runtime upgrade: TensorFlow selection and
-both eigenbasis modes are removed from the installed package. Requests for
-unported modes fail explicitly. The MIT historical implementation remains
-under [validation/reference](validation/reference/README.md) for isolated
-comparisons, outside the runtime and wheel. Eigenbasis and factorized JAX
-ports remain unfinished.
+channels. Only JAX/NumPyro is supported in the package, tests and CI.
+Eigenbasis joint/factorized JAX inference is unfinished; those requests fail
+explicitly. AR whitening/recolouring is not integrated. The old TensorFlow
+backend and reference support are removed; historical results remain in Git
+history. See [migration scope](validation/JAX_MIGRATION.md).
 
 ```python
 from sgvb_psd.psd_estimator import PSDEstimator
@@ -43,7 +42,7 @@ joint = PSDEstimator(x=data)  # blocked Whittle likelihood
 
 ## JAX runtime and experimental migration
 
-Install with `pip install -e '.[dev]'` from this checkout (`[jax]` remains a
+Install with `uv sync --locked --extra dev` from this checkout (`[jax]` remains a
 compatibility alias). The original joint model runs in JAX/NumPyro for
 univariate or multivariate input:
 
@@ -83,13 +82,22 @@ protocol; it is separate from prior-predictive calibration.
 
 ## Development
 
-Install in editable mode with dev dependencies
-```
-pip install -e ".[dev]"
-pre-commit install
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then
+create the editable development environment from the lockfile:
+
+```bash
+uv sync --locked --extra dev
+uv run --no-sync pre-commit install
 ```
 
-Ensure unit tests are passing locally and on the CI!
+Run the same non-slow tests as CI:
+
+```bash
+uv run --no-sync pytest -m "not slow"
 ```
-pytest tests/
-```
+
+After dependency changes, run `uv lock` and commit the updated `uv.lock`.
+
+Validation scripts and concise summaries are in [validation/README.md](validation/README.md).
+Experiment arrays, per-run outputs, plots and logs are ignored local files;
+do not commit them. Earlier blobs remain in Git history without a force-push.

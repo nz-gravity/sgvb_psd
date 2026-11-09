@@ -1,0 +1,310 @@
+{
+  "dtype": "float64 research comparison",
+  "steps": 6000,
+  "particles": 8,
+  "schedule": "0.01 for 4000, then 0.001; per-coordinate gradient clip 10",
+  "seeds": [
+    0,
+    1
+  ],
+  "initialization": "faithful frozen guides physical sigma 1e-4; richer guides sigma 0.1 in common Hessian-diagonal-scaled coordinates",
+  "cases": {
+    "ar1": {
+      "dimension": 15,
+      "row_dimensions": [
+        15
+      ],
+      "families": {
+        "manual_frozen_diagonal": [
+          {
+            "negative_elbo": 216.71721824529516,
+            "negative_elbo_mc_se": 0.19890247504907285,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.2448612920125015,
+            "free_parameters": 15,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 216.92590924710584,
+            "negative_elbo_mc_se": 0.2239989989478023,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.08985204197233543,
+            "free_parameters": 15,
+            "training_finite": true
+          }
+        ],
+        "numpyro_frozen_diagonal": [
+          {
+            "negative_elbo": 216.84783418410217,
+            "negative_elbo_mc_se": 0.20883141525339027,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.25559316703584045,
+            "free_parameters": 15,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 216.73162732951494,
+            "negative_elbo_mc_se": 0.23042945072495025,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.08334037498570979,
+            "free_parameters": 15,
+            "training_finite": true
+          }
+        ],
+        "legacy_scale_lowrank2": [
+          {
+            "negative_elbo": 215.60194576210836,
+            "negative_elbo_mc_se": 0.26591393852020023,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.4332882500020787,
+            "free_parameters": 45,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 215.6778494530128,
+            "negative_elbo_mc_se": 0.2665332342882196,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.10640674998285249,
+            "free_parameters": 45,
+            "training_finite": true
+          }
+        ],
+        "auto_diagonal": [
+          {
+            "negative_elbo": 177.58304763706033,
+            "negative_elbo_mc_se": 0.08722999820341662,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.2830835410277359,
+            "free_parameters": 30,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 177.93457044272853,
+            "negative_elbo_mc_se": 0.1433261708832058,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.0911677079857327,
+            "free_parameters": 30,
+            "training_finite": true
+          }
+        ],
+        "auto_lowrank4": [
+          {
+            "negative_elbo": 174.01573237610063,
+            "negative_elbo_mc_se": 0.07922840370820688,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.533039000001736,
+            "free_parameters": 90,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 173.84577386068602,
+            "negative_elbo_mc_se": 0.06289602195384791,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.23016979201929644,
+            "free_parameters": 90,
+            "training_finite": true
+          }
+        ],
+        "auto_full": [
+          {
+            "negative_elbo": 173.78867251108744,
+            "negative_elbo_mc_se": 0.10799838173715777,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.32523775001754984,
+            "free_parameters": 135,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 174.04408945968225,
+            "negative_elbo_mc_se": 0.2151945260176019,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.08669404196552932,
+            "free_parameters": 135,
+            "training_finite": true
+          }
+        ],
+        "structured_row_gaussian": [
+          {
+            "negative_elbo": 173.75525763261197,
+            "negative_elbo_mc_se": 0.06637769032710902,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 0.3057469169725664,
+            "free_parameters": 135,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 173.87054665374745,
+            "negative_elbo_mc_se": 0.169924039766271,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 0.08338762499624863,
+            "free_parameters": 135,
+            "training_finite": true
+          }
+        ]
+      }
+    },
+    "var2": {
+      "dimension": 63,
+      "row_dimensions": [
+        15,
+        48
+      ],
+      "families": {
+        "manual_frozen_diagonal": [
+          {
+            "negative_elbo": 394.0793201616075,
+            "negative_elbo_mc_se": 0.3528317055458639,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.077079374983441,
+            "free_parameters": 63,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 393.6303886668518,
+            "negative_elbo_mc_se": 0.3450645887578527,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 1.8151197919505648,
+            "free_parameters": 63,
+            "training_finite": true
+          }
+        ],
+        "numpyro_frozen_diagonal": [
+          {
+            "negative_elbo": 394.2399746690895,
+            "negative_elbo_mc_se": 0.35489819464913624,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.0276539999758825,
+            "free_parameters": 63,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 393.3751633852834,
+            "negative_elbo_mc_se": 0.3435667809649245,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 1.7306164170149714,
+            "free_parameters": 63,
+            "training_finite": true
+          }
+        ],
+        "legacy_scale_lowrank2": [
+          {
+            "negative_elbo": 391.50857542690267,
+            "negative_elbo_mc_se": 0.502469068450775,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.9246550829848275,
+            "free_parameters": 189,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 390.31935555386895,
+            "negative_elbo_mc_se": 0.4591282985841925,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 2.093272791011259,
+            "free_parameters": 189,
+            "training_finite": true
+          }
+        ],
+        "auto_diagonal": [
+          {
+            "negative_elbo": 69.44054078385722,
+            "negative_elbo_mc_se": 0.19196875942241426,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.03172095795162,
+            "free_parameters": 126,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 69.61202620557236,
+            "negative_elbo_mc_se": 0.18434550387451032,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 1.7400535410270095,
+            "free_parameters": 126,
+            "training_finite": true
+          }
+        ],
+        "auto_lowrank4": [
+          {
+            "negative_elbo": 62.462227153420756,
+            "negative_elbo_mc_se": 0.17170931951866703,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.3632861669757403,
+            "free_parameters": 378,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 62.16247759256328,
+            "negative_elbo_mc_se": 0.17099496750926582,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 1.9479150410043076,
+            "free_parameters": 378,
+            "training_finite": true
+          }
+        ],
+        "auto_full": [
+          {
+            "negative_elbo": 54.79675088212423,
+            "negative_elbo_mc_se": 0.16734817553405432,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.2245575839770027,
+            "free_parameters": 2079,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 54.77396720662534,
+            "negative_elbo_mc_se": 0.16383836946146038,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 1.8486275419709273,
+            "free_parameters": 2079,
+            "training_finite": true
+          }
+        ],
+        "structured_row_gaussian": [
+          {
+            "negative_elbo": 54.528453750342365,
+            "negative_elbo_mc_se": 0.1864910504664056,
+            "evaluation_finite": true,
+            "seed": 0,
+            "training_s": 2.370065415976569,
+            "free_parameters": 1359,
+            "training_finite": true
+          },
+          {
+            "negative_elbo": 54.324290422429456,
+            "negative_elbo_mc_se": 0.2374835770124037,
+            "evaluation_finite": true,
+            "seed": 1,
+            "training_s": 1.902424499974586,
+            "free_parameters": 1359,
+            "training_finite": true
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,186 +1,200 @@
-"""Deterministic backend parity plus bounded inference controls."""
+"""Independent NumPy/SciPy scientific controls for the JAX backend."""
 
-import subprocess
-import sys
-from types import SimpleNamespace
-
+import jax
+import jax.numpy as jnp
 import numpy as np
 import pytest
+from scipy.special import expit
+from scipy.stats import halfcauchy, multivariate_normal, norm
 
-tf = pytest.importorskip(
-    "tensorflow", reason="isolated legacy parity reference"
-)
-
-jax = pytest.importorskip("jax")
-pytest.importorskip("numpyro")
-import jax.numpy as jnp
-
-from sgvb_psd._spectral import compute_chunked_fft
-from sgvb_tf.backend import AnalysisData, BayesianModel
 from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel, JaxViRunner
-from sgvb_psd.psd_estimator import PSDEstimator
+from sgvb_psd.jax_backend.model import PARAMETER_NAMES
 
 
-@pytest.mark.parametrize("rank", [1, 2])
-def test_optional_lowrank_scale_port_matches_tfp(rank):
-    import tensorflow_probability as tfp
-    from sgvb_psd.jax_backend.guides import legacy_lowrank_normal
-
-    rng = np.random.default_rng(123)
-    loc = rng.normal(size=(2, 4)).astype(np.float32)
-    diagonal = np.full((2, 4), 0.3, np.float32)
-    factor = rng.normal(0, 0.15, size=(2, 4, rank)).astype(np.float32)
-    reference = tfp.distributions.MultivariateNormalDiagPlusLowRank(
-        loc=loc, scale_diag=diagonal, scale_perturb_factor=factor
-    )
-    port = legacy_lowrank_normal(
-        jnp.asarray(loc), jnp.asarray(diagonal), jnp.asarray(factor)
-    )
-    np.testing.assert_allclose(
-        port.covariance_matrix, reference.covariance(), rtol=2e-6
-    )
-    value = rng.normal(size=(5, 2, 4)).astype(np.float32)
-    np.testing.assert_allclose(
-        port.log_prob(value), reference.log_prob(value), rtol=3e-6, atol=2e-5
-    )
-
-
-def paired_models(p, nchunks, n_basis=4):
+def make_model(p, nchunks):
     x = np.random.default_rng(41).normal(size=(192, max(2, p)))
     x /= np.std(x)
-    options = dict(
+    data = JaxAnalysisData(
+        x[:, :p],
         nchunks=nchunks,
-        fs=16.0,
-        fmin_for_analysis=1.0,
-        fmax_for_analysis=7.0,
-        N_delta=n_basis,
-        N_theta=n_basis,
+        fs=16,
+        fmin_for_analysis=1,
+        fmax_for_analysis=7,
+        N_delta=4,
+        N_theta=4,
     )
-    tf_data = AnalysisData(x=x, **options)
-    if p == 1:
-        # AnalysisData rejects p=1, but the MIT BayesianModel supports the
-        # empty theta blocks. Restrict its data to make a 1D TF oracle.
-        tf_data = SimpleNamespace(**vars(tf_data))
-        tf_data.p = 1
-        tf_data.y_ft = tf_data.y_ft[..., :1]
-        tf_data.summed_periodogram = tf_data.summed_periodogram[:, :1, :1]
-    ja_data = JaxAnalysisData(x=x[:, :p], **options)
-    return BayesianModel(tf_data, Nbw=1.5), JaxBayesianModel(ja_data, Nbw=1.5)
+    return JaxBayesianModel(data, Nbw=1.5)
 
 
-def varied_params(model, draws=4):
+def varied_params(model, draws):
     rng = np.random.default_rng(66)
     return tuple(
         np.asarray(a).repeat(draws, axis=0)
-        + rng.normal(0, 0.025, size=(draws,) + a.shape[1:]).astype(np.float32)
+        + rng.normal(0, 0.025, (draws,) + a.shape[1:]).astype(np.float32)
         for a in model.trainable_vars
     )
+
+
+def numpy_target(model, params):
+    """Direct Fourier residuals, not the JAX summed-periodogram contraction."""
+    ga, local, real, lr, imag, li, tau, tt = [
+        np.asarray(a, float) for a in params
+    ]
+    xd = np.asarray(model.data.Xmat_delta, float)
+    xt = np.asarray(model.data.Xmat_theta, float)
+    y = np.asarray(model.data.y_ft, complex)
+    gamma = np.einsum("fk,spk->sfp", xd, ga)
+    theta = np.einsum("fk,sek->sfe", xt, real + 1j * imag)
+    residual = np.broadcast_to(y, (len(ga),) + y.shape).copy()
+    for channel in range(1, model.data.p):
+        start = channel * (channel - 1) // 2
+        residual[..., channel] -= np.einsum(
+            "sfi,bfi->sbf",
+            theta[..., start : start + channel],
+            y[..., :channel],
+        )
+    likelihood = (
+        -model.data.nchunks * gamma.sum(axis=(1, 2))
+        - np.sum(abs(residual) ** 2 * np.exp(-gamma[:, None]), axis=(1, 2, 3))
+    ) / model.Nbw
+    prior = norm.logpdf(ga[..., :2], scale=np.sqrt(10)).sum(axis=(1, 2))
+    for coef, shrink, global_scale in (
+        (ga[..., 2:], local, tau),
+        (real, lr, tt),
+        (imag, li, tt),
+    ):
+        bounded = np.exp(2 * (shrink + global_scale))
+        scale = 4 * bounded / (4 + bounded)
+        prior += norm.logpdf(coef, scale=scale).sum(axis=(1, 2))
+        hc = expit(
+            -np.arange(1, shrink.shape[-1] + 1) + model.degree_fluctuate
+        )
+        prior += (halfcauchy.logpdf(np.exp(shrink), scale=hc) + shrink).sum(
+            axis=(1, 2)
+        )
+    for shrink in (tau, tt):
+        prior += (halfcauchy.logpdf(np.exp(shrink), scale=0.01) + shrink).sum(
+            axis=(1, 2)
+        )
+    return likelihood, prior
 
 
 @pytest.mark.parametrize("p", [1, 2, 3])
 @pytest.mark.parametrize("nchunks", [1, 3])
 @pytest.mark.parametrize("draws", [1, 4])
-def test_log_density_and_gradients_match_tensorflow(p, nchunks, draws):
-    reference, model = paired_models(p, nchunks)
+def test_target_and_directional_gradients_against_numpy(p, nchunks, draws):
+    model = make_model(p, nchunks)
     params = varied_params(model, draws)
-    tf_params = tuple(tf.Variable(a) for a in params)
-    actual = model.loglik(params)
-    assert actual.shape == (draws,)
-    # Never use legacy logpost for several draws: its scalar likelihood
-    # broadcasts across the vector prior. Compare each target explicitly.
-    expected = np.array(
-        [
-            reference.loglik(tuple(a[i : i + 1] for a in tf_params)).numpy()
-            for i in range(draws)
-        ]
-    )
-    np.testing.assert_allclose(actual, expected, rtol=3e-6, atol=1e-4)
+    ll, prior = numpy_target(model, params)
+    np.testing.assert_allclose(model.loglik(params), ll, rtol=4e-6, atol=2e-4)
     np.testing.assert_allclose(
-        model.logprior(params),
-        reference.logprior(tf_params),
-        rtol=3e-6,
-        atol=2e-4,
+        model.logprior(params), prior, rtol=4e-6, atol=2e-4
     )
     np.testing.assert_allclose(
-        jnp.sum(actual), reference.loglik(tf_params), rtol=3e-6, atol=1e-4
+        jax.jit(model.logpost)(params), ll + prior, rtol=4e-6, atol=4e-4
     )
-
-    with tf.GradientTape() as tape:
-        target = reference.loglik(tf_params) + tf.reduce_sum(
-            reference.logprior(tf_params)
+    gradient = jax.grad(lambda z: jnp.sum(model.logpost(z)))(params)
+    rng = np.random.default_rng(912)
+    for index, leaf in enumerate(params):
+        if not leaf.size:
+            continue
+        direction = rng.normal(size=leaf.shape)
+        direction /= np.linalg.norm(direction)
+        plus = [np.asarray(a, float) for a in params]
+        minus = [a.copy() for a in plus]
+        step = 1e-4
+        plus[index] = plus[index] + step * direction
+        minus[index] = minus[index] - step * direction
+        lp = numpy_target(model, plus)
+        lm = numpy_target(model, minus)
+        finite_difference = (
+            sum(a.sum() for a in lp) - sum(a.sum() for a in lm)
+        ) / (2 * step)
+        actual = np.sum(np.asarray(gradient[index]) * direction)
+        np.testing.assert_allclose(
+            actual, finite_difference, rtol=6e-4, atol=3e-3
         )
-    expected_grads = tape.gradient(target, tf_params)
-    actual_grads = jax.grad(lambda z: jnp.sum(model.logpost(z)))(params)
-    for a, b in zip(actual_grads, expected_grads):
-        np.testing.assert_allclose(a, b, rtol=3e-5, atol=5e-4)
-    np.testing.assert_allclose(
-        jax.jit(model.logpost)(params),
-        model.logpost(params),
-        rtol=3e-6,
-        atol=2e-4,
-    )
 
 
 @pytest.mark.parametrize("p", [1, 2, 3])
-def test_psd_reconstruction_and_scaling_match_tensorflow(p):
-    reference, model = paired_models(p, 3)
+def test_psd_matches_inverse_precision_and_unit_scaling(p):
+    model = make_model(p, 3)
     params = varied_params(model, 7)
-    expected = reference.compute_psd(
-        [tf.constant(a) for a in params], fs=16, psd_scaling=2.5
+    gamma = np.einsum(
+        "fk,spk->sfp", np.asarray(model.data.Xmat_delta), params[0]
     )
-    actual = model.compute_psd(params, fs=16, psd_scaling=2.5)
-    for a, b in zip(actual, expected):
-        np.testing.assert_allclose(a, b, rtol=5e-5, atol=2e-6)
-    samples = np.asarray(model.psd_samples(params, fs=16))
+    theta = np.einsum(
+        "fk,sek->sfe",
+        np.asarray(model.data.Xmat_theta),
+        params[2] + 1j * params[4],
+    )
+    t = np.broadcast_to(
+        np.eye(p, dtype=complex), gamma.shape[:2] + (p, p)
+    ).copy()
+    row, col = np.tril_indices(p, -1)
+    t[..., row, col] = -theta
+    precision = t.conj().swapaxes(-1, -2) @ (np.exp(-gamma)[..., :, None] * t)
+    expected = np.linalg.inv(precision) / 16
+    actual = np.asarray(model.psd_samples(params, fs=16))
+    np.testing.assert_allclose(actual, expected, rtol=5e-6, atol=2e-7)
+    assert np.all(np.linalg.eigvalsh(actual) > 0)
+    raw, ci, _ = model.compute_psd(params, fs=16, psd_scaling=2.5)
+    np.testing.assert_allclose(raw, expected, rtol=5e-6, atol=2e-7)
+    diag = np.diagonal(ci, axis1=-2, axis2=-1).real
     np.testing.assert_allclose(
-        samples, samples.conj().swapaxes(-1, -2), atol=1e-7
+        diag,
+        np.quantile(
+            np.diagonal(expected, axis1=-2, axis2=-1).real,
+            [0.05, 0.5, 0.95],
+            axis=0,
+        )
+        * 2.5**2,
+        rtol=5e-6,
     )
-    assert np.all(np.linalg.eigvalsh(samples) > 0)
 
 
-def test_prior_jacobians_against_independent_scalar_formula():
-    from scipy.special import expit
-    from scipy.stats import halfcauchy, norm
+@pytest.mark.parametrize("rank", [1, 2])
+def test_lowrank_scale_family_against_scipy(rank):
+    from sgvb_psd.jax_backend.guides import legacy_lowrank_normal
 
-    _, model = paired_models(1, 3)
-    params = varied_params(model, 1)
-    ga, local, _, _, _, _, tau, _ = params
-    scale = np.exp(2 * local) * np.exp(2 * tau)
-    scale = scale * 4 / (scale + 4)
-    expected = np.sum(norm.logpdf(ga[..., :2], scale=np.sqrt(10)))
-    expected += np.sum(norm.logpdf(ga[..., 2:], scale=scale))
-    hc = expit(-np.arange(1, local.shape[-1] + 1) + model.degree_fluctuate)
-    expected += np.sum(halfcauchy.logpdf(np.exp(local), scale=hc) + local)
-    expected += np.sum(halfcauchy.logpdf(np.exp(tau), scale=0.01) + tau)
-    np.testing.assert_allclose(model.logprior(params), expected, rtol=2e-6)
+    rng = np.random.default_rng(123)
+    loc = rng.normal(size=(2, 4)).astype(np.float32)
+    diagonal = np.full((2, 4), 0.3, np.float32)
+    factor = rng.normal(0, 0.15, (2, 4, rank)).astype(np.float32)
+    scale = np.eye(4) * diagonal[..., None, :] + factor @ factor.swapaxes(
+        -1, -2
+    )
+    covariance = scale @ scale.swapaxes(-1, -2)
+    port = legacy_lowrank_normal(
+        jnp.asarray(loc), jnp.asarray(diagonal), jnp.asarray(factor)
+    )
+    values = rng.normal(size=(5, 2, 4)).astype(np.float32)
+    expected = np.column_stack(
+        [
+            multivariate_normal(loc[i], covariance[i]).logpdf(values[:, i])
+            for i in range(2)
+        ]
+    )
+    np.testing.assert_allclose(port.covariance_matrix, covariance, rtol=3e-6)
+    np.testing.assert_allclose(
+        port.log_prob(values), expected, rtol=3e-6, atol=2e-5
+    )
 
 
 @pytest.mark.parametrize("p", [1, 2])
-def test_reference_and_default_jax_guides_keep_map_locations(p):
+def test_default_guide_locations_stay_at_map(p):
     from numpyro.handlers import seed, substitute, trace
-    from sgvb_tf.backend import ViRunner
-    from sgvb_psd.jax_backend.model import PARAMETER_NAMES
 
-    reference, model = paired_models(p, 3)
-    runner = ViRunner.__new__(ViRunner)
-    runner.variation_factor = 0.0
-    runner.init_surrogate_posterior(reference.trainable_vars)
-    # Regression for the 30% discrepancy: TF only exposes scale variables.
-    assert all(
-        "q_z_scale" in v.name
-        for v in runner.surrogate_posterior.trainable_variables
+    runner = JaxViRunner(
+        np.random.default_rng(0).normal(size=(96, p)), N_theta=3
     )
-    assert not any(
-        isinstance(d.distribution.loc, tf.Variable)
-        for d in runner.surrogate_posterior.model
-    )
-
-    ja = JaxViRunner(np.random.default_rng(0).normal(size=(96, p)), N_theta=3)
-    ja.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
-    assert all(name.endswith("_scale") for name in ja.svi_params)
-    tr = trace(
-        seed(substitute(ja._guide, data=ja.svi_params), rng_seed=0)
+    runner.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
+    assert all(n.endswith("_scale") for n in runner.svi_params)
+    sites = trace(
+        seed(substitute(runner._guide, data=runner.svi_params), rng_seed=0)
     ).get_trace()
-    for name, a in zip(PARAMETER_NAMES, ja.model.trainable_vars):
+    for name, a in zip(PARAMETER_NAMES, runner.model.trainable_vars):
         if a.size:
-            np.testing.assert_array_equal(tr[name]["fn"].base_dist.loc, a[0])
+            np.testing.assert_array_equal(
+                sites[name]["fn"].base_dist.loc, a[0]
+            )

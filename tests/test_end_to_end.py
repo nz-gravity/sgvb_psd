@@ -1,131 +1,50 @@
-import pytest
-import os.path
-import time
+"""Full public JAX inference on the existing bivariate VAR(2) model."""
 
-import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
-tf = pytest.importorskip("tensorflow", reason="optional legacy comparison")
-from sgvb_tf.backend import BayesianModel, AnalysisData
-from sgvb_psd.logging import logger
-from sgvb_psd.postproc.plot_psd import plot_psdq
-from sgvb_psd.postproc.psd_analyzer import PSDAnalyzer
-from sgvb_tf.psd_estimator import PSDEstimator
+from sgvb_psd.psd_estimator import PSDEstimator
 from sgvb_psd.utils.sim_varma import SimVARMA
-from sgvb_tf.utils.tf_utils import set_seed
 
 
-def get_var_data(npts):
-    set_seed(0)
-    tf.config.experimental.enable_op_determinism()
-
-    sigma = np.array([[1.0, 0.9], [0.9, 1.0]])
-    varCoef = np.array([[[0.5, 0.0], [0.0, -0.3]], [[0.0, 0.0], [0.0, -0.5]]])
-    vmaCoef = np.array([[[1.0, 0.0], [0.0, 1.0]]])
-    print(f"Generating VARMA data: {npts} samples")
-    var2 = SimVARMA(
-        n_samples=npts, var_coeffs=varCoef, vma_coeffs=vmaCoef, sigma=sigma
+@pytest.mark.parametrize("nchunks", [1, 2])
+def test_var2_public_inference(nchunks):
+    sim = SimVARMA(
+        n_samples=512,
+        var_coeffs=np.array([[[0.5, 0], [0, -0.3]], [[0, 0], [0, -0.5]]]),
+        vma_coeffs=np.eye(2)[None],
+        sigma=np.array([[1, 0.9], [0.9, 1]]),
+        seed=4,
     )
-    return var2
-
-
-def test_var_psd_generation(plot_dir):
-    var2_data = get_var_data(2**9)
-    print("Starting VAR PSD generation test")
-    start_time = time.time()
-    kwags = dict(
-        N_theta=30,
-        nchunks=1,
-        ntrain_map=100,
-        x=var2_data.data,
-        max_hyperparm_eval=1,
+    estimator = PSDEstimator(
+        sim.data,
+        N_theta=6,
+        nchunks=nchunks,
+        fs=sim.fs,
+        ntrain_map=40,
         n_elbo_maximisation_steps=50,
-        fs=2 * np.pi,
-        seed=0,
+        N_samples=32,
+        seed=7,
     )
-    optim = PSDEstimator(**kwags)
-
-    optim.run()
-
-    ## Run is done, lets make some plots
-    ax = optim.plot(
-        true_psd=[var2_data.psd, var2_data.freq],
-        off_symlog=False,
-        xlims=[0, np.pi],
-        quantiles="pointwise",
+    samples, pointwise, uniform = estimator.run(lr=0.003)
+    assert samples.shape == (32, 512 // nchunks // 2 - 1, 2, 2)
+    assert pointwise.shape == uniform.shape == (3, samples.shape[1], 2, 2)
+    assert all(np.all(np.isfinite(x)) for x in (samples, pointwise, uniform))
+    np.testing.assert_allclose(
+        samples, samples.conj().swapaxes(-1, -2), atol=2e-7
     )
-    plot_psdq(
-        optim.uniform_ci,
-        freqs=optim.freq,
-        axs=ax,
-        color="red",
-        ls="--",
+    assert np.all(np.linalg.eigvalsh(samples) > 0)
+    coherence = abs(samples[..., 0, 1]) ** 2 / (
+        samples[..., 0, 0].real * samples[..., 1, 1].real
     )
-
-    plt.savefig(f"{plot_dir}/var_psd250.png")
-    optim.plot_coherence(
-        true_psd=[var2_data.psd, var2_data.freq],
+    assert np.all((coherence >= 0) & (coherence <= 1 + 1e-6))
+    np.testing.assert_allclose(
+        estimator.freq,
+        np.arange(1, 512 // nchunks // 2) * sim.fs / (512 // nchunks),
     )
-    plt.savefig(f"{plot_dir}/var_coherence.png")
-    optim.plot_vi_losses()
-    plt.savefig(f"{plot_dir}/var_vi_losses.png")
-    csv = f"{plot_dir}/var_psd.csv"
-    psd_analyzer = PSDAnalyzer(
-        spec_true=var2_data.psd,
-        spectral_density_q=optim.pointwise_ci,
-        idx=1,
-        csv_file=csv,
+    params, _ = estimator.sample_posterior(1)
+    restored = PSDEstimator(
+        sim.data, N_theta=6, nchunks=nchunks, fs=sim.fs, init_params=params
     )
-    assert isinstance(psd_analyzer.coverage_point_CI, float)
-    assert isinstance(psd_analyzer.l2_error, float)
-    assert os.path.exists(csv)
-
-    end_time = time.time()
-    estimation_time = end_time - start_time
-    assert (
-        estimation_time < 50
-    ), f"Estimation time {estimation_time} is too long"
-    logger.info(f"Test passed in {estimation_time} seconds")
-
-    # see if we can load old params
-    spline_params, psd = optim.sample_posterior(1)
-    optim2 = PSDEstimator(**kwags, init_params=spline_params)
-
-
-def test_one_train_step_with_chunks():
-    t0 = time.time()
-    var2_data = get_var_data(2**7)
-    analysis_data = AnalysisData(
-        x=var2_data.data,
-        nchunks=2,
-        fmax_for_analysis=128,
-        fs=2 * np.pi,
-        N_theta=10,
-        N_delta=10,
-    )
-    model = BayesianModel(analysis_data)
-    opts = tf.keras.optimizers.Adam(0.01)
-    model.map_train_step(opts)
-    estimation_time = time.time() - t0
-    assert (
-        estimation_time < 2
-    ), f"Estimation time {estimation_time} is too long"
-    logger.info(f"Test passed in {estimation_time} seconds")
-
-
-#
-# def test_var_psd_save_and_resume(plot_dir, output_dir):
-#     var2_data = get_var_data(2 ** 8)
-#     optim = PSDEstimator(#         N_theta=30,
-#         nchunks=1,
-#         ntrain_map=100,
-#         max_hyperparm_eval=1,
-#         n_elbo_maximisation_steps=50,
-#         fs=2 * np.pi,
-#         seed=0,
-#     )
-#     optim.run(x=var2_data.data)
-#     optim.save(output_dir)
-#
-#     optim = PSDEstimator.load(output_dir)
-#     optim.run(x=var2_data.data)
+    for a, b in zip(restored.inference_runner.model.trainable_vars, params):
+        np.testing.assert_array_equal(a, b)

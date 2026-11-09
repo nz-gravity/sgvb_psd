@@ -1,9 +1,0 @@
-........................                                                 [100%]
-=============================== warnings summary ===============================
-tests/test_jax_runtime.py::test_estimator_inference_and_rng[1-1]
-tests/test_varma_data.py::test_data_generation
-  <repo>/src/sgvb_psd/postproc/plot_psd.py:236: UserWarning: Attempt to set non-positive ylim on a log-scaled axis will be ignored.
-    ax.set_ylim(diag_ylims)
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-24 passed, 5 skipped, 2 warnings in 62.20s (0:01:02)

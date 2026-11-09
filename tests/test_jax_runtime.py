@@ -69,7 +69,7 @@ def test_default_package_requirements_exclude_tensorflow():
 
 
 def test_removed_tensorflow_runtime_has_explicit_error():
-    with pytest.raises(ValueError, match="archived validation reference"):
+    with pytest.raises(ValueError, match="other backends are not supported"):
         PSDEstimator(
             np.random.default_rng(0).normal(size=(64, 2)), backend="tensorflow"
         )

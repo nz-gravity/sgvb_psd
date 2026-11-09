@@ -1,0 +1,49 @@
+{
+  "dtype": "float64 reference process",
+  "chains": 2,
+  "warmup": 1000,
+  "samples_per_chain": 1000,
+  "cases": {
+    "ar1": {
+      "chains": 4,
+      "warmup": 2000,
+      "samples_per_chain": 2000,
+      "target_accept": 0.99,
+      "dimension": 15,
+      "row_dimensions": [
+        15
+      ],
+      "target_jacobian_abs_error": 2.0869991068650506e-07,
+      "seconds_including_compile": 7.659090749977622,
+      "divergences": 19,
+      "max_parameter_rhat": 1.0097386170143652,
+      "min_parameter_ess": 326.6486908253556,
+      "max_functional_rhat": 1.009265040248246,
+      "min_functional_ess": 419.6902980035096,
+      "tree_depth_saturations": 0,
+      "mean_accept_probability": 0.9561158163774394,
+      "qualified_strict_reference": false,
+      "original_log_coordinate_max_rhat": 1.0113244723863122,
+      "original_log_coordinate_min_ess": 274.9219653517604
+    },
+    "var2": {
+      "dimension": 63,
+      "row_dimensions": [
+        15,
+        48
+      ],
+      "target_jacobian_abs_error": 7.381672730844002e-07,
+      "seconds_including_compile": 173.886933999951,
+      "divergences": 0,
+      "max_parameter_rhat": 1.0189992229256335,
+      "min_parameter_ess": 118.83286062065633,
+      "max_functional_rhat": 1.012279689306916,
+      "min_functional_ess": 511.1004803234779,
+      "tree_depth_saturations": 1983,
+      "mean_accept_probability": 0.9309941861965597,
+      "qualified_strict_reference": false,
+      "original_log_coordinate_max_rhat": 1.0627480235231317,
+      "original_log_coordinate_min_ess": 40.46807341525548
+    }
+  }
+}

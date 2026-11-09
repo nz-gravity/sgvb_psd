@@ -22,9 +22,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
+          version: "0.13.7"
           python-version: "3.11"
 
       # Normal main updates: calculate and create the next version automatically.
@@ -40,9 +41,7 @@ jobs:
       # Build after either an automatic release or a manually pushed version tag.
       - name: Build distribution
         if: startsWith(github.ref, 'refs/tags/v') || steps.release.outputs.released == 'true'
-        run: |
-          python -m pip install --upgrade build
-          python -m build --sdist --wheel --outdir dist/
+        run: uv build --sdist --wheel --out-dir dist/
 
       - name: Publish to PyPI
         if: startsWith(github.ref, 'refs/tags/v') || steps.release.outputs.released == 'true'

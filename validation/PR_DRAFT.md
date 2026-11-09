@@ -1,106 +1,84 @@
-Title: Review JAX SGVB port and validation
+Title: Review JAX-only SGVB port and validation
 
-This draft replaces the installed TensorFlow inference path with JAX/NumPyro
-for original-joint 1D and multivariate SGVB. The goal is to review whether
-the implementation reproduces the intended method and scientific capabilities.
-It is not ready for merging or release.
+Draft for code review only. No merge, version bump, tag or release is
+proposed. Existing compatibility gaps and historical `feat!` commits must
+be resolved before an eventual merge; this is not release-ready.
 
-**Review only: no version bump, tag, PyPI release or major release is proposed.**
-The existing release workflow triggers on pushes to `main` or `v*` tags,
-not on this feature branch/draft PR. This branch includes historical `feat!`
-commits and compatibility changes; those must be resolved or explicitly
-reconsidered before any eventual merge. Keeping this PR draft does not
-make the current code backward compatible.
+## Scope
 
-## What changed
+- JAX/NumPyro original-joint SGVB for 1D and multivariate data, with fixed
+  MAP guide means by default and explicit `optimize_mean=True`.
+- Per-draw Whittle target, inherited priors/Jacobians and PSD conventions,
+  local RNG/dtype policy, and per-runner compilation caches.
+- JAX-only runtime, development tests, benchmark and CI. TensorFlow backend,
+  archive, parity dependency group, comparison scripts and CI job removed.
+- Generated arrays, per-run JSON/logs/plots/CSV and environment dumps are
+  untracked and ignored. A verified local copy is preserved. Compact
+  historical aggregates live in `validation/summaries`.
+- No history rewrite/force-push: old blobs remain in earlier commits, so
+  this cleans the current PR diff, not the repository's historical size.
 
-- Original-joint inference supports `(n,)` and `(n, p)` through the public
-  `PSDEstimator`. NumPyro runs a custom independent-Normal guide with fixed
-  MAP means by default; `optimize_mean=True` explicitly trains means.
-- The blocked Whittle target, shrinkage priors, log-coordinate Jacobians,
-  Fourier preprocessing and PSD conventions are ported with parity controls.
-  Each variational draw has its own target value, avoiding the reference's
-  scalar likelihood broadcasting across multiple draws.
-- Per-runner JAX compilation is reused; current MAP locations and learning
-  rates are dynamic arguments, with tests against stale cached values.
-- TensorFlow dependencies and the legacy install extra are removed. The MIT
-  reference implementation is archived in `validation/reference`, excluded
-  from the installed wheel. No external univariate source was copied.
+## Reading order
 
-## Capability and compatibility gaps to review
+1. [Estimator](../src/sgvb_psd/psd_estimator.py): public API, unsupported modes,
+   input normalization and sampling.
+2. [Preprocessing](../src/sgvb_psd/_spectral.py) and
+   [model](../src/sgvb_psd/jax_backend/model.py): FFT, axes, prior scales,
+   log Jacobians, Whittle target, PSD reconstruction and physical units.
+3. [Guide/MAP](../src/sgvb_psd/jax_backend/vi_runner.py) and
+   [scale-form Gaussian](../src/sgvb_psd/jax_backend/guides.py).
+4. [Independent NumPy/SciPy controls](../tests/test_jax_backend.py),
+   [runtime tests](../tests/test_jax_runtime.py) and
+   [VAR2 end-to-end checks](../tests/test_end_to_end.py).
+5. [Reproduction/artifact policy](README.md),
+   [migration scope](JAX_MIGRATION.md), [guides](GUIDE_COMPARISON.md),
+   [historical costs](UPGRADE_BENCHMARK.md), [VAR2 coverage](VAR2_COVERAGE.md).
 
-| Area | Current branch |
-|---|---|
-| Original-joint 1D / multivariate inference | Implemented in JAX |
-| Eigenbasis joint / factorized inference | JAX ports unfinished; requests fail explicitly; historical source is validation-only |
-| AR prewhitening / recolouring workflow | Not integrated |
-| Default guide | Independent Normal with frozen MAP means; not a production structured-covariance selector |
-| Optional TF low-rank guide family | Faithful JAX scale-family building block and research comparisons; not exposed by the production estimator |
-| Scientific units / prior questions | Inherited behavior retained and documented; no silent correction |
-| Full-model Bayesian calibration | Not established |
+## Scientific and compatibility gaps
 
-## Suggested reading order
+Eigenbasis joint/factorized JAX inference is unfinished and fails explicitly;
+there is no TF fallback. AR whitening/recolouring is not integrated. Richer
+covariance guides are research comparisons, not production options. The
+variance-named prior quantity remains a Normal standard deviation, odd FFT
+bin behavior is retained, and raw-draw/interval input scaling differs as
+before. These require explicit scientific/API decisions, not silent fixes.
 
-1. [Public estimator](../src/sgvb_psd/psd_estimator.py): input validation,
-   API changes, unsupported modes, normalization and learning-rate behavior.
-2. [Fourier preprocessing](../src/sgvb_psd/_spectral.py) and
-   [JAX target](../src/sgvb_psd/jax_backend/model.py): axes, FFT/fs conventions,
-   Whittle likelihood, priors/Jacobians, Cholesky reconstruction and units.
-   In particular, the reference's variance-named quantity remains a Normal
-   **standard deviation**; `psd_all` and interval scaling remain different;
-   inherited odd-length FFT bin behavior is documented.
-3. [Production guide/optimizer](../src/sgvb_psd/jax_backend/vi_runner.py) and
-   [low-rank scale family](../src/sgvb_psd/jax_backend/guides.py): fixed versus
-   trainable means, initialization, gradients, per-particle axes, RNG/dtype,
-   compilation caching and scale-form versus covariance-form low rank.
-4. [Target parity tests](../tests/test_jax_backend.py) and
-   [runtime tests](../tests/test_jax_runtime.py): likelihood/prior/gradient/PSD
-   agreement, 1D/VAR2D behavior, multiple draws, RNG and cache regression checks.
-5. [Migration](JAX_MIGRATION.md), [VI diagnosis](VI_DIAGNOSIS.md),
-   [guide comparison](GUIDE_COMPARISON.md), [performance](UPGRADE_BENCHMARK.md)
-   and [100-run VAR2 coverage](VAR2_COVERAGE.md). Generated logs, numerical
-   artifacts and figures are supporting evidence rather than the core code diff.
+Historical target parity is recorded without retaining TF support. Current
+checks independently validate Fourier residual likelihoods, priors/Jacobians,
+directional finite-difference gradients, inverse-precision PSD reconstruction,
+scale-family geometry, 1D/VAR2D behavior, RNG, multi-draw targets and caches.
 
-## Evidence and its limits
+The completed 100-run fixed-truth VAR2 study has no failed/retried fits, but
+nominal 90% intervals have frequency-average coverage 71.6%/62.0% (PSDs),
+65.5%/53.0% (real/imaginary CSD) and 68.6% (coherence). These averages are
+separate from per-frequency Wilson bands, not SBC/simultaneous coverage.
+32 late MAP traces decline. This is a finite-budget pipeline limitation,
+not an isolated guide/backend diagnosis. No matched 100-run TF campaign
+reproducing the original study's exact setup/aggregation is claimed.
 
-- The full reference-enabled suite passed 68 tests. A TensorFlow-free
-  environment passed 29 tests with five reference modules skipped.
-  The later coverage/runtime focused suite passed 32 tests.
-- A built wheel contains no TF imports/dependencies or archived reference
-  source; public 1D and VAR2D smoke inference passes with TF imports forbidden.
-- Measured CPU first-result costs improve 1.52–2.94x and repeated-fit costs
-  1.77–10.41x across three cases. Warm fits reuse a prepared runner.
-  Full-model functional medians differ <.46%, but interval widths differ
-  up to 29%; this does not prove equal posterior accuracy.
-- The initial ~30% difference was traced to training guide means in one
-  implementation while the TF reference froze them. Matched-noise
-  objective/gradient controls distinguish target parity from VI optimization.
-- A separate 64-dataset conditional full-Gaussian control passes the same
-  quadrature accuracy checks in both engines; it is not full SGVB calibration.
-- **The full-production fixed-truth VAR2 campaign completed 100/100 fits,
-  with no failures, timeouts, retries or outcome-based tuning.** For nominal
-  90% equal-tail intervals, frequency-average coverage is 71.6%/62.0% for
-  the PSDs, 65.5%/53.0% for real/imaginary CSD and 68.6% for coherence.
-  These averages are separate from per-frequency counts/Wilson bands and
-  are neither prior-predictive SBC nor simultaneous coverage.
-- 32/100 MAP traces have a declining late objective. This identifies an
-  unresolved finite-budget pipeline limitation, not an isolated guide-family
-  diagnosis or proof of a JAX regression. No matched 100-run TF campaign
-  reproducing the original study's exact setup and aggregation is claimed.
-- No remote CI result is claimed at PR creation; the local checks and raw
-  evidence are recorded with versions, seeds and revisions.
+Historical measured CPU gains are 1.52–2.94x cold and 1.77–10.41x warm,
+but full-model interval widths differ up to 29%; equal accuracy is not
+established. The separate conditional quadrature control is not full SGVB.
 
-## Review questions before considering a merge
+## Review checklist
 
-- [ ] Does the JAX target reproduce the intended likelihood, prior scales
-      and Jacobians, including all data/draw axes and PSD normalization?
-- [ ] Does the custom guide preserve the desired TF behavior, and are
-      intentional changes explicit and adequately tested?
-- [ ] Do we retain every required scientific capability and public API,
-      particularly eigenbasis/factorized inference, without requiring a
-      major-release compatibility break?
-- [ ] Are optimization stability and the comparison to the original TF
-      method adequate for a faithful, faster port? Treat improved uncertainty
-      calibration as a separate, explicitly evaluated change.
-- [ ] Are documentation, dependencies, tests and migration behavior ready
-      for users? Confirm release policy separately; keep this PR draft.
+- [ ] Target, axes, priors/Jacobians and physical normalization are intended.
+- [ ] Guide behavior, optimization and caching match the intended method.
+- [ ] Required public/scientific capabilities are retained or gaps resolved
+      before any release decision, including compatibility without a major bump.
+- [ ] Tests and reproduced evidence justify claims of faithful accuracy/speed.
+- [ ] Generated experiment outputs stay local; only useful summaries are tracked.
+- [ ] Keep draft: no merge/release until the review and explicit release decision.
+
+
+Cleanup validation: **55 JAX-only tests passed with no skipped legacy modules**.
+This includes independent NumPy/SciPy target/gradient/PSD controls and the
+existing bivariate VAR2 model through the public estimator. Concurrent uv
+setup changes were preserved, with the TensorFlow parity group removed and
+the lockfile refreshed for the JAX stack. Historical raw outputs have a
+verified local backup; the 100-run campaign was not rerun or retuned.
+
+Wheel and source-distribution scans passed: no generated experiment outputs,
+local backups or TensorFlow reference source are packaged. The refreshed
+lockfile check and JAX benchmark smoke passed. See
+[cleanup verification](summaries/cleanup-verification.json).

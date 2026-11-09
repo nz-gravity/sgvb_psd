@@ -62,6 +62,20 @@ dev = [
     "pytest_click"
 ]
 
+[tool.uv]
+constraint-dependencies = [
+    "jax==0.6.2; python_version == '3.12'",
+    "jaxlib==0.6.2; python_version == '3.12'",
+    "numpyro==0.19.0; python_version == '3.12'",
+    "numpy==2.5.4; python_version == '3.12'",
+    "scipy==1.18.1; python_version == '3.12'",
+    "pandas==3.1.1; python_version == '3.12'",
+    "matplotlib==3.11.2; python_version == '3.12'",
+    "hyperopt==0.3.0; python_version == '3.12'",
+    "colorama==0.4.6; python_version == '3.12'",
+    "click==8.5.1; python_version == '3.12'",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/nz-gravity/sgvb_psd"
 "Bug Reports" = "https://github.com/nz-gravity/sgvb_psd/issues"

@@ -1,7 +1,4 @@
-# Scientific backend stack used for the initial UoA parity control.
-tensorflow==2.20.0
-tensorflow-probability==0.25.0
-tf-keras==2.20.1
+# JAX scientific stack used for the UoA validation.
 jax==0.6.2
 jaxlib==0.6.2
 numpyro==0.19.0

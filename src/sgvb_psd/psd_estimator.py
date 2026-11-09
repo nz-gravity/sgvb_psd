@@ -137,7 +137,7 @@ class PSDEstimator:
         :type use_eigenbasis: bool, optional
         :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
         :type posterior_mode: str, optional
-        :param backend: "jax". TensorFlow is archived outside the runtime. JAX
+        :param backend: "jax". JAX
             supports the original joint model for one or more channels.
         :param elbo_samples: Number of Monte Carlo particles per JAX ELBO
             step, defaults to 1.
@@ -148,12 +148,12 @@ class PSDEstimator:
 
         if backend != "jax":
             raise ValueError(
-                "This upgrade requires backend='jax'; TensorFlow is an archived validation reference, not a runtime backend"
+                "This package requires backend='jax'; other backends are not supported"
             )
         if use_eigenbasis or posterior_mode != "joint":
             raise ValueError(
                 "the JAX backend currently supports original joint inference only; "
-                "eigenbasis/factorized JAX modes are not yet ported; the old implementation is archived under validation/reference"
+                "eigenbasis/factorized JAX modes are not yet implemented"
             )
         self.backend = backend
         if backend == "jax":
