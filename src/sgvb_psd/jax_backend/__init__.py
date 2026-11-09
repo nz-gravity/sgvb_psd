@@ -6,5 +6,11 @@ configuration. JAX/NumPyro is the package runtime.
 
 from .model import JaxAnalysisData, JaxBayesianModel
 from .vi_runner import JaxViRunner
+from .row_vi_runner import JaxRowViRunner
 
-__all__ = ["JaxAnalysisData", "JaxBayesianModel", "JaxViRunner"]
+__all__ = [
+    "JaxAnalysisData",
+    "JaxBayesianModel",
+    "JaxViRunner",
+    "JaxRowViRunner",
+]

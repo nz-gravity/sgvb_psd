@@ -181,42 +181,82 @@ class JaxBayesianModel:
             )
         return likelihood / self.Nbw
 
-    def logprior(self, params):
-        """Preserve reference scales, including its variance-named Normal scale.
+    def _prior_components(self, params):
+        """Density arrays and their Cholesky-row ownership.
 
-        The bounded ``a2*tau2*c2/(a2*tau2+c2)`` expression is used as a
-        standard deviation in the TF code. Taking a square root here would
-        change the model. Log-HalfCauchy coordinates include exp Jacobians.
+        Preserve the inherited Normal scale and one exp Jacobian per
+        log-HalfCauchy coordinate. Pairwise theta terms belong to their
+        regression row; no prior hyperparameter couples different rows.
         """
         ga, la, re, lr, im, li, tau, tt = params
-        total = jnp.sum(
-            dist.Normal(0.0, jnp.sqrt(10.0)).log_prob(ga[..., :2]),
-            axis=(-2, -1),
-        )
-        for coef, local, global_scale in (
-            (ga[..., 2:], la, tau),
-            (re, lr, tt),
-            (im, li, tt),
+        terms = [
+            (dist.Normal(0.0, jnp.sqrt(10.0)).log_prob(ga[..., :2]), None)
+        ]
+        for coef, local, global_scale, owner in (
+            (ga[..., 2:], la, tau, None),
+            (re, lr, tt, self.row),
+            (im, li, tt, self.row),
         ):
             a2tau2 = jnp.exp(2 * local) * jnp.exp(2 * global_scale)
             scale = a2tau2 * 4.0 / (a2tau2 + 4.0)
-            total += jnp.sum(
-                dist.Normal(0.0, scale).log_prob(coef), axis=(-2, -1)
-            )
+            terms.append((dist.Normal(0.0, scale).log_prob(coef), owner))
             hc_scale = sigmoid(
                 -jnp.arange(1, local.shape[-1] + 1, dtype=jnp.float32)
                 + self.degree_fluctuate
             )
-            total += jnp.sum(
-                dist.HalfCauchy(hc_scale).log_prob(jnp.exp(local)) + local,
-                axis=(-2, -1),
+            terms.append(
+                (
+                    dist.HalfCauchy(hc_scale).log_prob(jnp.exp(local)) + local,
+                    owner,
+                )
             )
-        for log_scale in (tau, tt):
-            total += jnp.sum(
-                dist.HalfCauchy(0.01).log_prob(jnp.exp(log_scale)) + log_scale,
-                axis=(-2, -1),
+        for log_scale, owner in ((tau, None), (tt, self.row)):
+            terms.append(
+                (
+                    dist.HalfCauchy(0.01).log_prob(jnp.exp(log_scale))
+                    + log_scale,
+                    owner,
+                )
             )
+        return terms
+
+    def logprior(self, params):
+        terms = self._prior_components(params)
+        total = jnp.sum(terms[0][0], axis=(-2, -1))
+        for density, _ in terms[1:]:
+            total += jnp.sum(density, axis=(-2, -1))
         return total
+
+    def logpost_rows(self, params):
+        """Independent modified-Cholesky row targets, shape (draw, row).
+
+        Their sum is the original joint posterior. The fixed reference
+        determinant is split evenly; this does not change any row gradient.
+        """
+        gamma, t = self._spectrum_factors(params)
+        transformed = (
+            t @ self.data.summed_periodogram @ t.conj().swapaxes(-1, -2)
+        )
+        power = jnp.diagonal(transformed, axis1=-2, axis2=-1).real
+        values = (
+            -jnp.sum(
+                self.data.nchunks * gamma + power * jnp.exp(-gamma), axis=-2
+            )
+            / self.Nbw
+        )
+        if self.data.reference_logdet is not None:
+            values -= (
+                self.data.nchunks
+                * jnp.sum(self.data.reference_logdet)
+                / (self.Nbw * self.data.p)
+            )
+        for density, owner in self._prior_components(params):
+            term = jnp.sum(density, axis=-1)
+            if owner is None:
+                values += term
+            else:
+                values = values.at[:, owner].add(term)
+        return values
 
     def logpost(self, params):
         return self.loglik(params) + self.logprior(params)

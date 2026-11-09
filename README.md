@@ -111,6 +111,27 @@ is not inferred. With no reference, the original model is preserved.
 
 `plot(true_psd=(values, frequencies))` remains a separate comparison overlay.
 
+## Parallel Cholesky rows and quick examples
+
+Set `parallel_rows=True` on `PSDEstimator` to fit the independent modified-
+Cholesky rows with separate random keys in a single JAX-vmapped program.
+The row targets sum to the original joint posterior, including a supplied
+full reference matrix. Cross-spectra are retained through each row's regression coefficients.
+The guide family is unchanged. This is batched
+independent-row computation; CPU/GPU scheduling and speed are device dependent.
+The original joint runner remains the default. Eigenbasis inference and the
+collapsed conditional-theta method in LogPSplinePSD are distinct algorithms.
+
+The documentation notebooks cover scalar AR, correlated VAR2, a short ET
+sample, LISA XYZ2/AET references and LVK strain with training-only AR order
+selection. They use 1000 MAP steps, 300 VI steps and 96 draws for a quick
+workflow demonstration. Real-data downloads are cached and bounded; the
+LISA examples use a 13.8 MB excerpt instead of the full 505 MB file. These
+budgets are not convergence or uncertainty-calibration guarantees.
+
+Install optional HDF5 support with `uv sync --locked --extra examples`
+(or `pip install 'sgvb_psd[examples]'` after this API is released).
+
 ## Development
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then

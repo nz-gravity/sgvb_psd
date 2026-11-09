@@ -100,6 +100,7 @@ class PSDEstimator:
         elbo_samples=1,
         optimize_mean=False,
         reference_psd=None,
+        parallel_rows=False,
     ):
         """
         Initialize the PSDEstimator.
@@ -154,6 +155,9 @@ class PSDEstimator:
             Inference models S = L_ref S_residual L_ref.H. For one channel,
             log(S) = log(S_ref) + cosine_basis @ coefficients. No reference
             preserves the original model; no interpolation/floor is applied.
+        :param parallel_rows: Fit independent modified-Cholesky rows using
+            JAX vmap, with separate row random keys and the same target/guide
+            family. Default False preserves joint-runner stochastic behavior.
         """
 
         if backend != "jax":
@@ -165,6 +169,9 @@ class PSDEstimator:
                 "the JAX backend currently supports original joint inference only; "
                 "eigenbasis/factorized JAX modes are not yet implemented"
             )
+        if not isinstance(parallel_rows, (bool, np.bool_)):
+            raise ValueError("parallel_rows must be a boolean")
+        self.parallel_rows = bool(parallel_rows)
         self.backend = backend
         if backend == "jax":
             x = np.asarray(x)
@@ -265,7 +272,13 @@ class PSDEstimator:
             reference_psd=reference_psd,
             data_scale=float(self.psd_scaling),
         )
-        self.inference_runner = JaxViRunner(**runner_kwargs)
+        if self.parallel_rows:
+            from .jax_backend.row_vi_runner import JaxRowViRunner
+
+            runner_cls = JaxRowViRunner
+        else:
+            runner_cls = JaxViRunner
+        self.inference_runner = runner_cls(**runner_kwargs)
 
     def _learning_rate_optimisation_objective(self, lr):
         """

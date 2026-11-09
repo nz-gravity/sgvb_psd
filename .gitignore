@@ -176,7 +176,7 @@ cython_debug/
 /studies/out_simulation_results/
 /studies/out_gibbs/
 /.uv-cache/
-/.mpl-cache/
+.mpl-cache/
 /tests/out_plots/
 /tests/out/
 
@@ -184,3 +184,6 @@ cython_debug/
 *.npz
 /.local-validation-backup/
 /validation/
+
+/docs/examples/data/
+/docs/examples/*.part
