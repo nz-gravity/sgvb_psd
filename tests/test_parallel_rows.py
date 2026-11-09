@@ -7,7 +7,12 @@ import pytest
 from numpyro import distributions as dist
 from numpyro.infer.util import log_density
 
-from sgvb_psd.inference import AnalysisData, BayesianModel, ViRunner
+from sgvb_psd.inference import (
+    AnalysisData,
+    BayesianModel,
+    ViRunner,
+    CoarseGrainConfig,
+)
 from sgvb_psd.inference.row_vi_runner import RowViRunner
 from sgvb_psd.psd_estimator import PSDEstimator
 
@@ -23,7 +28,15 @@ def varied(model):
 
 @pytest.mark.parametrize("p", [1, 2, 3])
 @pytest.mark.parametrize("reference", [False, True])
-def test_row_targets_and_gradients_sum_to_joint(p, reference):
+@pytest.mark.parametrize(
+    "coarse_grain",
+    [
+        None,
+        CoarseGrainConfig(method="fixed", max_bin_width=7),
+        CoarseGrainConfig(max_bin_width=8),
+    ],
+)
+def test_row_targets_and_gradients_sum_to_joint(p, reference, coarse_grain):
     def ref(f):
         l = np.eye(p) + 0.1 * np.tril(np.ones((p, p)), -1) * 1j
         return np.broadcast_to(l @ l.conj().T / 8, (len(f), p, p))
@@ -35,6 +48,7 @@ def test_row_targets_and_gradients_sum_to_joint(p, reference):
         N_theta=3,
         N_delta=3,
         reference_psd=ref if reference else None,
+        coarse_grain=coarse_grain,
     )
     model = BayesianModel(data, Nbw=1.4)
     params = varied(model)

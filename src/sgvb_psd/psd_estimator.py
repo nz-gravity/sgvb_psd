@@ -100,6 +100,7 @@ class PSDEstimator:
         optimize_mean=False,
         reference_psd=None,
         parallel_rows=False,
+        coarse_grain=None,
     ):
         """
         Initialize the PSDEstimator.
@@ -155,6 +156,13 @@ class PSDEstimator:
         :param parallel_rows: Fit independent modified-Cholesky rows using
             JAX vmap, with separate row random keys and the same target/guide
             family. Default False preserves joint-runner stochastic behavior.
+        :param coarse_grain: Optional CoarseGrainConfig for fixed or adaptive
+            frequency aggregation of the reference-whitened likelihood.
+            None (default) uses every Fourier bin. Counts and unsmoothed
+            complex spectral sums are retained; the partition is frozen
+            before optimization. This approximates a residual spectrum
+            constant within each bin. PSD output and references remain on
+            the original frequency grid. Compatible with parallel_rows.
         """
 
         if use_eigenbasis or posterior_mode != "joint":
@@ -165,6 +173,7 @@ class PSDEstimator:
         if not isinstance(parallel_rows, (bool, np.bool_)):
             raise ValueError("parallel_rows must be a boolean")
         self.parallel_rows = bool(parallel_rows)
+        self.coarse_grain = coarse_grain
         x = np.asarray(x)
         if x.ndim == 1:
             x = x[:, None]
@@ -250,9 +259,16 @@ class PSDEstimator:
             optimize_mean=optimize_mean,
             reference_psd=reference_psd,
             data_scale=float(self.psd_scaling),
+            coarse_grain=coarse_grain,
         )
         runner_cls = RowViRunner if self.parallel_rows else ViRunner
         self.inference_runner = runner_cls(**runner_kwargs)
+        if coarse_grain is not None:
+            data = self.inference_runner.data
+            logger.info(
+                f"Likelihood uses {len(data.likelihood_freq)} aggregates for "
+                f"{len(data.freq)} native Fourier frequencies ({coarse_grain.method})"
+            )
 
     def _learning_rate_optimisation_objective(self, lr):
         """
