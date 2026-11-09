@@ -32,7 +32,7 @@ launch_buttons:
 repository:
   url: https://github.com/nz-gravity/sgvb_psd
   path_to_book: docs
-  branch: feature/jax-sgvb  # Draft notebook/Colab links; restore main at merge.
+  branch: main
 
 sphinx:
   extra_extensions: ['sphinx.ext.autodoc', 'sphinx_inline_tabs']
