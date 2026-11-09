@@ -1,4 +1,4 @@
-"""Blocked Whittle model in the legacy unconstrained coordinates.
+"""Blocked Whittle model in unconstrained coordinates.
 
 The first axis of every parameter is a *variational draw*, never a data
 block. Log densities return one value per draw. All data-block reductions
@@ -25,7 +25,7 @@ PARAMETER_NAMES = (
 )
 
 
-class JaxAnalysisData:
+class AnalysisData:
     def __init__(
         self,
         x,
@@ -100,7 +100,7 @@ class JaxAnalysisData:
             )
 
 
-class JaxBayesianModel:
+class BayesianModel:
     def __init__(self, data, degree_fluctuate=None, init_params=None, Nbw=1.0):
         if not np.isfinite(Nbw) or Nbw <= 0:
             raise ValueError("Nbw must be finite and positive")
@@ -280,7 +280,7 @@ class JaxBayesianModel:
 
         # Match the existing API: raw psd_all excludes psd_scaling, whereas
         # both interval arrays include it. This is a separate scientific/API
-        # correction to consider after backend parity.
+        # correction to consider independently of inference implementation.
         psd = np.asarray(self.psd_samples(vi_samples, fs=fs))
         pointwise = get_pointwise_ci(psd, quantiles)
         uniform = get_uniform_ci(psd, pointwise)

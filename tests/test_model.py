@@ -1,4 +1,4 @@
-"""Independent NumPy/SciPy scientific controls for the JAX backend."""
+"""Independent NumPy/SciPy scientific controls for the SGVB model."""
 
 import jax
 import jax.numpy as jnp
@@ -7,14 +7,14 @@ import pytest
 from scipy.special import expit
 from scipy.stats import halfcauchy, multivariate_normal, norm
 
-from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel, JaxViRunner
-from sgvb_psd.jax_backend.model import PARAMETER_NAMES
+from sgvb_psd.inference import AnalysisData, BayesianModel, ViRunner
+from sgvb_psd.inference.model import PARAMETER_NAMES
 
 
 def make_model(p, nchunks):
     x = np.random.default_rng(41).normal(size=(192, max(2, p)))
     x /= np.std(x)
-    data = JaxAnalysisData(
+    data = AnalysisData(
         x[:, :p],
         nchunks=nchunks,
         fs=16,
@@ -23,7 +23,7 @@ def make_model(p, nchunks):
         N_delta=4,
         N_theta=4,
     )
-    return JaxBayesianModel(data, Nbw=1.5)
+    return BayesianModel(data, Nbw=1.5)
 
 
 def varied_params(model, draws):
@@ -155,7 +155,7 @@ def test_psd_matches_inverse_precision_and_unit_scaling(p):
 
 @pytest.mark.parametrize("rank", [1, 2])
 def test_lowrank_scale_family_against_scipy(rank):
-    from sgvb_psd.jax_backend.guides import legacy_lowrank_normal
+    from sgvb_psd.inference.guides import lowrank_scale_normal
 
     rng = np.random.default_rng(123)
     loc = rng.normal(size=(2, 4)).astype(np.float32)
@@ -165,7 +165,7 @@ def test_lowrank_scale_family_against_scipy(rank):
         -1, -2
     )
     covariance = scale @ scale.swapaxes(-1, -2)
-    port = legacy_lowrank_normal(
+    port = lowrank_scale_normal(
         jnp.asarray(loc), jnp.asarray(diagonal), jnp.asarray(factor)
     )
     values = rng.normal(size=(5, 2, 4)).astype(np.float32)
@@ -185,9 +185,7 @@ def test_lowrank_scale_family_against_scipy(rank):
 def test_default_guide_locations_stay_at_map(p):
     from numpyro.handlers import seed, substitute, trace
 
-    runner = JaxViRunner(
-        np.random.default_rng(0).normal(size=(96, p)), N_theta=3
-    )
+    runner = ViRunner(np.random.default_rng(0).normal(size=(96, p)), N_theta=3)
     runner.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
     assert all(n.endswith("_scale") for n in runner.svi_params)
     sites = trace(

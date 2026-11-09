@@ -13,7 +13,7 @@ from numpyro.infer import SVI, Trace_ELBO
 from numpyro.optim import Adam
 
 from .model import PARAMETER_NAMES
-from .vi_runner import JaxViRunner
+from .vi_runner import ViRunner
 
 
 def _map_row(target, initial, rate, steps, row, indices, mask):
@@ -31,7 +31,7 @@ def _map_row(target, initial, rate, steps, row, indices, mask):
     return optimizer.get_params(state), trace
 
 
-class JaxRowViRunner(JaxViRunner):
+class RowViRunner(ViRunner):
     """Same row-factorized target and guide family, independent row RNGs.
 
     Rows have different sizes. Padding is excluded from MAP and uses fixed

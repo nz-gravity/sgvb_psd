@@ -7,21 +7,21 @@ import pytest
 import jax
 import jax.numpy as jnp
 from sgvb_psd._spectral import compute_chunked_fft
-from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel, JaxViRunner
+from sgvb_psd.inference import AnalysisData, BayesianModel, ViRunner
 from sgvb_psd.psd_estimator import PSDEstimator
 
 
 def test_lowrank_scale_and_covariance_updates_are_distinct():
-    from sgvb_psd.jax_backend.guides import (
+    from sgvb_psd.inference.guides import (
         diagonal_plus_lowrank_scale,
-        legacy_lowrank_normal,
+        lowrank_scale_normal,
     )
     from numpyro.distributions import LowRankMultivariateNormal
 
     diagonal = jnp.array([0.3, 0.6])
     factor = jnp.array([[0.2], [-0.4]])
     scale = diagonal_plus_lowrank_scale(diagonal, factor)
-    faithful = legacy_lowrank_normal(jnp.zeros(2), diagonal, factor)
+    faithful = lowrank_scale_normal(jnp.zeros(2), diagonal, factor)
     covariance_form = LowRankMultivariateNormal(
         jnp.zeros(2), factor, diagonal**2
     )
@@ -45,7 +45,7 @@ import numpy as np
 from sgvb_psd.psd_estimator import PSDEstimator
 e=PSDEstimator(np.random.default_rng(0).normal(size=64),N_theta=2,
               ntrain_map=1,n_elbo_maximisation_steps=1,N_samples=3,seed=0)
-assert e.backend=='jax'
+assert not hasattr(e, 'backend')
 assert np.all(np.isfinite(e.run(lr=0.001)[0]))
 assert not any(s.startswith(('tensorflow','tf_keras')) for s in sys.modules)
 """
@@ -68,16 +68,18 @@ def test_default_package_requirements_exclude_tensorflow():
     )
 
 
-def test_removed_tensorflow_runtime_has_explicit_error():
-    with pytest.raises(ValueError, match="other backends are not supported"):
+def test_estimator_has_no_backend_selector():
+    with pytest.raises(
+        TypeError, match="unexpected keyword argument 'backend'"
+    ):
         PSDEstimator(
-            np.random.default_rng(0).normal(size=(64, 2)), backend="tensorflow"
+            np.random.default_rng(0).normal(size=(64, 2)), backend="jax"
         )
 
 
 def test_cached_vi_uses_updated_map_locations():
     x = np.random.default_rng(7).normal(size=64)
-    runner = JaxViRunner(x, N_theta=2)
+    runner = ViRunner(x, N_theta=2)
     runner.map_time = 0.0
     runner.rng_key = jax.random.PRNGKey(7)
     runner.run_phase2(1)
@@ -87,7 +89,7 @@ def test_cached_vi_uses_updated_map_locations():
     runner.model.trainable_vars = tuple(changed)
     runner.rng_key = jax.random.PRNGKey(7)
     runner.run_phase2(1)
-    fresh = JaxViRunner(x, N_theta=2, init_params=changed)
+    fresh = ViRunner(x, N_theta=2, init_params=changed)
     fresh.map_time = 0.0
     fresh.rng_key = jax.random.PRNGKey(7)
     fresh.run_phase2(1)
@@ -97,13 +99,13 @@ def test_cached_vi_uses_updated_map_locations():
 
 def test_cached_map_respects_changed_learning_rate():
     x = np.random.default_rng(8).normal(size=64)
-    runner = JaxViRunner(x, N_theta=2)
+    runner = ViRunner(x, N_theta=2)
     initial = runner.model.trainable_vars
     runner.run_phase1(lr_map=0.001, ntrain_map=2)
     slow = runner.model.trainable_vars
     runner.model.trainable_vars = initial
     runner.run_phase1(lr_map=0.02, ntrain_map=2)
-    fresh = JaxViRunner(x, N_theta=2)
+    fresh = ViRunner(x, N_theta=2)
     fresh.run_phase1(lr_map=0.02, ntrain_map=2)
     for a, b in zip(runner.model.trainable_vars, fresh.model.trainable_vars):
         np.testing.assert_allclose(a, b, rtol=1e-6)
@@ -136,14 +138,14 @@ def test_fft_convention_is_unchanged(length):
 
 
 def test_white_noise_normalization_and_draw_independence():
-    data = JaxAnalysisData(
+    data = AnalysisData(
         np.random.default_rng(40).normal(size=128),
         nchunks=2,
         fs=16,
         N_delta=2,
         N_theta=2,
     )
-    model = JaxBayesianModel(data)
+    model = BayesianModel(data)
     params = [
         np.asarray(a).repeat(3, axis=0).copy() for a in model.trainable_vars
     ]
@@ -169,8 +171,8 @@ def test_white_noise_normalization_and_draw_independence():
 
 
 def test_distinct_delta_and_theta_basis_sizes():
-    model = JaxBayesianModel(
-        JaxAnalysisData(
+    model = BayesianModel(
+        AnalysisData(
             np.random.default_rng(0).normal(size=(64, 2)), N_delta=3, N_theta=5
         )
     )
@@ -181,8 +183,8 @@ def test_distinct_delta_and_theta_basis_sizes():
 def test_numpyro_target_has_no_duplicate_prior_or_jacobian():
     from numpyro.infer.util import log_density
 
-    runner = JaxViRunner(np.random.default_rng(0).normal(size=64), N_theta=3)
-    from sgvb_psd.jax_backend.model import PARAMETER_NAMES
+    runner = ViRunner(np.random.default_rng(0).normal(size=64), N_theta=3)
+    from sgvb_psd.inference.model import PARAMETER_NAMES
 
     params = varied_params(runner.model, 1)
     sites = {name: a[0] for name, a in zip(PARAMETER_NAMES, params) if a.size}
@@ -200,7 +202,6 @@ def test_estimator_inference_and_rng(p, particles):
         x = x[:, 0]
     options = dict(
         x=x,
-        backend="jax",
         N_theta=3,
         nchunks=2,
         fs=16,
@@ -231,10 +232,9 @@ def test_estimator_inference_and_rng(p, particles):
         plt.close(axes[0, 0].figure)
 
 
-def test_jax_learning_rate_search_smoke():
+def test_learning_rate_search_smoke():
     estimator = PSDEstimator(
         x=np.random.default_rng(2).normal(size=64),
-        backend="jax",
         N_theta=2,
         ntrain_map=1,
         n_elbo_maximisation_steps=1,
@@ -247,8 +247,8 @@ def test_jax_learning_rate_search_smoke():
     assert np.all(np.isfinite(psd))
 
 
-def test_trainable_guide_means_are_an_explicit_jax_option():
-    ja = JaxViRunner(
+def test_trainable_guide_means_are_an_explicit_option():
+    ja = ViRunner(
         np.random.default_rng(0).normal(size=64), N_theta=3, optimize_mean=True
     )
     ja.run(ntrain_map=1, n_elbo_maximisation_steps=3, inference_size=3)
@@ -256,10 +256,6 @@ def test_trainable_guide_means_are_an_explicit_jax_option():
     assert not np.array_equal(
         ja.svi_params["ga_delta_loc"], ja.model.trainable_vars[0][0]
     )
-    with pytest.raises(ValueError, match="requires backend='jax'"):
-        PSDEstimator(
-            np.ones((64, 2)), backend="tensorflow", optimize_mean=True
-        )
 
 
 def test_conditional_calibration_target_and_fft_generator_match_model():
@@ -282,10 +278,10 @@ def test_conditional_calibration_target_and_fft_generator_match_model():
     full[:, 1 : n // 2] = y
     full[:, -np.arange(1, n // 2)] = y.conj()
     x = np.fft.ifft(full * np.sqrt(n), axis=1).real.reshape(-1, 1)
-    data = JaxAnalysisData(x, nchunks=blocks, N_delta=1, N_theta=1)
+    data = AnalysisData(x, nchunks=blocks, N_delta=1, N_theta=1)
     np.testing.assert_allclose(data.y_ft[..., 0], y, atol=1e-12)
     power = np.sum(np.abs(y) ** 2, axis=0)
-    model = JaxBayesianModel(data)
+    model = BayesianModel(data)
 
     def conditional_target(b):
         gamma = jnp.asarray(design) @ b
@@ -306,12 +302,12 @@ def test_conditional_calibration_target_and_fft_generator_match_model():
     )
 
 
-def test_jax_import_does_not_load_tensorflow():
+def test_inference_import_does_not_load_tensorflow():
     subprocess.run(
         [
             sys.executable,
             "-c",
-            "import sys; import sgvb_psd.jax_backend; assert 'tensorflow' not in sys.modules",
+            "import sys; import sgvb_psd.inference; assert 'tensorflow' not in sys.modules",
         ],
         check=True,
     )
@@ -320,13 +316,13 @@ def test_jax_import_does_not_load_tensorflow():
 @pytest.mark.parametrize(
     "options",
     [
-        {"backend": "unknown"},
-        {"backend": "jax", "use_eigenbasis": True},
-        {"backend": "jax", "posterior_mode": "factorized"},
+        {"posterior_mode": "unknown"},
+        {"use_eigenbasis": True},
+        {"posterior_mode": "factorized"},
     ],
 )
-def test_rejects_unsupported_backends(options):
-    with pytest.raises(ValueError, match="backend"):
+def test_rejects_unsupported_inference_modes(options):
+    with pytest.raises(ValueError, match="joint inference"):
         PSDEstimator(x=np.ones((32, 2)), **options)
 
 
@@ -335,13 +331,13 @@ def test_rejects_unsupported_backends(options):
 )
 def test_rejects_invalid_input(x):
     with pytest.raises(ValueError):
-        PSDEstimator(x=x, backend="jax")
+        PSDEstimator(x=x)
 
 
 def test_lowrank_scale_handles_legacy_small_diagonal_without_squaring_condition():
-    from sgvb_psd.jax_backend.guides import legacy_lowrank_normal
+    from sgvb_psd.inference.guides import lowrank_scale_normal
 
-    q = legacy_lowrank_normal(
+    q = lowrank_scale_normal(
         jnp.zeros(4),
         jnp.full(4, 1e-4),
         jnp.array([[0.2], [0.7], [-0.3], [0.4]]),
@@ -357,7 +353,7 @@ def test_ported_lowrank_scale_guide_runs_in_numpyro():
     from numpyro.distributions import constraints
     from numpyro.infer import SVI, Trace_ELBO
     from numpyro.optim import Adam
-    from sgvb_psd.jax_backend.guides import legacy_lowrank_normal
+    from sgvb_psd.inference.guides import lowrank_scale_normal
 
     def model():
         numpyro.sample("z", dist.Normal(jnp.zeros(3), 1).to_event(1))
@@ -368,7 +364,7 @@ def test_ported_lowrank_scale_guide_runs_in_numpyro():
         )
         factor = numpyro.param("factor", jnp.full((3, 1), 0.1))
         numpyro.sample(
-            "z", legacy_lowrank_normal(jnp.zeros(3), diagonal, factor)
+            "z", lowrank_scale_normal(jnp.zeros(3), diagonal, factor)
         )
 
     fit = SVI(model, guide, Adam(0.001), Trace_ELBO()).run(

@@ -11,7 +11,7 @@ from numpyro.distributions import constraints
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.optim import Adam
 
-from .model import PARAMETER_NAMES, JaxAnalysisData, JaxBayesianModel
+from .model import PARAMETER_NAMES, AnalysisData, BayesianModel
 
 
 def _fit_map(model, initial_params, learning_rate, steps):
@@ -31,7 +31,7 @@ def _fit_map(model, initial_params, learning_rate, steps):
     return optimizer.get_params(state), values
 
 
-class JaxViRunner:
+class ViRunner:
     def __init__(
         self,
         x,
@@ -51,7 +51,7 @@ class JaxViRunner:
     ):
         if not isinstance(elbo_samples, int) or elbo_samples < 1:
             raise ValueError("elbo_samples must be a positive integer")
-        self.data = JaxAnalysisData(
+        self.data = AnalysisData(
             x,
             nchunks,
             fmax_for_analysis,
@@ -62,7 +62,7 @@ class JaxViRunner:
             reference_psd=reference_psd,
             data_scale=data_scale,
         )
-        self.model = JaxBayesianModel(
+        self.model = BayesianModel(
             self.data,
             degree_fluctuate,
             init_params,
@@ -104,8 +104,7 @@ class JaxViRunner:
         for name, initial in zip(PARAMETER_NAMES, locations):
             shape = initial.shape[1:]
             if np.prod(shape):
-                # The reference TF guide captures params[i][0] as a tensor:
-                # its location stays at MAP and only its scale is trainable.
+                # By default, hold the location at MAP and train only scale.
                 loc = initial[0]
                 if self.optimize_mean:
                     loc = numpyro.param(name + "_loc", loc)

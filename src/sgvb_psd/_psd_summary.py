@@ -1,4 +1,4 @@
-"""Legacy NumPy PSD interval summaries, shared across backends."""
+"""NumPy summaries of posterior PSD intervals."""
 
 import numpy as np
 from scipy.stats import median_abs_deviation

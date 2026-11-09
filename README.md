@@ -25,14 +25,13 @@ with `uv sync --locked` (Python 3.10+; validation uses 3.12). TensorFlow and
 TensorFlow Probability are no longer runtime dependencies or install extras. Existing PyPI
 releases may still use the previous runtime.
 
-## Inference modes
+## Supported model
 
-The original non-eigenbasis joint SGVB model runs in JAX for one or more
-channels. Only JAX/NumPyro is supported in the package, tests and CI.
-Eigenbasis joint/factorized JAX inference is unfinished; those requests fail
-explicitly. AR whitening/recolouring is not integrated. The old TensorFlow
-backend and reference support are removed; historical results remain in Git
-history.
+SGVB uses one JAX/NumPyro inference implementation for one or more channels;
+there is no backend selector. The original modified-Cholesky joint model is
+supported. Eigenbasis/factorized inference is unfinished and those requests
+fail explicitly. Fit AR models externally and supply their spectra through
+`reference_psd`, as demonstrated in the LVK notebook.
 
 ```python
 from sgvb_psd.psd_estimator import PSDEstimator
@@ -40,16 +39,14 @@ from sgvb_psd.psd_estimator import PSDEstimator
 joint = PSDEstimator(x=data)  # blocked Whittle likelihood
 ```
 
-## JAX runtime and experimental migration
+## Running inference
 
-Install with `uv sync --locked --extra dev` from this checkout (`[jax]` remains a
-compatibility alias). The original joint model runs in JAX/NumPyro for
+Install with `uv sync --locked --extra dev` from this checkout. For
 univariate or multivariate input:
 
 ```python
 estimator = PSDEstimator(
     x=data,                  # (n,) or (n, p)
-    backend="jax",
     fs=sample_rate,
     nchunks=4,
     N_theta=15,
@@ -61,13 +58,12 @@ estimator = PSDEstimator(
 psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
 ```
 
-The installed runtime imports no TensorFlow. The JAX
-guide keeps its means at MAP by default, matching the current TensorFlow
-implementation. Set `optimize_mean=True` to train JAX guide means too;
-this changes the variational approximation while keeping the target model.
+The guide keeps its means at MAP by default. Set `optimize_mean=True`
+to train guide means too. This changes the variational approximation while
+keeping the target model.
 The default approximation has known uncertainty limitations; stable
 optimization and calibrated interval coverage remain under review. The
-backend preserves inherited prior scales and PSD conventions. In particular,
+model preserves inherited prior scales and PSD conventions. In particular,
 raw `psd_samples` omit the input standard deviation squared while returned
 intervals include it. Investigation notes and experiments are kept locally.
 

@@ -133,7 +133,7 @@ def compute_chunked_fft(
 
     # scale it
     y_ft = y_ft / np.sqrt(n_per_chunk)
-    Ts = 1  # for VB backend we use Duration of 1.0 (rescale later)
+    Ts = 1  # use a unit duration here; restore the density scaling later
     fq_y = np.fft.fftfreq(np.size(chunked_x, axis=1), Ts)
     ftrue_y = np.fft.fftfreq(n_per_chunk, d=1 / fs)
 

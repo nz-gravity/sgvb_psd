@@ -12,7 +12,7 @@ pip install sgvb_psd
 
 ## Quick notebooks
 
-All notebooks install the JAX PR branch explicitly while it is under review.
+All notebooks install the development PR branch explicitly while it is under review.
 Their default demonstration budget is 1000 MAP steps, 300 VI steps and 96
 draws, with an explicit learning rate. They are intended for a CPU Colab
 runtime; local CPU execution is tested, not a guarantee of Colab timings or

@@ -7,8 +7,8 @@ import pytest
 from numpyro import distributions as dist
 from numpyro.infer.util import log_density
 
-from sgvb_psd.jax_backend import JaxAnalysisData, JaxBayesianModel, JaxViRunner
-from sgvb_psd.jax_backend.row_vi_runner import JaxRowViRunner
+from sgvb_psd.inference import AnalysisData, BayesianModel, ViRunner
+from sgvb_psd.inference.row_vi_runner import RowViRunner
 from sgvb_psd.psd_estimator import PSDEstimator
 
 
@@ -28,7 +28,7 @@ def test_row_targets_and_gradients_sum_to_joint(p, reference):
         l = np.eye(p) + 0.1 * np.tril(np.ones((p, p)), -1) * 1j
         return np.broadcast_to(l @ l.conj().T / 8, (len(f), p, p))
 
-    data = JaxAnalysisData(
+    data = AnalysisData(
         np.random.default_rng(4).normal(size=(96, p)),
         nchunks=2,
         fs=8,
@@ -36,7 +36,7 @@ def test_row_targets_and_gradients_sum_to_joint(p, reference):
         N_delta=3,
         reference_psd=ref if reference else None,
     )
-    model = JaxBayesianModel(data, Nbw=1.4)
+    model = BayesianModel(data, Nbw=1.4)
     params = varied(model)
     rows = model.logpost_rows(params)
     assert rows.shape == (3, p)
@@ -50,7 +50,7 @@ def test_row_targets_and_gradients_sum_to_joint(p, reference):
 
 
 def test_row_coordinate_partition_padding_and_density():
-    runner = JaxRowViRunner(
+    runner = RowViRunner(
         np.random.default_rng(0).normal(size=(96, 3)), N_theta=3
     )
     assert runner.row_dimensions == (9, 30, 51)
@@ -92,8 +92,8 @@ def test_row_coordinate_partition_padding_and_density():
 
 def test_parallel_map_matches_joint_parameter_updates():
     x = np.random.default_rng(2).normal(size=(96, 2))
-    joint = JaxViRunner(x, N_theta=3, seed=0)
-    rows = JaxRowViRunner(x, N_theta=3, seed=0)
+    joint = ViRunner(x, N_theta=3, seed=0)
+    rows = RowViRunner(x, N_theta=3, seed=0)
     for runner in (joint, rows):
         runner.run_phase1(lr_map=0.001, ntrain_map=3)
     for a, b in zip(joint.model.trainable_vars, rows.model.trainable_vars):
@@ -123,7 +123,7 @@ def test_parallel_public_runner_reproducible_and_finite(
     second = PSDEstimator(**options)
     a = first.run(lr=0.001)
     b = second.run(lr=0.001)
-    assert isinstance(first.inference_runner, JaxRowViRunner)
+    assert isinstance(first.inference_runner, RowViRunner)
     assert first.inference_runner.row_kdl_losses.shape == (3, 3)
     for x, y in zip(a, b):
         assert np.all(np.isfinite(x))
@@ -139,14 +139,14 @@ def test_parallel_public_runner_reproducible_and_finite(
 
 def test_cached_row_vi_uses_current_map_locations():
     x = np.random.default_rng(21).normal(size=(64, 2))
-    runner = JaxRowViRunner(x, N_theta=2, seed=0)
+    runner = RowViRunner(x, N_theta=2, seed=0)
     runner.map_time = 0.0
     runner.run_phase2(1)
     initial = np.asarray(runner.kdl_losses)
     changed = list(runner.model.trainable_vars)
     changed[0] = changed[0].at[0, 0, 0].add(0.6)
     runner.model.trainable_vars = tuple(changed)
-    fresh = JaxRowViRunner(x, N_theta=2, seed=0, init_params=changed)
+    fresh = RowViRunner(x, N_theta=2, seed=0, init_params=changed)
     fresh.map_time = 0.0
     for current in (runner, fresh):
         current.rng_key = jax.random.PRNGKey(1)

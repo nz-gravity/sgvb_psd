@@ -7,7 +7,7 @@ from numpyro.distributions import constraints
 
 
 def diagonal_plus_lowrank_scale(diagonal, factor):
-    """TFP-compatible scale S = diag(diagonal) + factor @ factor.T.
+    """Low-rank scale S = diag(diagonal) + factor @ factor.T.
 
     The diagonal contains standard-deviation scale entries. Covariance is
     S @ S.T, unlike NumPyro LowRankMultivariateNormal's covariance update.
@@ -67,6 +67,6 @@ class LowRankScaleNormal(dist.Distribution):
         return self.scale @ self.scale.swapaxes(-1, -2)
 
 
-def legacy_lowrank_normal(loc, diagonal, factor):
-    """Port the optional TFP scale-perturbation family exactly."""
+def lowrank_scale_normal(loc, diagonal, factor):
+    """Construct the Gaussian with a diagonal-plus-low-rank scale."""
     return LowRankScaleNormal(loc, diagonal, factor)

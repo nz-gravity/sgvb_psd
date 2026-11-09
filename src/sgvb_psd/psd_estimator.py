@@ -96,7 +96,6 @@ class PSDEstimator:
         Nbw=1.0,
         use_eigenbasis=False,
         posterior_mode="joint",
-        backend="jax",
         elbo_samples=1,
         optimize_mean=False,
         reference_psd=None,
@@ -135,16 +134,14 @@ class PSDEstimator:
         :type fmax_idx_extension: int, optional
         :param Nbw: Effective window-bandwidth correction applied to the likelihood, defaults to 1.0.
         :type Nbw: float, optional
-        :param use_eigenbasis: Whether to use the eigenbasis likelihood representation, defaults to False.
+        :param use_eigenbasis: Compatibility flag; only False is supported.
         :type use_eigenbasis: bool, optional
-        :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
+        :param posterior_mode: Posterior mode; only "joint" is implemented.
         :type posterior_mode: str, optional
-        :param backend: "jax". JAX
-            supports the original joint model for one or more channels.
-        :param elbo_samples: Number of Monte Carlo particles per JAX ELBO
+        :param elbo_samples: Number of Monte Carlo particles per ELBO
             step, defaults to 1.
-        :param optimize_mean: Optimize JAX guide means as well as scales.
-            The default False matches TensorFlow's fixed MAP means. This
+        :param optimize_mean: Optimize guide means as well as scales.
+            By default, means remain fixed at their MAP estimates. This
             changes the variational approximation, not the target model.
         :param reference_psd: Fixed reference spectral density in original
             input units squared per frequency unit (two-sided, positive bins).
@@ -160,31 +157,21 @@ class PSDEstimator:
             family. Default False preserves joint-runner stochastic behavior.
         """
 
-        if backend != "jax":
-            raise ValueError(
-                "This package requires backend='jax'; other backends are not supported"
-            )
         if use_eigenbasis or posterior_mode != "joint":
             raise ValueError(
-                "the JAX backend currently supports original joint inference only; "
-                "eigenbasis/factorized JAX modes are not yet implemented"
+                "Only original joint inference is implemented; "
+                "eigenbasis/factorized modes are not yet available"
             )
         if not isinstance(parallel_rows, (bool, np.bool_)):
             raise ValueError("parallel_rows must be a boolean")
         self.parallel_rows = bool(parallel_rows)
-        self.backend = backend
-        if backend == "jax":
-            x = np.asarray(x)
-            if x.ndim == 1:
-                x = x[:, None]
-            if x.ndim != 2 or x.shape[1] < 1 or not np.all(np.isfinite(x)):
-                raise ValueError(
-                    "x must be a finite time series of shape (n, p)"
-                )
-            if not np.isfinite(np.std(x)) or np.std(x) <= 0:
-                raise ValueError(
-                    "x must have positive finite standard deviation"
-                )
+        x = np.asarray(x)
+        if x.ndim == 1:
+            x = x[:, None]
+        if x.ndim != 2 or x.shape[1] < 1 or not np.all(np.isfinite(x)):
+            raise ValueError("x must be a finite time series of shape (n, p)")
+        if not np.isfinite(np.std(x)) or np.std(x) <= 0:
+            raise ValueError("x must have positive finite standard deviation")
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -211,14 +198,6 @@ class PSDEstimator:
         if not np.isfinite(self.Nbw) or self.Nbw <= 0:
             raise ValueError("Nbw must be finite and positive")
         self.use_eigenbasis = use_eigenbasis
-        if posterior_mode not in {"joint", "factorized"}:
-            raise ValueError(
-                'posterior_mode must be either "joint" or "factorized"'
-            )
-        if not self.use_eigenbasis and posterior_mode == "factorized":
-            raise ValueError(
-                "posterior_mode='factorized' requires use_eigenbasis=True"
-            )
         self.posterior_mode = posterior_mode
         self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
         self.pdgrm = self.pdgrm * self.psd_scaling**2
@@ -263,7 +242,7 @@ class PSDEstimator:
             init_params=init_params,
             Nbw=self.Nbw,
         )
-        from .jax_backend import JaxViRunner
+        from .inference import RowViRunner, ViRunner
 
         runner_kwargs.update(
             seed=seed,
@@ -272,12 +251,7 @@ class PSDEstimator:
             reference_psd=reference_psd,
             data_scale=float(self.psd_scaling),
         )
-        if self.parallel_rows:
-            from .jax_backend.row_vi_runner import JaxRowViRunner
-
-            runner_cls = JaxRowViRunner
-        else:
-            runner_cls = JaxViRunner
+        runner_cls = RowViRunner if self.parallel_rows else ViRunner
         self.inference_runner = runner_cls(**runner_kwargs)
 
     def _learning_rate_optimisation_objective(self, lr):
@@ -296,8 +270,6 @@ class PSDEstimator:
             inference_size=self.N_samples,
             n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
-        if isinstance(vi_losses, list):
-            return sum(losses[-1].numpy() for losses in vi_losses)
         return float(np.asarray(vi_losses[-1]))
 
     def _find_optimal_learing_rate(self):
@@ -513,12 +485,7 @@ class PSDEstimator:
         :return: Samples from the posterior distribution
         :rtype: np.ndarray
         """
-        if hasattr(self.inference_runner, "sample_posterior"):
-            spline_params = self.inference_runner.sample_posterior(n_samples)
-        else:
-            spline_params = self.inference_runner.surrogate_posterior.sample(
-                n_samples
-            )
+        spline_params = self.inference_runner.sample_posterior(n_samples)
         psd = self.model.compute_psd(
             spline_params, psd_scaling=self.psd_scaling, fs=self.fs
         )

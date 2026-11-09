@@ -4740,7 +4740,7 @@ requires-dist = [
     { name = "scipy" },
     { name = "sphinx-inline-tabs", marker = "extra == 'dev'" },
 ]
-provides-extras = ["examples", "jax", "dev"]
+provides-extras = ["examples", "dev"]
 
 [[package]]
 name = "six"
