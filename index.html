@@ -217,14 +217,12 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/var1d_example.html">Fast 1D AR simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/simulation_example.html">Fast bivariate VAR2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/ET_example.html">ET sample</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/lisa_example.html">LISA XYZ2 reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/lisa_example_v2.html">LISA AET reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/LVK_example.html">LVK with AR reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/paper_plots.html">Paper plots</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/2409.13224">Paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/var1d_example.html">Univariate simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/simulation_example.html">Bivariate simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ET_example.html">ET example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/lisa_example.html">LISA example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/LVK_example.html">LVK example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="papers.html">Credits and papers</a></li>
 </ul>
 
     </div>
@@ -418,9 +416,8 @@
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-notebooks">Quick notebooks</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#paper">Paper</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#acknowledging-sgvb-psd">Acknowledging SGVB PSD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#papers-and-credits">Papers and credits</a></li>
 </ul>
             </nav>
         </div>
@@ -442,80 +439,49 @@ of correlated multivariate detector noise using variational inference (VI).</p>
 </pre></div>
 </div>
 </section>
-<section id="quick-notebooks">
-<h2>Quick notebooks<a class="headerlink" href="#quick-notebooks" title="Link to this heading">#</a></h2>
-<p>All notebooks install the development PR branch explicitly while it is under review.
-Their default demonstration budget is 1000 MAP steps, 300 VI steps and 96
-draws, with an explicit learning rate. They are intended for a CPU Colab
-runtime; local CPU execution is tested, not a guarantee of Colab timings or
-publication-level accuracy. Notebook outputs and data caches are not committed.</p>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<p>The five notebooks include saved plots, so you can read the results without
+running them. Their Colab setup installs the JAX/NumPyro package from <code class="docutils literal notranslate"><span class="pre">main</span></code>;
+local execution uses the project environment. Data downloads are cached locally.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>Notebook</p></th>
-<th class="head"><p>Default data and reference</p></th>
+<tr class="row-odd"><th class="head"><p>Example</p></th>
+<th class="head"><p>Data and reference</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><a class="reference internal" href="examples/var1d_example.html"><span class="std std-doc">1D AR</span></a></p></td>
-<td><p>1024 simulated samples; approximate AR reference</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="examples/var1d_example.html"><span class="std std-doc">Univariate simulation</span></a></p></td>
+<td><p>AR(1) simulation with an approximate AR reference</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="examples/simulation_example.html"><span class="std std-doc">VAR2</span></a></p></td>
-<td><p>1024 correlated samples; known analytic truth; parallel Cholesky rows</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="examples/simulation_example.html"><span class="std std-doc">Bivariate simulation</span></a></p></td>
+<td><p>Correlated VAR(2), analytic truth and parallel Cholesky rows</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="examples/ET_example.html"><span class="std std-doc">ET</span></a></p></td>
-<td><p>Short slice of the 16 MB sample; anti-aliased downsampling</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="examples/ET_example.html"><span class="std std-doc">ET example</span></a></p></td>
+<td><p>Short, anti-aliased sample of three-channel ET noise</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="examples/lisa_example.html"><span class="std std-doc">LISA XYZ2</span></a></p></td>
-<td><p>13.8 MB cached real excerpt; light-travel-time notch reference</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="examples/lisa_example.html"><span class="std std-doc">LISA example</span></a></p></td>
+<td><p>Shared public noise-simulation slice and full reference model in XYZ2 and AET coordinates</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="examples/lisa_example_v2.html"><span class="std std-doc">LISA AET</span></a></p></td>
-<td><p>Same excerpt transformed to A/E/T; full matrix reference</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="examples/LVK_example.html"><span class="std std-doc">LVK + AR</span></a></p></td>
-<td><p>1 MB H1 strain file; AR order optimized on disjoint pre-event training data; optional H1/L1</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="examples/LVK_example.html"><span class="std std-doc">LVK example</span></a></p></td>
+<td><p>Pre-event strain with AR order selection on a separate training segment</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>LISA also supports an explicit no-download synthetic mode or a user-supplied
-HDF5 file. Detector examples are short workflow demonstrations, not the
-original full-paper analyses. Increase duration, basis and optimization budgets
-under a separate validation plan for a scientific result.</p>
+<p>Defaults use 1000 MAP steps, 300 VI steps and 96 posterior draws. These small
+examples demonstrate the workflow; scientific analyses require convergence
+and uncertainty-calibration checks. The LISA example uses a 13.8 MB excerpt
+and supports an explicit synthetic mode or a user-supplied HDF5 file.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="api.html"><span class="std std-doc">API documentation</span></a></p></li>
+<li><p><a class="reference internal" href="papers.html"><span class="std std-doc">Credits and papers</span></a></p></li>
 </ul>
 </section>
-<section id="paper">
-<h2>Paper<a class="headerlink" href="#paper" title="Link to this heading">#</a></h2>
-<p>The paper for SGVB PSD can be found <a class="reference external" href="https://arxiv.org/abs/2409.13224">here</a>.
-Code to generate the plots for the paper are available <a class="reference external" href="https://github.com/nz-gravity/sgvb_psd_paper">here</a></p>
-</section>
-<section id="acknowledging-sgvb-psd">
-<h2>Acknowledging SGVB PSD<a class="headerlink" href="#acknowledging-sgvb-psd" title="Link to this heading">#</a></h2>
-<p>If you use this SGVB PSD code in your research, please cite the following papers:</p>
-<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@article</span><span class="p">{</span><span class="nl">Liu2024</span><span class="p">,</span>
-<span class="w">      </span><span class="na">title</span><span class="p">=</span><span class="s">{Variational Inference for Correlated Gravitational Wave Detector Network Noise}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">author</span><span class="p">=</span><span class="s">{Jianan Liu and Avi Vajpeyi and Renate Meyer and Kamiel Janssens and Jeung Eun Lee and Patricio Maturana-Russel and Nelson Christensen and Yixuan Liu}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">year</span><span class="p">=</span><span class="s">{2024}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">journal</span><span class="p">=</span><span class="s">{arXiv preprint}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">volume</span><span class="p">=</span><span class="s">{2409.13224}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">archivePrefix</span><span class="p">=</span><span class="s">{arXiv}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">primaryClass</span><span class="p">=</span><span class="s">{gr-qc}</span><span class="p">,</span>
-<span class="w">      </span><span class="na">url</span><span class="p">=</span><span class="s">{https://arxiv.org/abs/2409.13224}</span>
-<span class="p">}</span>
-<span class="nc">@article</span><span class="p">{</span><span class="nl">Hu2023</span><span class="p">,</span>
-<span class="w">	</span><span class="na">title</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="s">{Fast Bayesian inference on spectral analysis of multivariate stationary time series}</span><span class="p">,</span>
-<span class="w">	</span><span class="na">author</span><span class="w">       </span><span class="p">=</span><span class="w"> </span><span class="s">{Zhixiong Hu and Raquel Prado}</span><span class="p">,</span>
-<span class="w">	</span><span class="na">year</span><span class="w">         </span><span class="p">=</span><span class="w"> </span><span class="m">2023</span><span class="p">,</span>
-<span class="w">	</span><span class="na">journal</span><span class="w">      </span><span class="p">=</span><span class="w"> </span><span class="s">{Computational Statistics \&amp; Data Analysis}</span><span class="p">,</span>
-<span class="w">	</span><span class="na">volume</span><span class="w">       </span><span class="p">=</span><span class="w"> </span><span class="m">178</span><span class="p">,</span>
-<span class="w">	</span><span class="na">pages</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="m">107596</span><span class="p">,</span>
-<span class="w">	</span><span class="na">doi</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{https://doi.org/10.1016/j.csda.2022.107596}</span><span class="p">,</span>
-<span class="w">	</span><span class="na">issn</span><span class="w">         </span><span class="p">=</span><span class="w"> </span><span class="s">{0167-9473}</span><span class="p">,</span>
-<span class="w">	</span><span class="na">url</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{https://www.sciencedirect.com/science/article/pii/S0167947322001761}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
+<section id="papers-and-credits">
+<h2>Papers and credits<a class="headerlink" href="#papers-and-credits" title="Link to this heading">#</a></h2>
+<p>The <a class="reference internal" href="papers.html"><span class="std std-doc">credits and papers page</span></a> collects the SGVB and related
+P-spline papers, citations, software links and data acknowledgements.</p>
 </section>
 <div class="toctree-wrapper compound">
 </div>
@@ -579,9 +545,8 @@ Code to generate the plots for the paper are available <a class="reference exter
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-notebooks">Quick notebooks</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#paper">Paper</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#acknowledging-sgvb-psd">Acknowledging SGVB PSD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#papers-and-credits">Papers and credits</a></li>
 </ul>
   </nav></div>
 

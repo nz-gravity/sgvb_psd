@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Fast LISA-like XYZ2 reference fit &#8212; SGVB-psd</title>
+    <title>LISA example &#8212; SGVB-psd</title>
   
   
   
@@ -67,8 +67,8 @@
     <link rel="icon" href="../_static/favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="LISA A/E/T reference fit (parallel Cholesky rows)" href="lisa_example_v2.html" />
-    <link rel="prev" title="Fast ET three-channel sample" href="ET_example.html" />
+    <link rel="next" title="LVK example" href="LVK_example.html" />
+    <link rel="prev" title="ET example" href="ET_example.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -216,14 +216,12 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="var1d_example.html">Fast 1D AR simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="simulation_example.html">Fast bivariate VAR2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ET_example.html">ET sample</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">LISA XYZ2 reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lisa_example_v2.html">LISA AET reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="LVK_example.html">LVK with AR reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="paper_plots.html">Paper plots</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://arxiv.org/abs/2409.13224">Paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="var1d_example.html">Univariate simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_example.html">Bivariate simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ET_example.html">ET example</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">LISA example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LVK_example.html">LVK example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../papers.html">Credits and papers</a></li>
 </ul>
 
     </div>
@@ -283,7 +281,7 @@
       
       
       
-      <li><a href="https://colab.research.google.com/github/nz-gravity/sgvb_psd/blob/feature/jax-sgvb/docs/examples/lisa_example.ipynb" target="_blank"
+      <li><a href="https://colab.research.google.com/github/nz-gravity/sgvb_psd/blob/main/docs/examples/lisa_example.ipynb" target="_blank"
    class="btn btn-sm dropdown-item"
    title="Launch on Colab"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -437,7 +435,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Fast LISA-like XYZ2 reference fit</h1>
+    <h1>LISA example</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -447,6 +445,12 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-model-and-shared-data">Reference model and shared data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#resolve-the-transfer-nulls-at-the-analysis-window-scale">Resolve the transfer nulls at the analysis-window scale</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting-helper">Plotting helper</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xyz2-channels">XYZ2 channels</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#aet-channels">AET channels</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation-and-budget">Interpretation and budget</a></li>
 </ul>
             </nav>
@@ -459,9 +463,13 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <p><a class="reference external" href="https://colab.research.google.com/github/nz-gravity/sgvb_psd/blob/feature/jax-sgvb/docs/examples/lisa_example.ipynb">Open in Colab</a></p>
-<section class="tex2jax_ignore mathjax_ignore" id="fast-lisa-like-xyz2-reference-fit">
-<h1>Fast LISA-like XYZ2 reference fit<a class="headerlink" href="#fast-lisa-like-xyz2-reference-fit" title="Link to this heading">#</a></h1>
+  <p><a class="reference external" href="https://colab.research.google.com/github/nz-gravity/sgvb_psd/blob/main/docs/examples/lisa_example.ipynb">Open in Colab</a></p>
+<section class="tex2jax_ignore mathjax_ignore" id="lisa-example">
+<h1>LISA example<a class="headerlink" href="#lisa-example" title="Link to this heading">#</a></h1>
+<p>Fit the same short LISA data slice in <strong>XYZ2</strong> and <strong>AET</strong> coordinates.
+Both fits retain the full complex spectral matrix and use independent
+modified-Cholesky rows. The data download, training split and reference
+construction are shared between the two examples.</p>
 <p>For equal-arm second-generation Michelson TDI, use the light-travel time
 <code class="docutils literal notranslate"><span class="pre">tau=L/c</span></code>: the common PSD factor is
 <code class="docutils literal notranslate"><span class="pre">16</span> <span class="pre">sin²(2π</span> <span class="pre">f</span> <span class="pre">tau)</span> <span class="pre">sin²(4π</span> <span class="pre">f</span> <span class="pre">tau)</span></code>, not an unsquared sine.
@@ -469,8 +477,8 @@ See <a class="reference external" href="https://arxiv.org/html/2211.02539v2">Nam
 The example reference captures notch locations with a simple smooth envelope
 and correlation shape; it is not the complete instrument-noise transfer model.
 An explicit positive floor/decorrelation is shown for a valid reference.
-Replace <code class="docutils literal notranslate"><span class="pre">reference_shape</span></code> with your full physical <code class="docutils literal notranslate"><span class="pre">S_ref(f)</span></code> when available.</p>
-<p>The default downloads/caches a 13.8 MB <a class="reference external" href="https://github.com/nz-gravity/test_data/tree/1ed4cde58b9334340208fa17a294e8e7b736b2e9/lisa_noise/noise_4a_truncated/data">truncated noise-4a sample</a>,
+Replace <code class="docutils literal notranslate"><span class="pre">reference_xyz</span></code> with your full physical <code class="docutils literal notranslate"><span class="pre">S_ref(f)</span></code> when available.</p>
+<p>The default downloads/caches a 13.8 MB public noise-simulation <a class="reference external" href="https://github.com/nz-gravity/test_data/tree/1ed4cde58b9334340208fa17a294e8e7b736b2e9/lisa_noise/noise_4a_truncated/data">truncated noise-4a sample</a>,
 then reads only 4096 rows, split into reference-training and analysis blocks.
 Set <code class="docutils literal notranslate"><span class="pre">DATA_SOURCE=&quot;synthetic&quot;</span></code> for a no-download model demonstration, or set
 <code class="docutils literal notranslate"><span class="pre">SGVB_LISA_H5</span></code> to an existing <code class="docutils literal notranslate"><span class="pre">X2/Y2/Z2/t</span></code> HDF5 file. The full
@@ -478,17 +486,40 @@ Set <code class="docutils literal notranslate"><span class="pre">DATA_SOURCE=&qu
 this notebook does not fetch the 505 MB file. A positive broad reference
 envelope is fitted on the disjoint training block, with geometry held fixed.
 Channel units and the TDI generation must match your chosen reference.</p>
-<div class="cell tag_colab-install docutils container">
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run once in a fresh Colab runtime. This draft API is on the PR branch.</span>
-<span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="s2">"jax[cpu]==0.6.2"</span> <span class="s2">"numpyro==0.19.0"</span> <span class="s2">"sgvb_psd[examples] @ git+https://github.com/nz-gravity/sgvb_psd.git@feature/jax-sgvb"</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Colab installs the package; local runs use the project environment.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">google.colab</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Using the local SGVB environment. See the repository's uv setup instructions."</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"pip"</span><span class="p">,</span> <span class="s2">"install"</span><span class="p">,</span> <span class="s2">"-q"</span><span class="p">,</span>
+        <span class="s2">"jax[cpu]==0.6.2"</span><span class="p">,</span> <span class="s2">"numpyro==0.19.0"</span><span class="p">,</span>
+        <span class="s2">"sgvb_psd[examples] @ git+https://github.com/nz-gravity/sgvb_psd.git@main"</span><span class="p">,</span>
+    <span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Using the local SGVB environment. See the repository's uv setup instructions.
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="c1"># Progress widgets are unused; ipywidgets is optional in the local environment.</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">"IProgress not found.*"</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">perf_counter</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -497,8 +528,10 @@ Channel units and the TDI generation must match your chosen reference.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sgvb_psd.psd_estimator</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSDEstimator</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"font.family"</span><span class="p">:</span> <span class="s2">"sans-serif"</span><span class="p">,</span> <span class="s2">"font.size"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-                     <span class="s2">"axes.labelsize"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">"axes.titlesize"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"font.family"</span><span class="p">:</span> <span class="s2">"sans-serif"</span><span class="p">,</span> <span class="s2">"font.size"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+                     <span class="s2">"axes.labelsize"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span> <span class="s2">"axes.titlesize"</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
                      <span class="s2">"legend.fontsize"</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">"figure.dpi"</span><span class="p">:</span> <span class="mi">110</span><span class="p">,</span>
                      <span class="s2">"text.usetex"</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"JAX"</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span> <span class="s2">"devices:"</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">devices</span><span class="p">())</span>
@@ -508,10 +541,20 @@ Channel units and the TDI generation must match your chosen reference.</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>20:10:34|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+JAX 0.6.2 devices: [CpuDevice(id=0)]
+</pre></div>
 </div>
+</div>
+</div>
+</section>
+<section id="reference-model-and-shared-data">
+<h2>Reference model and shared data<a class="headerlink" href="#reference-model-and-shared-data" title="Link to this heading">#</a></h2>
+<p>The envelope is fitted using the training block only. The analysis block is reused in both coordinate systems.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">=</span> <span class="mf">299_792_458.0</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">C</span> <span class="o">=</span> <span class="mf">299_792_458.0</span>
 <span class="n">ARM_LENGTH</span> <span class="o">=</span> <span class="mf">2.5e9</span>  <span class="c1"># metres; update to the geometry/definition of your dataset.</span>
 <span class="n">TAU</span> <span class="o">=</span> <span class="n">ARM_LENGTH</span> <span class="o">/</span> <span class="n">C</span>
 <span class="n">REFERENCE_FLOOR</span> <span class="o">=</span> <span class="mf">1e-6</span>  <span class="c1"># Explicit positive reference floor, not a hidden likelihood floor.</span>
@@ -546,7 +589,7 @@ Channel units and the TDI generation must match your chosen reference.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Cheap real-data default; explicit offline synthetic option, no silent fallback.</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Cheap public noise-simulation default; explicit offline synthetic option, no silent fallback.</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.request</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlopen</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="n">DATA_SOURCE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SGVB_LISA_SOURCE"</span><span class="p">,</span> <span class="s2">"sample"</span><span class="p">)</span>
@@ -577,7 +620,7 @@ Channel units and the TDI generation must match your chosen reference.</p>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">N_TRAIN</span><span class="o">+</span><span class="n">N_FIT</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Need at least 4096 samples"</span><span class="p">)</span>
     <span class="n">simulation_truth</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Real XYZ2 slice:"</span><span class="p">,</span> <span class="n">LISA_PATH</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"XYZ2 noise-simulation slice:"</span><span class="p">,</span> <span class="n">LISA_PATH</span><span class="p">)</span>
 <span class="n">training</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">all_data</span><span class="p">[:</span><span class="n">N_TRAIN</span><span class="p">],</span> <span class="n">all_data</span><span class="p">[</span><span class="n">N_TRAIN</span><span class="p">:</span><span class="n">N_TRAIN</span><span class="o">+</span><span class="n">N_FIT</span><span class="p">]</span>
 <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">all_data</span><span class="p">))</span>
 <span class="c1"># Fit three smooth log-envelope coefficients using training only. The</span>
@@ -602,40 +645,77 @@ Channel units and the TDI generation must match your chosen reference.</p>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">reference</span> <span class="o">=</span> <span class="n">reference_xyz</span>
-<span class="n">truth</span> <span class="o">=</span> <span class="n">simulation_truth</span>
-<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"Y2"</span><span class="p">,</span> <span class="s2">"Z2"</span><span class="p">]</span>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>XYZ2 noise-simulation slice: data/lisa_noise4a_truncated.h5
+Reference log-envelope coefficients (training only): [-27.07376902   1.36754334   0.24509176]
 </pre></div>
 </div>
 </div>
 </div>
+</section>
+<section id="resolve-the-transfer-nulls-at-the-analysis-window-scale">
+<h2>Resolve the transfer nulls at the analysis-window scale<a class="headerlink" href="#resolve-the-transfer-nulls-at-the-analysis-window-scale" title="Link to this heading">#</a></h2>
+<p>A short rectangular FFT leaks power into deep transfer-function nulls. Apply
+an energy-normalized periodic Hann taper to each analysis block and average
+the reference with its three-bin spectral-window weights. Both coordinate
+systems then show <strong>window-resolved</strong> spectra and reference curves. The
+notch locations remain fixed by the light-travel time; their displayed
+depths have the finite frequency resolution of the blocks.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Nbw</span></code> uses the Hann equivalent noise bandwidth as an approximate likelihood
+correction. This does not establish calibrated uncertainty. The plotting
+helper computes a boxcar FFT of the already-tapered data, so it does not
+apply the Hann window twice. Reference uncertainty remains fixed.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-<span class="n">estimator</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">reference_psd</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
-                         <span class="n">parallel_rows</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fmin_for_analysis</span><span class="o">=</span><span class="mf">.002</span><span class="p">,</span> <span class="n">fmax_for_analysis</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mf">.1</span><span class="p">,</span> <span class="n">fs</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="o">**</span><span class="n">BUDGET</span><span class="p">)</span>
-<span class="n">_</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">.003</span><span class="p">)</span>  <span class="c1"># Explicit rate: no costly hyperparameter search.</span>
-<span class="n">runtime</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">pointwise_ci</span><span class="p">))</span>
-<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">inference_runner</span><span class="o">.</span><span class="n">kdl_losses</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples × </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> channels; fit </span><span class="si">{</span><span class="n">runtime</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">estimator</span><span class="o">.</span><span class="n">parallel_rows</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Independent vmapped Cholesky-row dimensions:"</span><span class="p">,</span> <span class="n">estimator</span><span class="o">.</span><span class="n">inference_runner</span><span class="o">.</span><span class="n">row_dimensions</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># A periodic Hann taper reduces leakage into the deep transfer-function nulls.</span>
+<span class="n">block_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">//</span><span class="n">BUDGET</span><span class="p">[</span><span class="s2">"nchunks"</span><span class="p">]</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">%</span> <span class="n">BUDGET</span><span class="p">[</span><span class="s2">"nchunks"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="n">window</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="n">block_length</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">window</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">data_windowed</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">BUDGET</span><span class="p">[</span><span class="s2">"nchunks"</span><span class="p">],</span> <span class="n">block_length</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                 <span class="o">*</span> <span class="n">window</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">energy</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">frequency_step</span> <span class="o">=</span> <span class="n">fs</span><span class="o">/</span><span class="n">block_length</span>
+<span class="n">window_bandwidth</span> <span class="o">=</span> <span class="n">block_length</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">window</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">window</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="c1"># Under the Whittle independent-Fourier approximation, a periodic Hann</span>
+<span class="c1"># window averages the reference with these exact discrete power weights.</span>
+<span class="n">spectral_window</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">window</span><span class="p">)</span><span class="o">/</span><span class="n">block_length</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">energy</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">spectral_window</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">6</span><span class="p">])</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">spectral_window</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">window_resolved</span><span class="p">(</span><span class="n">spectrum</span><span class="p">):</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">spectrum</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="n">spectrum</span><span class="p">(</span><span class="n">f</span><span class="o">-</span><span class="n">frequency_step</span><span class="p">)</span><span class="o">/</span><span class="mi">6</span>
+                     <span class="o">+</span> <span class="n">spectrum</span><span class="p">(</span><span class="n">f</span><span class="o">+</span><span class="n">frequency_step</span><span class="p">)</span><span class="o">/</span><span class="mi">6</span><span class="p">)</span>
+
+<span class="n">reference_windowed_xyz</span> <span class="o">=</span> <span class="n">window_resolved</span><span class="p">(</span><span class="n">reference_xyz</span><span class="p">)</span>
+<span class="n">truth_xyz</span> <span class="o">=</span> <span class="n">window_resolved</span><span class="p">(</span><span class="n">simulation_truth</span><span class="p">)</span> <span class="k">if</span> <span class="n">simulation_truth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Hann resolution: </span><span class="si">{</span><span class="n">frequency_step</span><span class="si">:</span><span class="s2">.5g</span><span class="si">}</span><span class="s2"> Hz; approximate bandwidth correction: </span><span class="si">{</span><span class="n">window_bandwidth</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Hann resolution: 0.00048828 Hz; approximate bandwidth correction: 1.5
 </pre></div>
 </div>
 </div>
 </div>
-<div class="cell docutils container">
+</section>
+<section id="plotting-helper">
+<h2>Plotting helper<a class="headerlink" href="#plotting-helper" title="Link to this heading">#</a></h2>
+<p>Use the same units, pointwise intervals and coherence definition in both views.</p>
+<div class="cell tag_hide-input docutils container">
+<details class="admonition hide above-input">
+<summary aria-label="Toggle hidden content">
+<p class="collapsed admonition-title">Show code cell source</p>
+<p class="expanded admonition-title">Hide code cell source</p>
+</summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">show_fit</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">truth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">show_fit</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">truth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Two-sided densities and magnitude-squared coherence, no hidden rescaling."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.ticker</span><span class="w"> </span><span class="kn">import</span> <span class="n">NullFormatter</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">squeeze</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.2</span><span class="p">,</span> <span class="mf">2.8</span><span class="o">*</span><span class="n">p</span><span class="p">),</span> <span class="n">squeeze</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]):</span>
         <span class="n">fw</span><span class="p">,</span> <span class="n">pw</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">welch</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">fs</span><span class="o">=</span><span class="n">estimator</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s2">"boxcar"</span><span class="p">,</span>
                               <span class="n">nperseg</span><span class="o">=</span><span class="n">estimator</span><span class="o">.</span><span class="n">nt_per_chunk</span><span class="p">,</span> <span class="n">noverlap</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                               <span class="n">detrend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_onesided</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -652,11 +732,12 @@ Channel units and the TDI generation must match your chosen reference.</p>
         <span class="n">ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">freq</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">estimator</span><span class="o">.</span><span class="n">freq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">4</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ticks</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">f</span><span class="si">:</span><span class="s2">.2g</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">ticks</span><span class="p">])</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_formatter</span><span class="p">(</span><span class="n">NullFormatter</span><span class="p">())</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"both"</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">"both"</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">which</span><span class="o">=</span><span class="s2">"major"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">.2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">7.2</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">))</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">psd_all</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
@@ -667,20 +748,132 @@ Channel units and the TDI generation must match your chosen reference.</p>
                 <span class="k">if</span> <span class="n">truth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">known</span> <span class="o">=</span> <span class="n">truth</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">freq</span><span class="p">)</span>
                     <span class="n">known_coh</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">known</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">known</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">*</span><span class="n">known</span><span class="p">[:,</span> <span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
-                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="n">known_coh</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Simulation truth"</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="n">known_coh</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">labels</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s2"> truth"</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"Frequency [Hz]"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Magnitude-squared coherence"</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span> <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">.2</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">);</span> <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+</section>
+<section id="xyz2-channels">
+<h2>XYZ2 channels<a class="headerlink" href="#xyz2-channels" title="Link to this heading">#</a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_xyz</span> <span class="o">=</span> <span class="n">data_windowed</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data_xyz</span>
+<span class="n">reference</span> <span class="o">=</span> <span class="n">reference_windowed_xyz</span>
+<span class="n">truth</span> <span class="o">=</span> <span class="n">truth_xyz</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"X2"</span><span class="p">,</span> <span class="s2">"Y2"</span><span class="p">,</span> <span class="s2">"Z2"</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">show_fit</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">truth</span><span class="o">=</span><span class="n">truth</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">reference_psd</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
+                         <span class="n">parallel_rows</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Nbw</span><span class="o">=</span><span class="n">window_bandwidth</span><span class="p">,</span> <span class="n">fmin_for_analysis</span><span class="o">=</span><span class="mf">.002</span><span class="p">,</span> <span class="n">fmax_for_analysis</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mf">.1</span><span class="p">,</span> <span class="n">fs</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="o">**</span><span class="n">BUDGET</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">.003</span><span class="p">)</span>  <span class="c1"># Explicit rate: no costly hyperparameter search.</span>
+<span class="n">runtime</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">pointwise_ci</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">inference_runner</span><span class="o">.</span><span class="n">kdl_losses</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples × </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> channels; fit </span><span class="si">{</span><span class="n">runtime</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">estimator</span><span class="o">.</span><span class="n">parallel_rows</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Independent vmapped Cholesky-row dimensions:"</span><span class="p">,</span> <span class="n">estimator</span><span class="o">.</span><span class="n">inference_runner</span><span class="o">.</span><span class="n">row_dimensions</span><span class="p">)</span>
+
+<span class="n">estimator_xyz</span> <span class="o">=</span> <span class="n">estimator</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>20:10:34|SGVB-PSD|INFO| Dividing data (2048, 3) into (2, 1024, 3) chunks
+20:10:34|SGVB-PSD|INFO| Reducing the number of frequencies to be analyzed from 512 to 0.1...
+20:10:34|SGVB-PSD|INFO| Final PSD will be of shape: 200 x 3 x 3
+20:10:34|SGVB-PSD|WARNING| Input data not standardised!
+20:10:34|SGVB-PSD|INFO| Using provided learning rate: 0.003
+20:10:34|SGVB-PSD|INFO| Training model
+20:10:36|SGVB-PSD|INFO| Model trained in 1.62s
+20:10:36|SGVB-PSD|INFO| Computing posterior PSDs
+2048 samples × 3 channels; fit 2.59 s
+Independent vmapped Cholesky-row dimensions: (19, 60, 101)
 </pre></div>
 </div>
 </div>
 </div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">show_fit</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">truth</span><span class="o">=</span><span class="n">truth</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/1e474d3b82891d0f60f57f83b531d199a58cbc064b77794bfc098829ad6bebec.png" src="../_images/1e474d3b82891d0f60f57f83b531d199a58cbc064b77794bfc098829ad6bebec.png" />
+<img alt="../_images/f0152dd7c7ac91219f29e686c4b36d67259f3a6fc0a6282c17ea48bb9dd3838a.png" src="../_images/f0152dd7c7ac91219f29e686c4b36d67259f3a6fc0a6282c17ea48bb9dd3838a.png" />
+</div>
+</div>
+</section>
+<section id="aet-channels">
+<h2>AET channels<a class="headerlink" href="#aet-channels" title="Link to this heading">#</a></h2>
+<p>Apply the orthonormal XYZ2-to-AET transform to the analysis data and the full reference matrix. Correlations between A, E and T are estimated; they are not set to zero. These fits use the current joint SGVB model. The channel transform is distinct from the eigenbasis likelihood representation discussed in the LISA paper.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="nb">float</span><span class="p">)</span>
+<span class="n">Q</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">]))[:,</span> <span class="kc">None</span><span class="p">]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">Q</span> <span class="o">@</span> <span class="n">Q</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-14</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data_xyz</span> <span class="o">@</span> <span class="n">Q</span><span class="o">.</span><span class="n">T</span>
+<span class="n">reference</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">Q</span> <span class="o">@</span> <span class="n">reference_windowed_xyz</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">@</span> <span class="n">Q</span><span class="o">.</span><span class="n">T</span>
+<span class="n">truth</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">Q</span> <span class="o">@</span> <span class="n">truth_xyz</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">@</span> <span class="n">Q</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="k">if</span> <span class="n">truth_xyz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"A"</span><span class="p">,</span> <span class="s2">"E"</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">PSDEstimator</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">reference_psd</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
+                         <span class="n">parallel_rows</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Nbw</span><span class="o">=</span><span class="n">window_bandwidth</span><span class="p">,</span> <span class="n">fmin_for_analysis</span><span class="o">=</span><span class="mf">.002</span><span class="p">,</span> <span class="n">fmax_for_analysis</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mf">.1</span><span class="p">,</span> <span class="n">fs</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="o">**</span><span class="n">BUDGET</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">estimator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">.003</span><span class="p">)</span>  <span class="c1"># Explicit rate: no costly hyperparameter search.</span>
+<span class="n">runtime</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">pointwise_ci</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">estimator</span><span class="o">.</span><span class="n">inference_runner</span><span class="o">.</span><span class="n">kdl_losses</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples × </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> channels; fit </span><span class="si">{</span><span class="n">runtime</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">estimator</span><span class="o">.</span><span class="n">parallel_rows</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Independent vmapped Cholesky-row dimensions:"</span><span class="p">,</span> <span class="n">estimator</span><span class="o">.</span><span class="n">inference_runner</span><span class="o">.</span><span class="n">row_dimensions</span><span class="p">)</span>
+
+<span class="n">estimator_aet</span> <span class="o">=</span> <span class="n">estimator</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>20:10:37|SGVB-PSD|INFO| Dividing data (2048, 3) into (2, 1024, 3) chunks
+20:10:37|SGVB-PSD|INFO| Reducing the number of frequencies to be analyzed from 512 to 0.1...
+20:10:37|SGVB-PSD|INFO| Final PSD will be of shape: 200 x 3 x 3
+20:10:37|SGVB-PSD|WARNING| Input data not standardised!
+20:10:37|SGVB-PSD|INFO| Using provided learning rate: 0.003
+20:10:37|SGVB-PSD|INFO| Training model
+20:10:38|SGVB-PSD|INFO| Model trained in 1.00s
+20:10:38|SGVB-PSD|INFO| Computing posterior PSDs
+2048 samples × 3 channels; fit 1.54 s
+Independent vmapped Cholesky-row dimensions: (19, 60, 101)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">show_fit</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">truth</span><span class="o">=</span><span class="n">truth</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/72fcf14fd4ce5865172e5479ceb5cf85a03821961cc24948f121e0d621a0e070.png" src="../_images/72fcf14fd4ce5865172e5479ceb5cf85a03821961cc24948f121e0d621a0e070.png" />
+<img alt="../_images/958e1a616871262ff94b57c6046316d54cca35df93888e0ab2750dc5d45dc616.png" src="../_images/958e1a616871262ff94b57c6046316d54cca35df93888e0ab2750dc5d45dc616.png" />
+</div>
+</div>
+</section>
 <section id="interpretation-and-budget">
 <h2>Interpretation and budget<a class="headerlink" href="#interpretation-and-budget" title="Link to this heading">#</a></h2>
 <p>The shaded bands are pointwise 90% variational intervals. Cheap settings
@@ -730,15 +923,15 @@ collapsed conditional-theta method in LogPSplinePSD.</p>
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Fast ET three-channel sample</p>
+        <p class="prev-next-title">ET example</p>
       </div>
     </a>
     <a class="right-next"
-       href="lisa_example_v2.html"
+       href="LVK_example.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">LISA A/E/T reference fit (parallel Cholesky rows)</p>
+        <p class="prev-next-title">LVK example</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -760,6 +953,12 @@ collapsed conditional-theta method in LogPSplinePSD.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup">Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reference-model-and-shared-data">Reference model and shared data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#resolve-the-transfer-nulls-at-the-analysis-window-scale">Resolve the transfer nulls at the analysis-window scale</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plotting-helper">Plotting helper</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#xyz2-channels">XYZ2 channels</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#aet-channels">AET channels</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation-and-budget">Interpretation and budget</a></li>
 </ul>
   </nav></div>
