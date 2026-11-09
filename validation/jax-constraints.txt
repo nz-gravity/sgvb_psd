@@ -1,6 +1,0 @@
-# JAX scientific stack used for the UoA validation.
-jax==0.6.2
-jaxlib==0.6.2
-numpyro==0.19.0
-numpy==2.5.4
-scipy==1.18.1

@@ -99,6 +99,7 @@ class PSDEstimator:
         backend="jax",
         elbo_samples=1,
         optimize_mean=False,
+        reference_psd=None,
     ):
         """
         Initialize the PSDEstimator.
@@ -144,6 +145,15 @@ class PSDEstimator:
         :param optimize_mean: Optimize JAX guide means as well as scales.
             The default False matches TensorFlow's fixed MAP means. This
             changes the variational approximation, not the target model.
+        :param reference_psd: Fixed reference spectral density in original
+            input units squared per frequency unit (two-sided, positive bins).
+            Provide a callable of physical frequencies, an array on the
+            analysis grid, or (values, frequencies) containing those bins.
+            Full matrices have shape (nfreq, p, p) and must be Hermitian
+            positive definite. Scalars/shared or per-channel PSDs also work.
+            Inference models S = L_ref S_residual L_ref.H. For one channel,
+            log(S) = log(S_ref) + cosine_basis @ coefficients. No reference
+            preserves the original model; no interpolation/floor is applied.
         """
 
         if backend != "jax":
@@ -176,6 +186,7 @@ class PSDEstimator:
         self.n_elbo_maximisation_steps = n_elbo_maximisation_steps
 
         self.fs = fs
+        self.reference_psd = reference_psd
         self.lr_range = lr_range
 
         # normalize the data
@@ -248,7 +259,11 @@ class PSDEstimator:
         from .jax_backend import JaxViRunner
 
         runner_kwargs.update(
-            seed=seed, elbo_samples=elbo_samples, optimize_mean=optimize_mean
+            seed=seed,
+            elbo_samples=elbo_samples,
+            optimize_mean=optimize_mean,
+            reference_psd=reference_psd,
+            data_scale=float(self.psd_scaling),
         )
         self.inference_runner = JaxViRunner(**runner_kwargs)
 

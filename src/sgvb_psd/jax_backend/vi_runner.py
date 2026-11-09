@@ -46,6 +46,8 @@ class JaxViRunner:
         seed=None,
         elbo_samples=1,
         optimize_mean=False,
+        reference_psd=None,
+        data_scale=1.0,
     ):
         if not isinstance(elbo_samples, int) or elbo_samples < 1:
             raise ValueError("elbo_samples must be a positive integer")
@@ -57,6 +59,8 @@ class JaxViRunner:
             N_theta,
             N_theta,
             fmin_for_analysis,
+            reference_psd=reference_psd,
+            data_scale=data_scale,
         )
         self.model = JaxBayesianModel(
             self.data,

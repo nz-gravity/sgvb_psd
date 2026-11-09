@@ -179,18 +179,8 @@ cython_debug/
 /.mpl-cache/
 /tests/out_plots/
 /tests/out/
-!/validation/jax-constraints.txt
 
 # Local experiment outputs and verified pre-cleanup backups.
 *.npz
 /.local-validation-backup/
-/validation/guide-comparison/
-/validation/vi-diagnosis/
-/validation/upgrade-benchmark/
-/validation/var2-coverage/
-/validation/*.json
-/validation/*.log
-/validation/*.svg
-/validation/*.pdf
-/validation/*.png
-/validation/*.lock
+/validation/

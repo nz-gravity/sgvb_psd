@@ -32,7 +32,7 @@ channels. Only JAX/NumPyro is supported in the package, tests and CI.
 Eigenbasis joint/factorized JAX inference is unfinished; those requests fail
 explicitly. AR whitening/recolouring is not integrated. The old TensorFlow
 backend and reference support are removed; historical results remain in Git
-history. See [migration scope](validation/JAX_MIGRATION.md).
+history.
 
 ```python
 from sgvb_psd.psd_estimator import PSDEstimator
@@ -65,20 +65,51 @@ The installed runtime imports no TensorFlow. The JAX
 guide keeps its means at MAP by default, matching the current TensorFlow
 implementation. Set `optimize_mean=True` to train JAX guide means too;
 this changes the variational approximation while keeping the target model.
-The diagonal guide has known calibration limitations in a small conditional
-prior-predictive control; full-model uncertainty calibration remains open.
-The JAX backend preserves the current model and PSD conventions; it does not yet
-include AR prewhitening or eigenbasis inference. See the
-[migration and parity report](validation/JAX_MIGRATION.md) for measured
-checks, conventions, known issues, and the remaining consolidation work.
-The [guide comparison](validation/GUIDE_COMPARISON.md) distinguishes the
-custom guide family from its inference engine and compares richer options.
-The [upgrade benchmark](validation/UPGRADE_BENCHMARK.md) reports cold and
-warmed costs alongside posterior agreement and conditional accuracy checks;
-full-model calibration is not yet established.
-The [VAR2 pointwise coverage study](validation/VAR2_COVERAGE.md) exercises
-the full production default guide under a frozen fixed-truth simulation
-protocol; it is separate from prior-predictive calibration.
+The default approximation has known uncertainty limitations; stable
+optimization and calibrated interval coverage remain under review. The
+backend preserves inherited prior scales and PSD conventions. In particular,
+raw `psd_samples` omit the input standard deviation squared while returned
+intervals include it. Investigation notes and experiments are kept locally.
+
+## Reference spectrum inside inference
+
+Supply a fixed reference `S_ref(f)` in original input units squared per
+physical-frequency unit. A callable receives the actual analysis frequencies;
+full matrices have shape `(nfreq, p, p)`:
+
+```python
+estimator = PSDEstimator(
+    x=data,
+    fs=sample_rate,
+    reference_psd=lambda frequencies: reference_spectral_matrix(frequencies),
+    seed=0,
+)
+psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
+```
+
+Arrays on the analysis grid also work, as does `(values, frequencies)` when
+that table contains every analysis bin. Tables are selected without
+interpolation/extrapolation so narrow reference features are preserved;
+a callable is useful for known AR structure or LISA dip locations. Scalar,
+shared-vector and per-channel `(nfreq, p)` diagonal references are supported.
+
+Prepare very small physical reference values in NumPy float64 before they
+are normalized to the JAX runtime precision. The reference must be finite,
+Hermitian and strictly positive definite.
+Exact spectral zeros require an explicit physical noise floor. Use the
+package's **two-sided** density convention; divide a one-sided reference by
+two at positive frequencies before passing it in.
+
+The model whitens Fourier coefficients with the reference Cholesky factor,
+fits the residual SGVB spectrum and reconstructs
+`S = L_ref @ S_residual @ L_ref.conj().T`. A zero residual correction returns
+`S_ref`. For one channel this is exactly
+`log(S) = log(S_ref) + cosine_basis @ coefficients`. For a full matrix the
+extension is Cholesky congruence; it is not a matrix-log sum. The fixed
+whitening determinant is included in the likelihood. Reference uncertainty
+is not inferred. With no reference, the original model is preserved.
+
+`plot(true_psd=(values, frequencies))` remains a separate comparison overlay.
 
 ## Development
 
@@ -97,7 +128,3 @@ uv run --no-sync pytest -m "not slow"
 ```
 
 After dependency changes, run `uv lock` and commit the updated `uv.lock`.
-
-Validation scripts and concise summaries are in [validation/README.md](validation/README.md).
-Experiment arrays, per-run outputs, plots and logs are ignored local files;
-do not commit them. Earlier blobs remain in Git history without a force-push.

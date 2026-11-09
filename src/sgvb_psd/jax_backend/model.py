@@ -11,6 +11,7 @@ from jax.nn import sigmoid
 from numpyro import distributions as dist
 
 from .._spectral import _compute_Xmatrices, compute_chunked_fft
+from .reference import reference_factor
 
 PARAMETER_NAMES = (
     "ga_delta",
@@ -34,6 +35,8 @@ class JaxAnalysisData:
         N_theta=15,
         N_delta=15,
         fmin_for_analysis=None,
+        reference_psd=None,
+        data_scale=1.0,
     ):
         x = np.asarray(x)
         if x.ndim == 1:
@@ -74,7 +77,27 @@ class JaxAnalysisData:
         self.Xmat_delta = jnp.asarray(xd, dtype=jnp.float32)
         self.Xmat_theta = jnp.asarray(xt, dtype=jnp.float32)
         y = jnp.asarray(self.y_ft, dtype=jnp.complex64)
+        self.reference_psd = None
+        self.reference_factor = None
+        self.reference_logdet = None
+        if reference_psd is not None:
+            physical, factor, logdet = reference_factor(
+                reference_psd, self.freq * fs, self.p, fs, data_scale
+            )
+            self.reference_psd = physical
+            self.reference_factor = jnp.asarray(factor)
+            self.reference_logdet = jnp.asarray(logdet)
+            y = jnp.linalg.solve(self.reference_factor[None], y[..., None])[
+                ..., 0
+            ]
+        self.whitened_y_ft = y
         self.summed_periodogram = jnp.einsum("bfi,bfj->fij", y, y.conj())
+        if self.reference_factor is not None and not np.all(
+            np.isfinite(np.asarray(self.summed_periodogram))
+        ):
+            raise ValueError(
+                "reference whitening exceeds float32 range; use a physically appropriate positive reference floor"
+            )
 
 
 class JaxBayesianModel:
@@ -146,13 +169,17 @@ class JaxBayesianModel:
             t @ self.data.summed_periodogram @ t.conj().swapaxes(-1, -2)
         )
         power = jnp.diagonal(transformed, axis1=-2, axis2=-1).real
-        return (
-            -jnp.sum(
-                self.data.nchunks * gamma + power * jnp.exp(-gamma),
-                axis=(-2, -1),
-            )
-            / self.Nbw
+        likelihood = -jnp.sum(
+            self.data.nchunks * gamma + power * jnp.exp(-gamma),
+            axis=(-2, -1),
         )
+        if self.data.reference_factor is not None:
+            # The whitening determinant is fixed but part of the raw-data
+            # density: log det(R_ref) for each complex Fourier observation.
+            likelihood -= self.data.nchunks * jnp.sum(
+                self.data.reference_logdet
+            )
+        return likelihood / self.Nbw
 
     def logprior(self, params):
         """Preserve reference scales, including its variance-named Normal scale.
@@ -201,6 +228,9 @@ class JaxBayesianModel:
         psd = (
             inverse_t * jnp.exp(gamma)[..., None, :]
         ) @ inverse_t.conj().swapaxes(-1, -2)
+        if self.data.reference_factor is not None:
+            factor = self.data.reference_factor
+            psd = factor @ psd @ factor.conj().swapaxes(-1, -2)
         return psd if fs is None else psd / fs
 
     def compute_psd(
