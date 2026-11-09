@@ -61,7 +61,11 @@ are separate modelling and inference choices.
   data-quality masks. Its fixed-order AR baseline follows the same prewhitening
   idea, with whitening/reconstruction handled by the JAX implementation.
 - The [ET example](examples/ET_example.ipynb) uses the repository's small
-  three-channel ET sample associated with the correlated-noise work above.
+  three-channel Case-A ET excerpt associated with the correlated-noise work
+  above. All three channel prefixes were verified against the
+  [paper’s fixed source revision](https://github.com/nz-gravity/sgvb_psd_paper/tree/037d93d189be0036fbb305aa60047260d5d16ee4/data);
+  the notebook compares native-resolution coherence at 10/50/90 Hz with the
+  paper’s ET sensitivity/Gaussian-component model.
 
 The examples use short data segments and small optimization budgets for
 readable, inexpensive demonstrations. Use the linked papers and research

@@ -20,7 +20,7 @@ local execution uses the project environment. Data downloads are cached locally.
 |---|---|
 | [Univariate simulation](examples/var1d_example.ipynb) | AR(1) simulation with an approximate AR reference |
 | [Bivariate simulation](examples/simulation_example.ipynb) | Correlated VAR(2), analytic truth and parallel Cholesky rows |
-| [ET example](examples/ET_example.ipynb) | Three-channel noise with a full VAR reference and held-out coherence checks |
+| [ET example](examples/ET_example.ipynb) | Paper Case-A Gaussian coherence peaks, full VAR reference and held-out checks |
 | [LISA example](examples/lisa_example.ipynb) | Shared public noise-simulation slice and full reference model in XYZ2 and AET coordinates |
 | [LVK example](examples/LVK_example.ipynb) | Off-source strain with a fixed-order AR line reference and held-out checks |
 
