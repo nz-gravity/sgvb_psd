@@ -32,3 +32,15 @@ comparisons are in `VI_DIAGNOSIS.md` and `GUIDE_COMPARISON.md`. The inherited
 diagonal approximation has conditional undercoverage. Covariance-aware
 production inference and full-model SBC remain open. CI configuration is
 updated; no remote CI result or automatic main merge is claimed.
+
+
+Follow-up full-production fixed-truth VAR2 coverage: all 100 independent
+realizations completed with no failures/retries. Nominal 90% intervals have
+frequency-average coverage 71.6%/62.0% for the diagonal PSDs,
+65.5%/53.0% for real/imaginary CSD and 68.6% for coherence. These averages
+are distinct from frequency-wise counts and are not prior-predictive SBC.
+Per-frequency Wilson bands and width/recovery/optimizer plots are in
+`validation/VAR2_COVERAGE.md`. MAP traces show unresolved stability issues;
+undercoverage is a limitation of this configured finite-budget pipeline,
+not an isolated diagnosis of guide family or backend. No tuning/retries
+were performed on the final evaluation outcomes.

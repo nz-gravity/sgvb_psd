@@ -77,6 +77,9 @@ custom guide family from its inference engine and compares richer options.
 The [upgrade benchmark](validation/UPGRADE_BENCHMARK.md) reports cold and
 warmed costs alongside posterior agreement and conditional accuracy checks;
 full-model calibration is not yet established.
+The [VAR2 pointwise coverage study](validation/VAR2_COVERAGE.md) exercises
+the full production default guide under a frozen fixed-truth simulation
+protocol; it is separate from prior-predictive calibration.
 
 ## Development
 

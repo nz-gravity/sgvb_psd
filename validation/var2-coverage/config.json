@@ -1,0 +1,75 @@
+{
+  "experiment": "fixed-truth frequentist pointwise coverage, NOT prior-predictive SBC or simultaneous coverage",
+  "realizations": 100,
+  "samples": 512,
+  "channels": 2,
+  "chunks": 2,
+  "basis": 6,
+  "fs": 6.283185307179586,
+  "var_coefficients": [
+    [
+      [
+        0.5,
+        0.0
+      ],
+      [
+        0.0,
+        -0.3
+      ]
+    ],
+    [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -0.5
+      ]
+    ]
+  ],
+  "innovation_covariance": [
+    [
+      1.0,
+      0.9
+    ],
+    [
+      0.9,
+      1.0
+    ]
+  ],
+  "simulation": "existing SimVARMA; identity MA; existing 101-point initialization/burn-in",
+  "guide": "production default independent Normal, frozen MAP means, trainable softplus scales initialized 1e-4",
+  "optimize_mean": false,
+  "elbo_samples": 1,
+  "map_steps": 5000,
+  "map_learning_rate": 0.003,
+  "vi_steps": 10000,
+  "vi_learning_rate": 0.05,
+  "posterior_draws": 2000,
+  "quantiles": [
+    0.05,
+    0.5,
+    0.95
+  ],
+  "priors": "unchanged production shrinkage/log-HalfCauchy model; degree_fluctuate=N_theta/2=3; Nbw=1; Normal base variance 10; bounded variance-named quantity remains scale",
+  "dtype": "production float32/complex64; independent summaries float64",
+  "preprocessing": "single global sample std division; no centering/taper; fft/sqrt(block length); discard DC/Nyquist; physical draws multiply std squared and divide fs",
+  "fit_timeout_seconds": 120,
+  "retry_failed_fits": false,
+  "master_seed": 20261109,
+  "seed_rule": "numpy.SeedSequence([master_seed, namespace, index]).generate_state(1); data namespace 1101; VI namespace 2202",
+  "edge_bins_each_end": 5,
+  "source_revision": "927c9b5078a729a5c3f4d00e96a7ead878a5813f",
+  "secondary_method": null,
+  "secondary_reason": "structured/full covariance guides are research harnesses, not supported production PSDEstimator options; primary campaign takes precedence",
+  "frozen_utc": "2026-11-09T00:10:14Z",
+  "source_status_at_freeze": "",
+  "script_sha256": "19a2beb0eafde2fce29fafab24aa0fed79181ee34ca144452b432c68bbef8e72",
+  "hardware": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.16 (main, Oct 26 2026, 13:59:40) [Clang 23.1.3 ]",
+    "logical_cpus": 18
+  }
+}

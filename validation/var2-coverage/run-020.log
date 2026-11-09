@@ -1,0 +1,8 @@
+13:13:49|SGVB-PSD|INFO| No GPU detected. Running on CPU.
+13:13:49|SGVB-PSD|INFO| Dividing data (512, 2) into (2, 256, 2) chunks
+13:13:49|SGVB-PSD|INFO| Final PSD will be of shape: 127 x 2 x 2
+13:13:49|SGVB-PSD|WARNING| Input data not standardised!
+13:13:50|SGVB-PSD|INFO| Using provided learning rate: 0.003
+13:13:50|SGVB-PSD|INFO| Training model
+13:13:52|SGVB-PSD|INFO| Model trained in 2.50s
+13:13:52|SGVB-PSD|INFO| Computing posterior PSDs

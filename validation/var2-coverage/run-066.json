@@ -1,0 +1,39 @@
+{
+  "index": 66,
+  "data_seed": 1290578467,
+  "vi_seed": 3138290184,
+  "status": "completed",
+  "fit_s": 7.811814166023396,
+  "map_s": 0.5460286250454374,
+  "vi_s": 1.467517041019164,
+  "input_scale": 1.185181378226771,
+  "finite": true,
+  "map_logpost_last": 47.651458740234375,
+  "map_last_500_change": 0.01197052001953125,
+  "map_gradient_rms": 39.492523193359375,
+  "map_gradient_abs_max": 268.3082580566406,
+  "vi_first_1000_mean": 131.2769775390625,
+  "vi_last_1000_mean": 106.08647155761719,
+  "vi_last_1000_std": 8.28562068939209,
+  "vi_previous_1000_mean": 106.51395416259766,
+  "guide_scale_min": 8.794217865215614e-05,
+  "guide_scale_max": 0.430326372385025,
+  "guide_scale_median": 0.09702100604772568,
+  "realization_frequency_average_coverage": [
+    0.49606299212598426,
+    0.7086614173228346,
+    0.8267716535433071,
+    0.5118110236220472,
+    0.6614173228346457
+  ],
+  "versions": {
+    "jax": "0.6.2",
+    "numpyro": "0.19.0",
+    "numpy": "2.5.4"
+  },
+  "jax_devices": [
+    "TFRT_CPU_0"
+  ],
+  "tensorflow_imported": false,
+  "worker_s": 10.42948420799803
+}

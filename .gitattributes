@@ -11,3 +11,4 @@ validation/var2-coverage/*.json linguist-generated=true
 validation/var2-coverage/*.log linguist-generated=true
 validation/var2-coverage/*.svg linguist-generated=true
 validation/var2-coverage/*.pdf linguist-generated=true
+validation/var2-coverage/*.csv linguist-generated=true

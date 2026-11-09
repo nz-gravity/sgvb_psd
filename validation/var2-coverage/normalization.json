@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "companion_spectral_radius": 0.7071067811865477,
+  "stationary_covariance": [
+    [
+      1.3333333333333333,
+      0.7058823529411765
+    ],
+    [
+      0.7058823529411765,
+      1.3888888888888886
+    ]
+  ],
+  "integrated_spectrum_covariance_real": [
+    [
+      1.3333333333333333,
+      0.7058823529411774
+    ],
+    [
+      0.7058823529411774,
+      1.3888888888888906
+    ]
+  ],
+  "existing_analytic_helper_max_abs_difference": 0.0,
+  "white_noise_mean_density": [
+    0.15932045594098213,
+    0.15907589649673268
+  ],
+  "white_noise_expected_density": 0.15915494309189535,
+  "white_noise_independent_preflight_seed": 917321,
+  "physical_psd_reconstruction_scale_squared_check": true,
+  "expected_finite_block_diagonal_relative_bias_max": 0.013561834628227576,
+  "density_convention": "two-sided spectral density per physical-frequency unit, evaluated at positive bins; no factor 2",
+  "csd_convention": "S[0,1] = E[X0 * conjugate(X1)] / fs",
+  "frequency_bins": 127,
+  "campaign_data_or_vi_used": false
+}

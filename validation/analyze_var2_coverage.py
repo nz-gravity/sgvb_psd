@@ -1,5 +1,6 @@
 """Summarize independent-realization coverage without pooling frequencies."""
 
+import csv
 import json
 from pathlib import Path
 
@@ -124,6 +125,7 @@ def five_panels(
     fig.tight_layout(rect=(0, 0, 1, 0.96))
     fig.savefig(OUT / (filename + ".svg"))
     fig.savefig(OUT / (filename + ".pdf"))
+    fig.savefig(OUT / (filename + ".png"), dpi=130)
     plt.close(fig)
 
 
@@ -156,11 +158,31 @@ def main():
             "normalized_error",
         )
     }
+    with np.load(OUT / "truth.npz") as reference:
+        reference_truth = reference["functionals"].copy()
+        reference_frequency = reference["frequency_cycles"].copy()
+    map_final_minus_max = []
     for i in ids:
         with np.load(OUT / f"run-{i:03d}.npz") as row:
+            map_trace = row["map_log_posterior"]
+            map_final_minus_max.append(float(map_trace[-1] - map_trace.max()))
             frequency = row["frequency_cycles"]
+            np.testing.assert_allclose(
+                frequency, reference_frequency, atol=0, rtol=0
+            )
+            np.testing.assert_allclose(
+                row["truth"], reference_truth, atol=1e-14
+            )
+            independently_covered = (
+                row["quantiles"][0] <= reference_truth
+            ) & (reference_truth <= row["quantiles"][2])
+            np.testing.assert_array_equal(
+                row["covered"], independently_covered
+            )
             for key in collected:
-                collected[key].append(row[key])
+                collected[key].append(
+                    independently_covered if key == "covered" else row[key]
+                )
     collected = {k: np.array(v) for k, v in collected.items()}
     summaries, arrays = summarize(
         collected["covered"],
@@ -178,6 +200,43 @@ def main():
         completed_indices=np.array(ids),
         **arrays,
     )
+    with (OUT / "frequency-results.csv").open("w", newline="") as output:
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "frequency_cycles_per_sample",
+                "frequency_physical",
+                "quantity",
+                "completed",
+                "successes",
+                "coverage",
+                "wilson95_low",
+                "wilson95_high",
+                "binomial_se",
+                "median_width",
+                "mean_absolute_error",
+                "all_attempted_coverage_lower",
+                "all_attempted_coverage_upper",
+            ]
+        )
+        for f, frequency_value in enumerate(frequency):
+            for k, name in enumerate(NAMES):
+                writer.writerow(
+                    [
+                        frequency_value,
+                        frequency_value * config["fs"],
+                        name,
+                        len(ids),
+                        int(arrays["successes"][f, k]),
+                        arrays["coverage_completed"][f, k],
+                        *arrays["coverage_wilson95"][f, k],
+                        arrays["coverage_binomial_se"][f, k],
+                        arrays["width_quantiles_over_realizations"][1, f, k],
+                        arrays["recovery_mae"][f, k],
+                        arrays["coverage_attempted_lower"][f, k],
+                        arrays["coverage_attempted_upper"][f, k],
+                    ]
+                )
     cost = [
         r["process_wall_s"] for r in manifest["runs"] if "process_wall_s" in r
     ]
@@ -209,6 +268,14 @@ def main():
         "min": float(drift.min()),
         "median": float(np.median(drift)),
         "max": float(drift.max()),
+    }
+    stability["map_last_500_negative_change_count"] = sum(
+        r["map_last_500_change"] < 0 for r in results
+    )
+    stability["map_last_logged_minus_trace_max"] = {
+        "min": min(map_final_minus_max),
+        "median": float(np.median(map_final_minus_max)),
+        "max": max(map_final_minus_max),
     }
     summary = {
         "counts": counts,
@@ -319,6 +386,7 @@ def main():
     fig.tight_layout()
     fig.savefig(OUT / "stability.svg")
     fig.savefig(OUT / "stability.pdf")
+    fig.savefig(OUT / "stability.png", dpi=130)
     plt.close(fig)
     # Representative traces are selected by index, never by fit quality.
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
@@ -343,6 +411,7 @@ def main():
     fig.tight_layout()
     fig.savefig(OUT / "traces.svg")
     fig.savefig(OUT / "traces.pdf")
+    fig.savefig(OUT / "traces.png", dpi=130)
     plt.close(fig)
     print(json.dumps(summary, indent=2))
 

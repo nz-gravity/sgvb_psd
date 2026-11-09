@@ -186,3 +186,5 @@ cython_debug/
 !/validation/reference/requirements.txt
 !/validation/upgrade-benchmark/*.log
 !/validation/var2-coverage/*.log
+!/validation/var2-coverage/*.png
+!/validation/var2-coverage/*.csv
