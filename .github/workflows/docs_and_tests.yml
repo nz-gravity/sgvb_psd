@@ -12,13 +12,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: 3.9
-          cache: 'pip'
-      - run: pip install -e .[dev]
-      - run: pytest -m "not slow" --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
+          version: "0.13.7"
+          enable-cache: true
+          python-version: '3.12'
+      - run: uv sync --locked --extra dev
+      - run: uv run --no-sync pytest -m "not slow" --cov=src/sgvb_psd/ --cov-report=xml --cov-report=term-missing:skip-covered
       - uses: coverallsapp/github-action@v2
         if: github.event_name == 'push'
         with:
@@ -30,17 +31,18 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: 3.9
-          cache: 'pip'
-      - run: pip install -e .[dev]
+          version: "0.13.7"
+          enable-cache: true
+          python-version: '3.12'
+      - run: uv sync --locked --extra dev
       - name: Build the book
-        run: jupyter-book build docs --config docs/_config.yaml
+        run: uv run --no-sync jupyter-book build docs --config docs/_config.yaml
       - name: GitHub Pages action
         uses: peaceiris/actions-gh-pages@v3.9.3
         with:

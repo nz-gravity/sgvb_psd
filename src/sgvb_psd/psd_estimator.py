@@ -5,18 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from hyperopt import fmin, hp, tpe
 
-from .backend import (
-    BayesianModel,
-    EigenbasisViRunner,
-    FactorizedViRunner,
-    ViRunner,
-)
 from .logging import logger
 from .postproc import plot_coherence
 from .postproc.plot_losses import plot_losses
 from .postproc.plot_psd import plot_psd
 from .utils.periodogram import get_periodogram
-from .utils.tf_utils import set_seed
 from .utils.utils import get_freq
 
 
@@ -103,6 +96,10 @@ class PSDEstimator:
         Nbw=1.0,
         use_eigenbasis=False,
         posterior_mode="joint",
+        elbo_samples=1,
+        optimize_mean=False,
+        reference_psd=None,
+        parallel_rows=False,
     ):
         """
         Initialize the PSDEstimator.
@@ -137,14 +134,44 @@ class PSDEstimator:
         :type fmax_idx_extension: int, optional
         :param Nbw: Effective window-bandwidth correction applied to the likelihood, defaults to 1.0.
         :type Nbw: float, optional
-        :param use_eigenbasis: Whether to use the eigenbasis likelihood representation, defaults to False.
+        :param use_eigenbasis: Compatibility flag; only False is supported.
         :type use_eigenbasis: bool, optional
-        :param posterior_mode: Posterior approximation mode, either "joint" or "factorized", defaults to "joint".
+        :param posterior_mode: Posterior mode; only "joint" is implemented.
         :type posterior_mode: str, optional
+        :param elbo_samples: Number of Monte Carlo particles per ELBO
+            step, defaults to 1.
+        :param optimize_mean: Optimize guide means as well as scales.
+            By default, means remain fixed at their MAP estimates. This
+            changes the variational approximation, not the target model.
+        :param reference_psd: Fixed reference spectral density in original
+            input units squared per frequency unit (two-sided, positive bins).
+            Provide a callable of physical frequencies, an array on the
+            analysis grid, or (values, frequencies) containing those bins.
+            Full matrices have shape (nfreq, p, p) and must be Hermitian
+            positive definite. Scalars/shared or per-channel PSDs also work.
+            Inference models S = L_ref S_residual L_ref.H. For one channel,
+            log(S) = log(S_ref) + cosine_basis @ coefficients. No reference
+            preserves the original model; no interpolation/floor is applied.
+        :param parallel_rows: Fit independent modified-Cholesky rows using
+            JAX vmap, with separate row random keys and the same target/guide
+            family. Default False preserves joint-runner stochastic behavior.
         """
 
-        if seed is not None:
-            set_seed(seed)
+        if use_eigenbasis or posterior_mode != "joint":
+            raise ValueError(
+                "Only original joint inference is implemented; "
+                "eigenbasis/factorized modes are not yet available"
+            )
+        if not isinstance(parallel_rows, (bool, np.bool_)):
+            raise ValueError("parallel_rows must be a boolean")
+        self.parallel_rows = bool(parallel_rows)
+        x = np.asarray(x)
+        if x.ndim == 1:
+            x = x[:, None]
+        if x.ndim != 2 or x.shape[1] < 1 or not np.all(np.isfinite(x)):
+            raise ValueError("x must be a finite time series of shape (n, p)")
+        if not np.isfinite(np.std(x)) or np.std(x) <= 0:
+            raise ValueError("x must have positive finite standard deviation")
 
         self.N_theta = N_theta
         self.N_samples = N_samples
@@ -153,6 +180,7 @@ class PSDEstimator:
         self.n_elbo_maximisation_steps = n_elbo_maximisation_steps
 
         self.fs = fs
+        self.reference_psd = reference_psd
         self.lr_range = lr_range
 
         # normalize the data
@@ -170,14 +198,6 @@ class PSDEstimator:
         if not np.isfinite(self.Nbw) or self.Nbw <= 0:
             raise ValueError("Nbw must be finite and positive")
         self.use_eigenbasis = use_eigenbasis
-        if posterior_mode not in {"joint", "factorized"}:
-            raise ValueError(
-                'posterior_mode must be either "joint" or "factorized"'
-            )
-        if not self.use_eigenbasis and posterior_mode == "factorized":
-            raise ValueError(
-                "posterior_mode='factorized' requires use_eigenbasis=True"
-            )
         self.posterior_mode = posterior_mode
         self.pdgrm, self.pdgrm_freq = get_periodogram(self.x, fs=self.fs)
         self.pdgrm = self.pdgrm * self.psd_scaling**2
@@ -205,7 +225,7 @@ class PSDEstimator:
         )
 
         # Internal variables
-        self.model: BayesianModel = None
+        self.model = None
         self.samps = None
         self.pointwise_ci = None
         self.uniform_ci = None
@@ -222,18 +242,16 @@ class PSDEstimator:
             init_params=init_params,
             Nbw=self.Nbw,
         )
-        if self.use_eigenbasis:
-            runner_kwargs.update(
-                fmin_idx_extension=self.fmin_idx_extension,
-                fmax_idx_extension=self.fmax_idx_extension,
-            )
-            runner_cls = (
-                FactorizedViRunner
-                if self.posterior_mode == "factorized"
-                else EigenbasisViRunner
-            )
-        else:
-            runner_cls = ViRunner
+        from .inference import RowViRunner, ViRunner
+
+        runner_kwargs.update(
+            seed=seed,
+            elbo_samples=elbo_samples,
+            optimize_mean=optimize_mean,
+            reference_psd=reference_psd,
+            data_scale=float(self.psd_scaling),
+        )
+        runner_cls = RowViRunner if self.parallel_rows else ViRunner
         self.inference_runner = runner_cls(**runner_kwargs)
 
     def _learning_rate_optimisation_objective(self, lr):
@@ -252,9 +270,7 @@ class PSDEstimator:
             inference_size=self.N_samples,
             n_elbo_maximisation_steps=self.n_elbo_maximisation_steps,
         )
-        if isinstance(vi_losses, list):
-            return sum(losses[-1].numpy() for losses in vi_losses)
-        return vi_losses[-1].numpy()
+        return float(np.asarray(vi_losses[-1]))
 
     def _find_optimal_learing_rate(self):
         """
@@ -469,12 +485,7 @@ class PSDEstimator:
         :return: Samples from the posterior distribution
         :rtype: np.ndarray
         """
-        if hasattr(self.inference_runner, "sample_posterior"):
-            spline_params = self.inference_runner.sample_posterior(n_samples)
-        else:
-            spline_params = self.inference_runner.surrogate_posterior.sample(
-                n_samples
-            )
+        spline_params = self.inference_runner.sample_posterior(n_samples)
         psd = self.model.compute_psd(
             spline_params, psd_scaling=self.psd_scaling, fs=self.fs
         )

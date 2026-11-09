@@ -19,7 +19,7 @@ namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 [project]
 name = "sgvb_psd"
 dynamic = ["version"] # scm versioning (using tags)
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 description = "A python package for estimating the power spectral density (PSD) of correlated multivariate detector noise using variational inference (VI)."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -32,14 +32,15 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Framework :: Jupyter"
 ]
 dependencies = [
-    "tensorflow-probability>=0.24.0",
-    "tf-keras",
+    "jax>=0.6.2",
+    "numpyro>=0.19.0",
+    "scipy",
     "pandas",
     "numpy",
     "matplotlib",
@@ -49,6 +50,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+examples = ["h5py>=3.15.1"]
 dev = [
     "pytest",
     "pytest-cov",
@@ -60,6 +62,20 @@ dev = [
     "pytest_click"
 ]
 
+[tool.uv]
+constraint-dependencies = [
+    "jax==0.6.2; python_version == '3.12'",
+    "jaxlib==0.6.2; python_version == '3.12'",
+    "numpyro==0.19.0; python_version == '3.12'",
+    "numpy==2.5.4; python_version == '3.12'",
+    "scipy==1.18.1; python_version == '3.12'",
+    "pandas==3.1.1; python_version == '3.12'",
+    "matplotlib==3.11.2; python_version == '3.12'",
+    "hyperopt==0.3.0; python_version == '3.12'",
+    "colorama==0.4.6; python_version == '3.12'",
+    "click==8.5.1; python_version == '3.12'",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/nz-gravity/sgvb_psd"
 "Bug Reports" = "https://github.com/nz-gravity/sgvb_psd/issues"
@@ -68,19 +84,6 @@ dev = [
 
 [tool.setuptools_scm]
 version_file = "src/sgvb_psd/_version.py"
-
-[tool.semantic_release]
-version_variable = "src/sgvb_psd/_version.py:__version__"
-version_source = "commit"
-commit_version_number = true
-commit_subject = "chore(release): {version}"
-commit_message = "chore(release): {version}"
-tag_format = "v{version}"
-no_local_version = true
-
-
-[tool.semantic_release.changelog]
-changelog_file = "CHANGELOG.rst"
 
 [tool.black]
 line-length = 79

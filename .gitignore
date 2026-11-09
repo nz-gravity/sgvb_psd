@@ -135,6 +135,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-*/
 env/
 venv/
 ENV/
@@ -174,3 +175,15 @@ cython_debug/
 /src/sgvb_psd/_version.py
 /studies/out_simulation_results/
 /studies/out_gibbs/
+/.uv-cache/
+.mpl-cache/
+/tests/out_plots/
+/tests/out/
+
+# Local experiment outputs and verified pre-cleanup backups.
+*.npz
+/.local-validation-backup/
+/validation/
+
+/docs/examples/data/
+/docs/examples/*.part

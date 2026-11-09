@@ -3,7 +3,6 @@ from collections import namedtuple
 
 import numpy as np
 import pytest
-import tensorflow as tf
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -13,7 +12,6 @@ def output_dir():
     d = os.path.join(HERE, "out")
     os.makedirs(plot_dir, exist_ok=True)
     return d
-
 
 
 @pytest.fixture

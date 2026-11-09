@@ -2,12 +2,13 @@ import logging
 import sys
 import time
 
-import tensorflow as tf
 from colorama import Fore, Style, init
 
 
 def log_if_gpu_or_cpu():
-    gpus = tf.config.list_physical_devices("GPU")
+    import jax
+
+    gpus = [device for device in jax.devices() if device.platform == "gpu"]
     if gpus:
         logger.info(f"GPU found: {gpus}")
     else:

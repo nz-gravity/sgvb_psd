@@ -4,46 +4,143 @@ on:
   push:
     branches:
       - main
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Exact version to publish from main (e.g. 2.1.0 or 2.1.0rc1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Serialize releases, including retries. Never cancel an upload in progress.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release:
+  request:
     runs-on: ubuntu-latest
-    concurrency: release
-
-    permissions:
-      id-token: write
-      contents: write
-
+    outputs:
+      publish: ${{ steps.request.outputs.publish }}
+      version: ${{ steps.request.outputs.version }}
+      tag: ${{ steps.request.outputs.tag }}
+      sha: ${{ steps.request.outputs.sha }}
+      prerelease: ${{ steps.request.outputs.prerelease }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4.2.2
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.11"
+          version: "0.13.7"
+          python-version: "3.12"
+      - name: Read explicit release request
+        id: request
+        run: uv run --script .github/scripts/release.py
 
-      # Normal main updates: calculate and create the next version automatically.
-      - name: Semantic Version Release
-        id: release
-        if: github.ref == 'refs/heads/main'
-        uses: python-semantic-release/python-semantic-release@v9.12.0
+  build:
+    needs: request
+    if: needs.request.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ needs.request.outputs.tag }}
+      RELEASE_SHA: ${{ needs.request.outputs.sha }}
+      RELEASE_VERSION: ${{ needs.request.outputs.version }}
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4.2.2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
-
-      # Build after either an automatic release or a manually pushed version tag.
-      - name: Build distribution
-        if: startsWith(github.ref, 'refs/tags/v') || steps.release.outputs.released == 'true'
+          ref: ${{ needs.request.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      # setuptools-scm reads this local tag. Nothing is pushed before tests pass.
+      - name: Set the exact build version
         run: |
-          python -m pip install --upgrade build
-          python -m build --sdist --wheel --outdir dist/
+          if ! git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            git tag "$RELEASE_TAG" "$RELEASE_SHA"
+          fi
+          test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_SHA"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked --extra dev
+      - name: Test the release commit
+        run: uv run --no-sync pytest -m "not slow"
+      - name: Build wheel and source distribution
+        run: uv build --sdist --wheel --out-dir dist/
+      - name: Verify distribution versions
+        run: |
+          uv run --no-sync python - <<'PY'
+          import os
+          import tarfile
+          import zipfile
+          from email.parser import BytesParser
+          from pathlib import Path
 
+          wheels = list(Path("dist").glob("*.whl"))
+          sdists = list(Path("dist").glob("*.tar.gz"))
+          assert len(wheels) == len(sdists) == 1, "Expected one wheel and one sdist"
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              names = [n for n in wheel.namelist() if n.endswith(".dist-info/METADATA")]
+              wheel_metadata = wheel.read(names[0])
+          with tarfile.open(sdists[0]) as sdist:
+              name = f"{sdists[0].name.removesuffix('.tar.gz')}/PKG-INFO"
+              sdist_metadata = sdist.extractfile(name).read()
+          for metadata in (wheel_metadata, sdist_metadata):
+              assert BytesParser().parsebytes(metadata)["Version"] == os.environ["RELEASE_VERSION"]
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: [request, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ needs.request.outputs.tag }}
+      RELEASE_SHA: ${{ needs.request.outputs.sha }}
+      PRERELEASE: ${{ needs.request.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ needs.request.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+      - name: Tag the tested commit without replacing existing tags
+        run: |
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_SHA"
+          else
+            git tag "$RELEASE_TAG" "$RELEASE_SHA"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+      # Keep the existing workflow identity for PyPI Trusted Publishing.
       - name: Publish to PyPI
-        if: startsWith(github.ref, 'refs/tags/v') || steps.release.outputs.released == 'true'
         uses: pypa/gh-action-pypi-publish@v1.12.3
+        with:
+          skip-existing: true
+      - name: Create GitHub release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            options=()
+            if [ "$PRERELEASE" = true ]; then
+              options+=(--prerelease --latest=false)
+            fi
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes "${options[@]}" dist/*
+          fi

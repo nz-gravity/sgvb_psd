@@ -10,12 +10,29 @@ of correlated multivariate detector noise using variational inference (VI).
 pip install sgvb_psd
 ```
 
-## Usage
+## Quick notebooks
 
-- [API Documentation](api.rst)
-- [Simulated data Example](examples/simulation_example.ipynb)
-- [ET Example](examples/ET_example.ipynb)
-- [LISA Example](examples/lisa_example.ipynb)
+All notebooks install the development PR branch explicitly while it is under review.
+Their default demonstration budget is 1000 MAP steps, 300 VI steps and 96
+draws, with an explicit learning rate. They are intended for a CPU Colab
+runtime; local CPU execution is tested, not a guarantee of Colab timings or
+publication-level accuracy. Notebook outputs and data caches are not committed.
+
+| Notebook | Default data and reference |
+|---|---|
+| [1D AR](examples/var1d_example.ipynb) | 1024 simulated samples; approximate AR reference |
+| [VAR2](examples/simulation_example.ipynb) | 1024 correlated samples; known analytic truth; parallel Cholesky rows |
+| [ET](examples/ET_example.ipynb) | Short slice of the 16 MB sample; anti-aliased downsampling |
+| [LISA XYZ2](examples/lisa_example.ipynb) | 13.8 MB cached real excerpt; light-travel-time notch reference |
+| [LISA AET](examples/lisa_example_v2.ipynb) | Same excerpt transformed to A/E/T; full matrix reference |
+| [LVK + AR](examples/LVK_example.ipynb) | 1 MB H1 strain file; AR order optimized on disjoint pre-event training data; optional H1/L1 |
+
+LISA also supports an explicit no-download synthetic mode or a user-supplied
+HDF5 file. Detector examples are short workflow demonstrations, not the
+original full-paper analyses. Increase duration, basis and optimization budgets
+under a separate validation plan for a scientific result.
+
+- [API documentation](api.rst)
 
 ## Paper
 
