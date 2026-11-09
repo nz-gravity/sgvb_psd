@@ -7,3 +7,7 @@ validation/guide-comparison/*.json linguist-generated=true
 validation/guide-comparison/*.log linguist-generated=true
 validation/upgrade-benchmark/*.json linguist-generated=true
 validation/upgrade-benchmark/*.log linguist-generated=true
+validation/var2-coverage/*.json linguist-generated=true
+validation/var2-coverage/*.log linguist-generated=true
+validation/var2-coverage/*.svg linguist-generated=true
+validation/var2-coverage/*.pdf linguist-generated=true
