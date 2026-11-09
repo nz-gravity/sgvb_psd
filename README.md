@@ -5,10 +5,14 @@
 
 # SGVB PSD Estimator
 
-This repository contains the code for the papers
+SGVB estimates multivariate spectral density matrices using variational
+inference. Research papers and related methods:
 
-- ["Variational inference for correlated gravitational wave detector network noise" by Jianan Liu et al. 2024](https://arxiv.org/abs/2409.13224)
-- "Variational Bayesian Inference for the Spectral Structure of LISA Noise" (arXiv link to be added)
+- [Variational inference for correlated gravitational wave detector network noise](https://arxiv.org/abs/2409.13224) (2024).
+- [Variational Bayesian Inference for the Spectral Structure of LISA Noise](https://arxiv.org/abs/2608.22245) (2026).
+- [Multivariate Bayesian P-spline estimation of spectral density matrices, with application to LISA TDI noise](https://arxiv.org/abs/2607.04833) (2026), the related [LogPSplinePSD](https://github.com/nz-gravity/LogPSplinePSD) method.
+
+See [credits and papers](docs/papers.md) for authors, citations and data sources.
 
 Documentation is available at https://nz-gravity.github.io/sgvb_psd/
 
@@ -20,7 +24,7 @@ Install the latest release from PyPI:
 pip install sgvb_psd
 ```
 
-On this migration branch, install the new JAX-only runtime from the checkout
+Install the JAX/NumPyro runtime from the source checkout
 with `uv sync --locked` (Python 3.10+; validation uses 3.12). TensorFlow and
 TensorFlow Probability are no longer runtime dependencies or install extras. Existing PyPI
 releases may still use the previous runtime.
@@ -118,11 +122,12 @@ independent-row computation; CPU/GPU scheduling and speed are device dependent.
 The original joint runner remains the default. Eigenbasis inference and the
 collapsed conditional-theta method in LogPSplinePSD are distinct algorithms.
 
-The documentation notebooks cover scalar AR, correlated VAR2, a short ET
-sample, LISA XYZ2/AET references and LVK strain with training-only AR order
-selection. They use 1000 MAP steps, 300 VI steps and 96 draws for a quick
-workflow demonstration. Real-data downloads are cached and bounded; the
-LISA examples use a 13.8 MB excerpt instead of the full 505 MB file. These
+The five documentation notebooks cover a univariate simulation, a bivariate
+simulation, ET, LISA (XYZ2 and AET together), and LVK strain with training-only
+AR order selection. Each notebook includes executed plots. They use 1000 MAP
+steps, 300 VI steps and 96 draws for a quick workflow demonstration. Data
+downloads are cached and bounded; the LISA example uses a 13.8 MB excerpt
+instead of the full 505 MB file. These
 budgets are not convergence or uncertainty-calibration guarantees.
 
 Install optional HDF5 support with `uv sync --locked --extra examples`
