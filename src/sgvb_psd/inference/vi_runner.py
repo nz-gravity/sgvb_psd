@@ -48,6 +48,7 @@ class ViRunner:
         optimize_mean=False,
         reference_psd=None,
         data_scale=1.0,
+        coarse_grain=None,
     ):
         if not isinstance(elbo_samples, int) or elbo_samples < 1:
             raise ValueError("elbo_samples must be a positive integer")
@@ -61,6 +62,7 @@ class ViRunner:
             fmin_for_analysis,
             reference_psd=reference_psd,
             data_scale=data_scale,
+            coarse_grain=coarse_grain,
         )
         self.model = BayesianModel(
             self.data,

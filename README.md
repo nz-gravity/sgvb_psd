@@ -111,6 +111,55 @@ is not inferred. With no reference, the original model is preserved.
 
 `plot(true_psd=(values, frequencies))` remains a separate comparison overlay.
 
+## Optional frequency coarse graining
+
+Opt in to adaptive frequency aggregation for the residual Whittle likelihood:
+
+```python
+from sgvb_psd.inference import CoarseGrainConfig
+
+estimator = PSDEstimator(
+    x=data,
+    fs=sample_rate,
+    coarse_grain=CoarseGrainConfig(
+        method="adaptive", tolerance=0.15, max_bin_width=32, pilot_window=31,
+    ),
+    parallel_rows=True,
+)
+psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
+```
+
+The default `coarse_grain=None` uses every retained Fourier frequency.
+`method="fixed"` pools consecutive groups up to `max_bin_width`; the final
+partial group is retained. `max_bin_width=1` gives the native-grid target.
+`break_frequencies=(...)` supplies physical-frequency boundaries that bins
+cannot cross. The pilot also respects gaps in the retained frequency grid.
+
+Adaptive binning uses a smoothed full complex residual matrix only to choose
+boundaries, then freezes the partition before optimization. Inference sums
+the **unsmoothed** complex periodograms and uses the original observation
+counts; aggregation does not reduce the effective data count. With a full
+reference, whitening happens at each native bin first, and its determinant
+is retained on that grid. Priors, guide family and frequency coordinates
+are unchanged. Both joint and parallel-row execution are supported.
+
+This approximates a residual spectrum that is constant within each aggregate.
+The tolerance is a pilot criterion, not a posterior-error guarantee. Compare
+with an unbinned fit before using it for a scientific analysis, particularly
+near narrow features or rapid cross-spectral phase changes. PSD draws and
+reference reconstruction still use the **original** frequency grid; their
+cost does not shrink with the likelihood grid. The LISA notebook separately
+documents finite-window resolution and its approximate bandwidth correction.
+
+Inspect the chosen frequencies and counts using:
+
+```python
+analysis = estimator.inference_runner.data
+likelihood_frequencies = analysis.likelihood_freq * estimator.fs
+native_bins_per_aggregate = analysis.freq_bin_counts
+fourier_observations_per_aggregate = analysis.counts
+```
+
 ## Parallel Cholesky rows and quick examples
 
 Set `parallel_rows=True` on `PSDEstimator` to fit the independent modified-

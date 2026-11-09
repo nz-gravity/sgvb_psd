@@ -12,6 +12,11 @@ from numpyro import distributions as dist
 
 from .._spectral import _compute_Xmatrices, compute_chunked_fft
 from .reference import reference_factor
+from .coarse_grain import (
+    CoarseGrainConfig,
+    make_frequency_bins,
+    pool_spectral_matrices,
+)
 
 PARAMETER_NAMES = (
     "ga_delta",
@@ -37,6 +42,7 @@ class AnalysisData:
         fmin_for_analysis=None,
         reference_psd=None,
         data_scale=1.0,
+        coarse_grain=None,
     ):
         x = np.asarray(x)
         if x.ndim == 1:
@@ -99,6 +105,44 @@ class AnalysisData:
                 "reference whitening exceeds float32 range; use a physically appropriate positive reference floor"
             )
 
+        # References have already been applied at every original Fourier bin.
+        # Only the residual likelihood is compressed; prediction stays native.
+        self.coarse_grain = coarse_grain
+        self.frequency_bins = make_frequency_bins(
+            self.freq * fs,
+            (
+                np.asarray(self.summed_periodogram) / self.nchunks
+                if isinstance(coarse_grain, CoarseGrainConfig)
+                and coarse_grain.method == "adaptive"
+                and coarse_grain.max_bin_width > 1
+                else None
+            ),
+            coarse_grain,
+        )
+        self.freq_bin_counts = self.frequency_bins.counts
+        self.counts = jnp.asarray(
+            self.nchunks * self.freq_bin_counts, dtype=jnp.float32
+        )
+        representative = self.frequency_bins.representatives
+        self.likelihood_freq = self.freq
+        self.likelihood_Xmat_delta = self.Xmat_delta
+        self.likelihood_Xmat_theta = self.Xmat_theta
+        self.likelihood_periodogram = self.summed_periodogram
+        if np.any(self.freq_bin_counts != 1):
+            self.likelihood_freq = self.freq[representative]
+            self.likelihood_Xmat_delta = self.Xmat_delta[representative]
+            self.likelihood_Xmat_theta = self.Xmat_theta[representative]
+            pooled = pool_spectral_matrices(
+                self.summed_periodogram, self.frequency_bins
+            )
+            self.likelihood_periodogram = jnp.asarray(
+                pooled, dtype=jnp.complex64
+            )
+            if not np.isfinite(np.asarray(self.likelihood_periodogram)).all():
+                raise ValueError(
+                    "pooled residual statistics exceed float32 range"
+                )
+
 
 class BayesianModel:
     def __init__(self, data, degree_fluctuate=None, init_params=None, Nbw=1.0):
@@ -153,24 +197,32 @@ class BayesianModel:
         row, col = np.tril_indices(p, k=-1)
         self.row, self.col = row, col
 
-    def _spectrum_factors(self, params):
-        gamma = jnp.einsum("fk,spk->sfp", self.data.Xmat_delta, params[0])
-        theta = jnp.einsum(
-            "fk,sek->sfe", self.data.Xmat_theta, params[2] + 1j * params[4]
+    def _spectrum_factors(self, params, *, likelihood=False):
+        xd = (
+            self.data.likelihood_Xmat_delta
+            if likelihood
+            else self.data.Xmat_delta
         )
+        xt = (
+            self.data.likelihood_Xmat_theta
+            if likelihood
+            else self.data.Xmat_theta
+        )
+        gamma = jnp.einsum("fk,spk->sfp", xd, params[0])
+        theta = jnp.einsum("fk,sek->sfe", xt, params[2] + 1j * params[4])
         shape = gamma.shape[:2] + (self.data.p, self.data.p)
         t = jnp.broadcast_to(jnp.eye(self.data.p, dtype=jnp.complex64), shape)
         t = t.at[..., self.row, self.col].set(-theta)
         return gamma, t
 
     def loglik(self, params):
-        gamma, t = self._spectrum_factors(params)
+        gamma, t = self._spectrum_factors(params, likelihood=True)
         transformed = (
-            t @ self.data.summed_periodogram @ t.conj().swapaxes(-1, -2)
+            t @ self.data.likelihood_periodogram @ t.conj().swapaxes(-1, -2)
         )
         power = jnp.diagonal(transformed, axis1=-2, axis2=-1).real
         likelihood = -jnp.sum(
-            self.data.nchunks * gamma + power * jnp.exp(-gamma),
+            self.data.counts[:, None] * gamma + power * jnp.exp(-gamma),
             axis=(-2, -1),
         )
         if self.data.reference_factor is not None:
@@ -233,14 +285,15 @@ class BayesianModel:
         Their sum is the original joint posterior. The fixed reference
         determinant is split evenly; this does not change any row gradient.
         """
-        gamma, t = self._spectrum_factors(params)
+        gamma, t = self._spectrum_factors(params, likelihood=True)
         transformed = (
-            t @ self.data.summed_periodogram @ t.conj().swapaxes(-1, -2)
+            t @ self.data.likelihood_periodogram @ t.conj().swapaxes(-1, -2)
         )
         power = jnp.diagonal(transformed, axis1=-2, axis2=-1).real
         values = (
             -jnp.sum(
-                self.data.nchunks * gamma + power * jnp.exp(-gamma), axis=-2
+                self.data.counts[:, None] * gamma + power * jnp.exp(-gamma),
+                axis=-2,
             )
             / self.Nbw
         )
