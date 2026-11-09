@@ -13,6 +13,18 @@ import numpy as np
 from var2_coverage import NAMES, OUT, load, dump, wilson
 
 
+def export_figure(fig, filename):
+    """Export standalone figures with clean generated SVG whitespace."""
+    path = OUT / (filename + ".svg")
+    fig.savefig(path)
+    path.write_text(
+        "\n".join(line.rstrip() for line in path.read_text().splitlines())
+        + "\n"
+    )
+    fig.savefig(OUT / (filename + ".pdf"))
+    fig.savefig(OUT / (filename + ".png"), dpi=130)
+
+
 def summarize(
     covered,
     widths,
@@ -123,9 +135,7 @@ def five_panels(
     axes.flat[5].legend(handles, labels, loc="upper left", frameon=False)
     fig.suptitle(title, fontsize=13)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
-    fig.savefig(OUT / (filename + ".svg"))
-    fig.savefig(OUT / (filename + ".pdf"))
-    fig.savefig(OUT / (filename + ".png"), dpi=130)
+    export_figure(fig, filename)
     plt.close(fig)
 
 
@@ -201,7 +211,7 @@ def main():
         **arrays,
     )
     with (OUT / "frequency-results.csv").open("w", newline="") as output:
-        writer = csv.writer(output)
+        writer = csv.writer(output, lineterminator="\n")
         writer.writerow(
             [
                 "frequency_cycles_per_sample",
@@ -384,9 +394,7 @@ def main():
         "Optimizer diagnostics: finite is not a convergence certificate"
     )
     fig.tight_layout()
-    fig.savefig(OUT / "stability.svg")
-    fig.savefig(OUT / "stability.pdf")
-    fig.savefig(OUT / "stability.png", dpi=130)
+    export_figure(fig, "stability")
     plt.close(fig)
     # Representative traces are selected by index, never by fit quality.
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
@@ -409,9 +417,7 @@ def main():
         ax.legend()
         ax.grid(alpha=0.2)
     fig.tight_layout()
-    fig.savefig(OUT / "traces.svg")
-    fig.savefig(OUT / "traces.pdf")
-    fig.savefig(OUT / "traces.png", dpi=130)
+    export_figure(fig, "traces")
     plt.close(fig)
     print(json.dumps(summary, indent=2))
 
