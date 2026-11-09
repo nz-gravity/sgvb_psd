@@ -3,17 +3,14 @@ root: index.md
 chapters:
 - file: api
 - file: examples/var1d_example.ipynb
-  title: Fast 1D AR simulation
+  title: Univariate simulation
 - file: examples/simulation_example.ipynb
-  title: Fast bivariate VAR2
+  title: Bivariate simulation
 - file: examples/ET_example.ipynb
-  title: ET sample
+  title: ET example
 - file: examples/lisa_example.ipynb
-  title: LISA XYZ2 reference
-- file: examples/lisa_example_v2.ipynb
-  title: LISA AET reference
+  title: LISA example
 - file: examples/LVK_example.ipynb
-  title: LVK with AR reference
-- file: examples/paper_plots
-- url: https://arxiv.org/abs/2409.13224
-  title: Paper
+  title: LVK example
+- file: papers
+  title: Credits and papers
