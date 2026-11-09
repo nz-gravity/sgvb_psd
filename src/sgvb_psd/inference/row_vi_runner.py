@@ -155,7 +155,7 @@ class RowViRunner(ViRunner):
             self.svi = SVI(
                 self._row_model,
                 self._row_guide,
-                Adam(0.05),
+                Adam(self.vi_learning_rate),
                 Trace_ELBO(num_particles=self.elbo_samples),
             )
         steps = n_elbo_maximisation_steps

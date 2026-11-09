@@ -20,3 +20,12 @@ Frequency coarse graining
 The partition is fixed before inference. Posterior spectra are evaluated on
 the native Fourier grid, including any supplied reference matrix. See the
 repository README for examples, counts and approximation limits.
+
+
+Autoregressive references
+=========================
+
+.. autofunction:: sgvb_psd.ar_reference.fit_ar_reference
+
+.. autoclass:: sgvb_psd.ar_reference.ARReference
+    :members:

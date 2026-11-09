@@ -372,3 +372,30 @@ def test_ported_lowrank_scale_guide_runs_in_numpyro():
     )
     assert np.all(np.isfinite(fit.losses))
     assert not np.array_equal(fit.params["scale"], jnp.full(3, 0.3))
+
+
+@pytest.mark.parametrize("parallel", [False, True])
+def test_public_vi_learning_rate_changes_joint_and_row_updates(parallel):
+    data = np.random.default_rng(9).normal(size=(32, 2))
+    locations = []
+    for rate in (0.001, 0.03):
+        estimator = PSDEstimator(
+            data,
+            N_theta=2,
+            seed=5,
+            parallel_rows=parallel,
+            optimize_mean=True,
+            vi_learning_rate=rate,
+        )
+        runner = estimator.inference_runner
+        assert runner.vi_learning_rate == rate
+        runner.run_phase1(ntrain_map=0)
+        runner.run_phase2(n_elbo_maximisation_steps=3)
+        locations.append(np.asarray(runner.svi_params["ga_delta_loc"]))
+    assert np.linalg.norm(locations[1] - locations[0]) > 0.001
+
+
+@pytest.mark.parametrize("rate", [0, -1, np.inf, np.nan, True, 1j, "fast"])
+def test_invalid_public_vi_learning_rate(rate):
+    with pytest.raises(ValueError, match="vi_learning_rate"):
+        PSDEstimator(np.arange(16.0), N_theta=2, vi_learning_rate=rate)

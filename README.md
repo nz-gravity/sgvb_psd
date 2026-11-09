@@ -65,6 +65,8 @@ psd_samples, pointwise_ci, uniform_ci = estimator.run(lr=0.003)
 The guide keeps its means at MAP by default. Set `optimize_mean=True`
 to train guide means too. This changes the variational approximation while
 keeping the target model.
+The VI Adam rate is configurable via `vi_learning_rate` (default 0.05);
+use a smaller rate when training many guide means. MAP still uses `run(lr=...)`.
 The default approximation has known uncertainty limitations; stable
 optimization and calibrated interval coverage remain under review. The
 model preserves inherited prior scales and PSD conventions. In particular,
@@ -110,6 +112,24 @@ whitening determinant is included in the likelihood. Reference uncertainty
 is not inferred. With no reference, the original model is preserved.
 
 `plot(true_psd=(values, frequencies))` remains a separate comparison overlay.
+
+For a cheap AR initial reference, fit one chosen order on separate, consistently
+processed training data; an order search is optional rather than required:
+
+```python
+from sgvb_psd.ar_reference import fit_ar_reference
+
+reference = fit_ar_reference(training, fs=sample_rate, order=512)
+# For a few correlated channels, use a modest VAR order:
+full_reference = fit_ar_reference(training, fs=sample_rate, order=128,
+                                  full_matrix=True)
+```
+
+Pass either callable to `PSDEstimator(reference_psd=...)`. Both return full
+matrices in two-sided physical units and keep AR-parameter uncertainty fixed.
+Apply matching filters/windows explicitly; SGVB whitens and reconstructs once.
+The ET and LVK notebooks include separate training/analysis/held-out segments,
+normalized windows, line/coherence plots and optimizer diagnostics.
 
 ## Optional frequency coarse graining
 
@@ -172,9 +192,11 @@ The original joint runner remains the default. Eigenbasis inference and the
 collapsed conditional-theta method in LogPSplinePSD are distinct algorithms.
 
 The five documentation notebooks cover a univariate simulation, a bivariate
-simulation, ET, LISA (XYZ2 and AET together), and LVK strain with training-only
-AR order selection. Each notebook includes executed plots. They use 1000 MAP
-steps, 300 VI steps and 96 draws for a quick workflow demonstration. Data
+simulation, ET, LISA (XYZ2 and AET together), and LVK strain with fixed-order
+AR/VAR references. Each notebook includes executed plots. Simulation/LISA use
+1000 MAP steps, 300 VI steps and 96 draws. ET/LVK use separate reference-training
+and held-out blocks, 1500/8000 MAP steps respectively, 2000 VI steps with
+four particles and 128 draws. These are bounded workflow demonstrations. Data
 downloads are cached and bounded; the LISA example uses a 13.8 MB excerpt
 instead of the full 505 MB file. These
 budgets are not convergence or uncertainty-calibration guarantees.
